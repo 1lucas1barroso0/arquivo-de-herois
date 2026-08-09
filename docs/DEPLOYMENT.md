@@ -15,6 +15,23 @@ Sem configuração adicional, o editor usa IndexedDB e armazena imagens no
 navegador. Esse modo preserva criação, edição, importação, exportação e links
 portáteis, mas não oferece links permanentes mantidos por um servidor.
 
+## GitHub e Vercel
+
+O arquivo `vercel.json` acompanha o código e mantém compatíveis os endereços
+antigos dos retratos. Para integrar os serviços sem manter tokens no
+repositório:
+
+1. envie este projeto para a ramificação `main` do GitHub;
+2. na Vercel, importe o repositório e mantenha **Next.js** como framework;
+3. deixe o diretório raiz como `./`, a instalação como `npm ci` e o build como
+   `npm run build`;
+4. habilite implantações de produção para `main` e prévias para as demais
+   ramificações.
+
+Depois disso, cada atualização de `main` gera uma implantação de produção, e
+cada pull request recebe uma prévia isolada. A verificação de qualidade do
+GitHub roda em paralelo e não precisa de credenciais da Vercel.
+
 ## Persistência opcional
 
 As rotas de API reconhecem dois bindings opcionais fornecidos pelo adaptador de

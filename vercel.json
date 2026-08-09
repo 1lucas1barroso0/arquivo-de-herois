@@ -1,0 +1,22 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "redirects": [
+    {
+      "source": "/demo/atlas-zero.png",
+      "destination": "/demo/atlas-zero.webp",
+      "permanent": true
+    },
+    {
+      "source": "/demo/espectro-rubro.png",
+      "destination": "/demo/espectro-rubro.webp",
+      "permanent": true
+    },
+    {
+      "source": "/demo/sentinela-solar.png",
+      "destination": "/demo/sentinela-solar.webp",
+      "permanent": true
+    }
+  ]
+}
