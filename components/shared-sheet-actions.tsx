@@ -9,8 +9,10 @@ import {
   Share2,
 } from "lucide-react";
 import { useState } from "react";
+import { writeBrowserStorage } from "../lib/browser-storage";
 import type { CharacterSheet } from "../lib/character";
 import { getDeviceOwnerId, OPEN_CHARACTER_KEY } from "../lib/device-owner";
+import { isLocalStorageFallbackResponse } from "../lib/storage-mode";
 import { useLocale } from "./locale-provider";
 
 export function SharedSheetActions({ sheet }: { sheet: CharacterSheet }) {
@@ -38,8 +40,15 @@ export function SharedSheetActions({ sheet }: { sheet: CharacterSheet }) {
           },
         }),
       } satisfies RequestInit;
-      let response = await fetch("/api/characters", request);
-      if (response.status >= 500) {
+      let response: Response;
+      try {
+        response = await fetch("/api/characters", request);
+      } catch (caught) {
+        if (!(caught instanceof TypeError)) throw caught;
+        const { localApiFetch } = await import("../lib/local-api");
+        response = await localApiFetch("/api/characters", request);
+      }
+      if (isLocalStorageFallbackResponse(response)) {
         const { localApiFetch } = await import("../lib/local-api");
         response = await localApiFetch("/api/characters", request);
       }
@@ -50,7 +59,7 @@ export function SharedSheetActions({ sheet }: { sheet: CharacterSheet }) {
       if (!response.ok || !payload.character?.id) {
         throw new Error(payload.error || "Não foi possível salvar a cópia.");
       }
-      window.localStorage.setItem(OPEN_CHARACTER_KEY, payload.character.id);
+      writeBrowserStorage(OPEN_CHARACTER_KEY, payload.character.id);
       window.location.assign("/");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Não foi possível salvar a cópia.");

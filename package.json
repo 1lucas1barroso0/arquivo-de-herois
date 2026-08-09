@@ -1,6 +1,6 @@
 {
   "name": "arquivo-de-herois",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "engines": {
     "node": ">=22.13.0"
@@ -10,7 +10,7 @@
     "build": "next build",
     "start": "next start",
     "test": "npm run test:rules",
-    "test:rules": "node --import tsx --test tests/rules.test.ts tests/catalog.test.ts tests/examples.test.ts tests/portable.test.ts tests/scales.test.ts tests/calculators.test.ts tests/reference.test.ts tests/identity.test.ts tests/view-mode.test.tsx",
+    "test:rules": "node --import tsx --test tests/rules.test.ts tests/catalog.test.ts tests/examples.test.ts tests/portable.test.ts tests/scales.test.ts tests/calculators.test.ts tests/reference.test.ts tests/identity.test.ts tests/storage-compat.test.ts tests/view-mode.test.tsx",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "db:generate": "drizzle-kit generate"

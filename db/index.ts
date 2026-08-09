@@ -1,5 +1,6 @@
 import { drizzle } from "drizzle-orm/d1";
 import { getWorkerEnv } from "../lib/cloudflare-runtime";
+import { StorageUnavailableError } from "../lib/storage-mode";
 import * as schema from "./schema";
 
 let initialization: Promise<void> | null = null;
@@ -7,7 +8,7 @@ let initialization: Promise<void> | null = null;
 export async function getDb() {
   const env = await getWorkerEnv();
   if (!env.DB) {
-    throw new Error(
+    throw new StorageUnavailableError(
       "Cloudflare D1 binding `DB` is unavailable. Configure the runtime binding as `DB` before using the database."
     );
   }
@@ -21,7 +22,9 @@ export async function ensureDatabase() {
   initialization = (async () => {
     const env = await getWorkerEnv();
     if (!env.DB) {
-      throw new Error("A conexão persistente está indisponível.");
+      throw new StorageUnavailableError(
+        "A conexão persistente está indisponível.",
+      );
     }
 
     await env.DB.batch([

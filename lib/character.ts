@@ -656,13 +656,7 @@ export function normalizeSheet(value: unknown): CharacterSheet {
     appearance: stringValue(raw.appearance),
     personality: stringValue(raw.personality),
     sizeRank: numberValue(raw.sizeRank, 0),
-    absentTraits: normalizeAbsentTraits(
-      Array.isArray(raw.absentTraits)
-        ? raw.absentTraits
-        : Array.isArray(raw.absentAbilities)
-          ? raw.absentAbilities
-          : [],
-    ),
+    absentTraits: getStoredAbsentTraits(raw),
     buildType: raw.buildType === "npc" ? "npc" : "hero",
     powerLevel,
     budgetMode,
@@ -1154,8 +1148,29 @@ function isTraitKey(value: unknown): value is TraitKey {
   );
 }
 
-function normalizeAbsentTraits(value: unknown[]): AbsentTraitKey[] {
+function normalizeAbsentTraits(value: readonly unknown[]): AbsentTraitKey[] {
   return absentTraitKeys.filter((key) => value.includes(key));
+}
+
+type AbsentTraitSource = {
+  absentTraits?: unknown;
+  absentAbilities?: unknown;
+};
+
+/**
+ * Reads explicit absences defensively from current or legacy sheets. This is
+ * intentionally non-mutating so opening an older IndexedDB record never
+ * rewrites or discards its original payload.
+ */
+export function getStoredAbsentTraits(
+  sheet: AbsentTraitSource,
+): AbsentTraitKey[] {
+  const value = Array.isArray(sheet.absentTraits)
+    ? sheet.absentTraits
+    : Array.isArray(sheet.absentAbilities)
+      ? sheet.absentAbilities
+      : [];
+  return normalizeAbsentTraits(value);
 }
 
 /**
@@ -1164,22 +1179,22 @@ function normalizeAbsentTraits(value: unknown[]): AbsentTraitKey[] {
  * anterior do usuário sem apagar informação.
  */
 export function getEffectiveAbsentTraits(
-  sheet: Pick<CharacterSheet, "absentTraits">,
+  sheet: AbsentTraitSource,
 ): ReadonlySet<AbsentTraitKey> {
-  const absent = new Set(sheet.absentTraits);
+  const absent = new Set(getStoredAbsentTraits(sheet));
   if (absent.has("awareness")) absent.add("presence");
   return absent;
 }
 
 export function isTraitAbsent(
-  sheet: Pick<CharacterSheet, "absentTraits">,
+  sheet: AbsentTraitSource,
   key: AbsentTraitKey,
 ) {
   return getEffectiveAbsentTraits(sheet).has(key);
 }
 
 export function isResistanceAbsent(
-  sheet: Pick<CharacterSheet, "absentTraits">,
+  sheet: AbsentTraitSource,
   key: ResistanceKey,
 ) {
   const absent = getEffectiveAbsentTraits(sheet);

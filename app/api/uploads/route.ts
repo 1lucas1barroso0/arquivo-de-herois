@@ -1,5 +1,6 @@
 import { getWorkerEnv } from "../../../lib/cloudflare-runtime";
 import { apiError, getOwnerId } from "../../../lib/server";
+import { StorageUnavailableError } from "../../../lib/storage-mode";
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const ACCEPTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
@@ -37,7 +38,11 @@ export async function POST(request: Request) {
 
     const env = await getWorkerEnv();
     const bucket = (env as unknown as { BUCKET?: ImageBucket }).BUCKET;
-    if (!bucket) throw new Error("O armazenamento de imagens está indisponível.");
+    if (!bucket) {
+      throw new StorageUnavailableError(
+        "O armazenamento de imagens está indisponível.",
+      );
+    }
 
     const ownerId = await getOwnerId(request);
     const extension = extensionFor(file.type);

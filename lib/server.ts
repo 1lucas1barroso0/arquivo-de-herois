@@ -1,5 +1,10 @@
 import type { CharacterSheet } from "./character";
 import { normalizeSheet } from "./character";
+import {
+  LOCAL_STORAGE_MODE,
+  STORAGE_MODE_HEADER,
+  StorageUnavailableError,
+} from "./storage-mode";
 
 const MAX_TEXT_LENGTH = 500_000;
 
@@ -54,5 +59,17 @@ export function clampInteger(value: unknown, min: number, max: number) {
 
 export function apiError(error: unknown, fallback = "Não foi possível concluir a operação.") {
   const message = error instanceof Error ? error.message : fallback;
-  return Response.json({ error: message }, { status: 500 });
+  const storageUnavailable = error instanceof StorageUnavailableError;
+  return Response.json(
+    { error: message },
+    {
+      status: storageUnavailable ? 503 : 500,
+      headers: {
+        "Cache-Control": "no-store",
+        ...(storageUnavailable
+          ? { [STORAGE_MODE_HEADER]: LOCAL_STORAGE_MODE }
+          : {}),
+      },
+    },
+  );
 }

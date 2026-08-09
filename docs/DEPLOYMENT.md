@@ -14,6 +14,9 @@ npm run start
 Sem configuração adicional, o editor usa IndexedDB e armazena imagens no
 navegador. Esse modo preserva criação, edição, importação, exportação e links
 portáteis, mas não oferece links permanentes mantidos por um servidor.
+Quando os bindings opcionais não existem, a API responde `503` com a indicação
+de modo local; o cliente então muda para o IndexedDB sem apagar nem migrar à
+força os registros já guardados no dispositivo.
 
 ## GitHub e Vercel
 

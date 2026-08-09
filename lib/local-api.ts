@@ -3,6 +3,10 @@ import {
   normalizeSheet,
   type CharacterSheet,
 } from "./character";
+import {
+  readBrowserStorage,
+  writeBrowserStorage,
+} from "./browser-storage";
 import { createExampleSheets } from "./example-sheets";
 import { createSummary } from "./rules";
 import { createPortableShareUrl } from "./portable-share";
@@ -104,10 +108,10 @@ function parseJsonBody(body: BodyInit | null | undefined) {
 
 async function listCharacters() {
   const database = await openDatabase();
-  let characters = await request<CharacterSheet[]>(
+  let characters = await request<unknown[]>(
     database.transaction(STORE_NAME, "readonly").objectStore(STORE_NAME).getAll(),
   );
-  if (!characters.length && !window.localStorage.getItem(SEED_KEY)) {
+  if (!characters.length && !readBrowserStorage(SEED_KEY)) {
     const now = new Date().toISOString();
     characters = createExampleSheets().map((sheet, index) =>
       normalizeSheet({
@@ -122,9 +126,15 @@ async function listCharacters() {
       transaction.objectStore(STORE_NAME).put(character);
     }
     await transactionDone(transaction);
-    window.localStorage.setItem(SEED_KEY, "yes");
+    writeBrowserStorage(SEED_KEY, "yes");
   }
-  return characters.sort((left, right) =>
+  return normalizeLocalCharacters(characters);
+}
+
+export function normalizeLocalCharacters(
+  characters: readonly unknown[],
+): CharacterSheet[] {
+  return characters.map((character) => normalizeSheet(character)).sort((left, right) =>
     String(right.updatedAt).localeCompare(String(left.updatedAt)),
   );
 }
