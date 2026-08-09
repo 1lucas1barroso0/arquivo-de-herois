@@ -1,0 +1,832 @@
+"use client";
+
+import {
+  Activity,
+  AlertTriangle,
+  BadgeCheck,
+  BookOpen,
+  Brain,
+  CheckCircle2,
+  Dumbbell,
+  Gauge,
+  HeartPulse,
+  Info,
+  Shield,
+  Sparkles,
+  Swords,
+  UserRound,
+  Wrench,
+  XCircle,
+  Zap,
+} from "lucide-react";
+import {
+  abilityAbbreviations,
+  abilityLabels,
+  coreAbilityKeys,
+  resistanceKeys,
+  resistanceLabels,
+  type CharacterSheet,
+  type CoreAbilityKey,
+} from "../lib/character";
+import {
+  getAttackCalculation,
+  getDerivedTraits,
+  getEffectCostBreakdown,
+  getEquipmentTotals,
+  getHeroicAdvantageCapacity,
+  getLuckCapacity,
+  getPointBreakdown,
+  getPointBudget,
+  getPowerEntryCost,
+  getRuleAudit,
+  getSkillTotal,
+  type RuleStatus,
+} from "../lib/rules";
+import { useLocale } from "./locale-provider";
+import { buildTypeLabel } from "../lib/localization";
+import { translateRuleText } from "../lib/localization";
+
+type SheetViewProps = {
+  sheet: CharacterSheet;
+  shared?: boolean;
+  showAudit?: boolean;
+};
+
+const abilityIcons: Record<CoreAbilityKey, typeof Dumbbell> = {
+  strength: Dumbbell,
+  stamina: HeartPulse,
+  agility: Zap,
+  intellect: Brain,
+  awareness: Activity,
+  presence: UserRound,
+};
+
+export function SheetView({
+  sheet,
+  shared = false,
+  showAudit = false,
+}: SheetViewProps) {
+  const { language, t } = useLocale();
+  const derived = getDerivedTraits(sheet);
+  const breakdown = getPointBreakdown(sheet);
+  const budget = getPointBudget(sheet);
+  const audit = showAudit ? getRuleAudit(sheet) : null;
+  const remaining = budget - breakdown.total;
+  const equipment = getEquipmentTotals(sheet);
+  const heroicAdvantageCapacity = getHeroicAdvantageCapacity(sheet);
+  const sectionNumber = (index: number) =>
+    String(index - (!showAudit && index > 3 ? 1 : 0)).padStart(2, "0");
+
+  return (
+    <article
+      className={`sheet-document ${showAudit ? "with-audit" : "is-clean"}`}
+      aria-label={
+        showAudit
+          ? t("Ficha do personagem com auditoria")
+          : t("Ficha limpa do personagem")
+      }
+      style={{ "--sheet-accent": sheet.accent } as React.CSSProperties}
+    >
+      <header className="sheet-cover">
+        <div className="sheet-cover-image">
+          {sheet.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={sheet.imageUrl}
+              alt={`Retrato de ${sheet.heroName}`}
+            />
+          ) : (
+            <div className="portrait-fallback" aria-hidden="true">
+              <Sparkles />
+            </div>
+          )}
+        </div>
+
+        <div className="sheet-cover-copy">
+          <p className="eyebrow">
+            {shared
+              ? t("Ficha compartilhada")
+              : sheet.buildType === "npc"
+                ? t("Ficha de NPC")
+                : t("Ficha ativa")}
+          </p>
+          <h1>{sheet.heroName || t("Personagem sem nome")}</h1>
+          <p className="sheet-concept">
+            {sheet.concept || t("Conceito ainda não registrado.")}
+          </p>
+          <div className="sheet-cover-meta">
+            <span>
+              <strong>NP {sheet.powerLevel}</strong>
+              {t("Nível de Poder")}
+            </span>
+            <span>
+              <strong>
+                {breakdown.total}/{budget}
+              </strong>
+              {t("Pontos de Poder")}
+            </span>
+            <span>
+              <strong>{remaining}</strong>
+              {t("Saldo")}
+            </span>
+          </div>
+          {audit && <AuditPill status={audit.status} />}
+        </div>
+      </header>
+
+      <section className="sheet-section identity-grid">
+        <SectionHeading
+          icon={UserRound}
+          index={sectionNumber(1)}
+          title="Identidade"
+        />
+        <DataCell label="Identidade civil" value={sheet.civilName} />
+        <DataCell label="Codinome" value={sheet.codename} />
+        <DataCell label="Jogador" value={sheet.player} />
+        <DataCell label="Campanha" value={sheet.campaign} />
+        <DataCell label="Arquétipo" value={sheet.archetype} />
+        <DataCell
+          label="Tipo"
+          value={
+            buildTypeLabel(sheet.buildType, language)
+          }
+        />
+        <DataCell label="Origem" value={sheet.origin} />
+        <DataCell label="Descritores" value={sheet.descriptors} wide />
+        <DataCell
+          label="Personalidade e motivação"
+          value={sheet.personality}
+          wide
+        />
+        <DataCell label="Aparência" value={sheet.appearance} wide />
+      </section>
+
+      <section className="sheet-section">
+        <SectionHeading
+          icon={Activity}
+          index={sectionNumber(2)}
+          title="Atributos e derivados"
+        />
+        <div className="stat-grid">
+          {coreAbilityKeys.map((key) => {
+            const Icon = abilityIcons[key];
+            const base = sheet.abilities[key];
+            const total = derived.abilities[key];
+            return (
+              <div className="stat-cell" key={key}>
+                <Icon size={17} aria-hidden="true" />
+                <span>
+                  {t(abilityLabels[key])}{" "}
+                  <small>{abilityAbbreviations[key]}</small>
+                </span>
+                <strong>{signed(total)}</strong>
+                {base !== total && <em>base {signed(base)}</em>}
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="combat-stat-grid">
+          <Stat label="Ataque base" value={derived.attack} />
+          <Stat label="Ataque corpo a corpo" value={derived.closeAttack} />
+          <Stat label="Ataque à distância" value={derived.rangedAttack} />
+          <Stat label="Defesa base" value={derived.defense} />
+          <Stat label="Defesa corpo a corpo" value={derived.closeDefense} />
+          <Stat label="Defesa à distância" value={derived.rangedDefense} />
+          <Stat label="Iniciativa" value={derived.initiative} />
+          <Stat label="CD de Defesa base" value={derived.defense + 10} />
+        </div>
+
+        <div className="resistance-grid">
+          {resistanceKeys.map((key) => (
+            <Stat
+              key={key}
+              label={resistanceLabels[key]}
+              value={derived.resistances[key]}
+            />
+          ))}
+        </div>
+      </section>
+
+      {audit && (
+        <section className="sheet-section">
+          <SectionHeading
+            icon={BadgeCheck}
+            index={sectionNumber(3)}
+            title="Auditoria das regras"
+          />
+          <div className={`audit-summary-view status-${audit.status}`}>
+            <AuditIcon status={audit.status} />
+            <div>
+              <strong>{auditTitle(audit.status)}</strong>
+              <span>
+                {formatCount(audit.failures, "erro", "erros")} ·{" "}
+                {formatCount(
+                  audit.attentions,
+                  "aviso pendente",
+                  "avisos pendentes",
+                )}
+                {audit.approvals > 0 &&
+                  ` · ${formatCount(audit.approvals, "aprovado", "aprovados")}`}
+              </span>
+            </div>
+          </div>
+          <div className="pl-checks">
+            {audit.checks.map((check) => (
+              <div
+                className={`pl-check status-${check.status}`}
+                key={check.key}
+              >
+                <AuditIcon status={check.status} />
+                <span>{translateRuleText(check.label, language)}</span>
+                {typeof check.value === "number" && (
+                  <strong>
+                    {formatNumber(check.value)}
+                    {typeof check.limit === "number" && (
+                      <small> / {formatNumber(check.limit)}</small>
+                    )}
+                  </strong>
+                )}
+                <p>{translateRuleText(check.detail, language)}</p>
+                {check.reviewDecision &&
+                  check.reviewDecision !== "pending" && (
+                    <small className="audit-decision-note">
+                      {check.reviewDecision === "approved"
+                        ? "Aviso aprovado pela mesa."
+                        : "Aviso reprovado e registrado como erro."}
+                    </small>
+                  )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <TwoColumnSection>
+        <section className="sheet-section">
+          <SectionHeading
+            icon={BookOpen}
+            index={sectionNumber(4)}
+            title="Perícias"
+          />
+          <DataTable
+            empty="Nenhuma perícia graduada."
+            rows={sheet.skills
+              .filter(
+                (skill) =>
+                  skill.rank ||
+                  skill.specializationRank ||
+                  skill.miscellaneousModifier,
+              )
+              .map((skill) => {
+                const total = getSkillTotal(skill, derived);
+                const cells = [
+                  skill.specialization
+                    ? `${skill.name}: ${skill.specialization}`
+                    : skill.name,
+                  abilityAbbreviations[skill.ability],
+                  `${skill.rank}+${skill.specializationRank}`,
+                  signed(total),
+                ];
+                if (showAudit) {
+                  cells.push(total <= sheet.powerLevel + 10 ? "✓" : "✕");
+                }
+                return cells;
+              })}
+            headers={
+              showAudit
+                ? ["Perícia", "Hab.", "Grad.", "Total", "NP"]
+                : ["Perícia", "Hab.", "Grad.", "Total"]
+            }
+          />
+        </section>
+
+        <section className="sheet-section">
+          <SectionHeading
+            icon={BadgeCheck}
+            index={sectionNumber(5)}
+            title="Vantagens"
+          />
+          <EntryList
+            empty="Nenhuma vantagem registrada."
+            entries={sheet.advantages.map((item) => ({
+              title: `${item.name}${item.rank > 1 ? ` ${item.rank}` : ""}`,
+              meta: `${item.categories.join(" · ")}${item.kind === "equipment" ? " · 5 PE por graduação" : ""}`,
+              body: item.notes,
+            }))}
+          />
+          <div className="inline-rule-note">
+            <strong>
+              {heroicAdvantageCapacity}
+            </strong>{" "}
+            {heroicAdvantageCapacity === 1
+              ? " graduação heroica comprada; "
+              : " graduações heroicas compradas; "}
+            <strong>{sheet.resources.heroicAdvantageUses}</strong>{" "}
+            {sheet.resources.heroicAdvantageUses === 1
+              ? "uso registrado"
+              : "usos registrados"}{" "}
+            nesta aventura.
+          </div>
+        </section>
+      </TwoColumnSection>
+
+      <section className="sheet-section">
+        <SectionHeading
+          icon={Sparkles}
+          index={sectionNumber(6)}
+          title="Poderes"
+        />
+        <div className="power-grid">
+          {sheet.powers.length ? (
+            sheet.powers.map((power) => {
+              const entryCost = getPowerEntryCost(sheet, power.id);
+              return (
+                <article className="power-card power-card-v2" key={power.id}>
+                  <div className="power-card-head">
+                    <div>
+                      <p>
+                        {power.arrayRole === "none"
+                          ? "Poder independente"
+                          : `${arrayRoleLabel(power.arrayRole)} · ${power.arrayName || "Matriz sem nome"}`}
+                      </p>
+                      <h3>{power.name || "Poder sem nome"}</h3>
+                    </div>
+                    <span>{entryCost?.chargedCost ?? 0} PP</span>
+                  </div>
+                  <div className="power-container-meta">
+                    <small>
+                      {power.active ? "Vínculos ativos" : "Vínculos inativos"}
+                    </small>
+                    {power.removable !== "none" && (
+                      <small>{removableLabel(power.removable)}</small>
+                    )}
+                    {power.descriptors && (
+                      <small>{power.descriptors}</small>
+                    )}
+                  </div>
+                  <div className="power-effect-list">
+                    {power.effects.map((effect) => {
+                      const cost = getEffectCostBreakdown(effect);
+                      return (
+                        <section key={effect.id}>
+                          <header>
+                            <div>
+                              <h4>{effect.name || "Efeito"}</h4>
+                              <span>Graduação {effect.rank}</span>
+                            </div>
+                            <strong>
+                              {cost.total} PP
+                              {!cost.complete && " · legado"}
+                            </strong>
+                          </header>
+                          <div className="power-parameters">
+                            <small>
+                              Ação <strong>{effect.action || "—"}</strong>
+                            </small>
+                            <small>
+                              Alcance <strong>{effect.range || "—"}</strong>
+                            </small>
+                            <small>
+                              Duração{" "}
+                              <strong>{effect.duration || "—"}</strong>
+                            </small>
+                            <small>
+                              Resistência{" "}
+                              <strong>{effect.resistance || "—"}</strong>
+                            </small>
+                          </div>
+                          {cost.complete && cost.segments.length > 0 && (
+                            <p>
+                              <b>Custo:</b>{" "}
+                              {cost.segments
+                                .map(
+                                  (segment) =>
+                                    `${segment.ranks} grad. a ${segment.ratio}`,
+                                )
+                                .join(" + ")}
+                              ; recursos +{cost.featureCost};
+                              desvantagens -{cost.drawbackDiscount}.
+                            </p>
+                          )}
+                          {effect.extras.length > 0 && (
+                            <p>
+                              <b>Extras:</b>{" "}
+                              {effect.extras
+                                .map(
+                                  (item) =>
+                                    `${item.name || "Extra"} +${item.value} por graduação${item.ranksApplied ? ` (${formatCount(item.ranksApplied, "graduação", "graduações")})` : ""}`,
+                                )
+                                .join("; ")}
+                            </p>
+                          )}
+                          {effect.flaws.length > 0 && (
+                            <p>
+                              <b>Falhas:</b>{" "}
+                              {effect.flaws
+                                .map(
+                                  (item) =>
+                                    `${item.name || "Falha"} −${item.value} por graduação${item.ranksApplied ? ` (${formatCount(item.ranksApplied, "graduação", "graduações")})` : ""}`,
+                                )
+                                .join("; ")}
+                            </p>
+                          )}
+                          {effect.features.length > 0 && (
+                            <p>
+                              <b>Recursos:</b>{" "}
+                              {effect.features
+                                .map(
+                                  (item) =>
+                                    `${item.name || "Recurso"} ${item.rank}`,
+                                )
+                                .join("; ")}
+                            </p>
+                          )}
+                          {effect.drawbacks.length > 0 && (
+                            <p>
+                              <b>Desvantagens:</b>{" "}
+                              {effect.drawbacks
+                                .map(
+                                  (item) =>
+                                    `${item.name || "Desvantagem"} ${item.rank}`,
+                                )
+                                .join("; ")}
+                            </p>
+                          )}
+                          {effect.traitLinks.length > 0 && (
+                            <p>
+                              <b>Vínculos:</b>{" "}
+                              {effect.traitLinks
+                                .map((link) => {
+                                  const amount =
+                                    link.mode === "per-rank"
+                                      ? effect.rank * link.value
+                                      : link.value;
+                                  return link.mode === "reference"
+                                    ? `${traitLabelsSafe(link.trait)} (graduações existentes)`
+                                    : `${traitLabelsSafe(link.trait)} ${signed(amount)}`;
+                                })
+                                .join("; ")}
+                            </p>
+                          )}
+                          {effect.notes && <p>{effect.notes}</p>}
+                        </section>
+                      );
+                    })}
+                  </div>
+                  {power.notes && <p>{power.notes}</p>}
+                </article>
+              );
+            })
+          ) : (
+            <EmptyState text="Nenhum poder registrado." />
+          )}
+        </div>
+      </section>
+
+      <TwoColumnSection>
+        <section className="sheet-section">
+          <SectionHeading
+            icon={Swords}
+            index={sectionNumber(7)}
+            title="Ataques"
+          />
+          <DataTable
+            empty="Nenhum ataque registrado."
+            rows={sheet.attacks.map((attack) => {
+              const calculation = getAttackCalculation(sheet, attack);
+              const cells = [
+                calculation.name,
+                calculation.range === "no-check"
+                  ? "Automático"
+                  : signed(calculation.attackBonus),
+                String(calculation.effectRank),
+                String(calculation.effectDc),
+              ];
+              if (showAudit) {
+                cells.push(
+                  `${calculation.limitValue}/${calculation.limit}`,
+                );
+              }
+              return cells;
+            })}
+            headers={
+              showAudit
+                ? ["Ataque", "Bônus", "Efeito", "CD", "Limite"]
+                : ["Ataque", "Bônus", "Efeito", "CD"]
+            }
+          />
+        </section>
+
+        <section className="sheet-section">
+          <SectionHeading
+            icon={Wrench}
+            index={sectionNumber(8)}
+            title="Equipamento"
+          />
+          <div
+            className={`inline-budget ${equipment.remaining >= 0 ? "is-valid" : "is-invalid"}`}
+          >
+            {equipment.used}/{equipment.allowance} PE · saldo{" "}
+            {equipment.remaining}
+          </div>
+          <EntryList
+            empty="Nenhum equipamento registrado."
+            entries={sheet.equipment.map((item) => ({
+              title: item.name,
+              meta: `${item.type} · ${item.cost} PE${item.active ? " · ativo" : " · guardado"}`,
+              body: item.details,
+            }))}
+          />
+        </section>
+      </TwoColumnSection>
+
+      <section className="sheet-section">
+        <SectionHeading
+          icon={Shield}
+          index={sectionNumber(9)}
+          title="Complicações"
+        />
+        <EntryList
+          empty="Nenhuma complicação registrada."
+          entries={sheet.complications.map((item) => ({
+            title: item.name,
+            meta: item.type,
+            body: item.description,
+          }))}
+          columns
+        />
+      </section>
+
+      <TwoColumnSection>
+        <section className="sheet-section">
+          <SectionHeading
+            icon={Gauge}
+            index={sectionNumber(10)}
+            title="Recursos atuais"
+          />
+          <div className="resource-view-grid">
+            <Stat label="Pontos Heroicos" value={sheet.resources.heroPoints} />
+            <Stat
+              label="Usos heroicos"
+              value={sheet.resources.heroicAdvantageUses}
+            />
+            <Stat label="Sorte disponível" value={sheet.resources.luckCurrent} />
+            <Stat label="Sorte calculada" value={getLuckCapacity(sheet)} />
+          </div>
+          <p className="inline-rule-note">
+            Fadiga: <strong>{sheet.resources.fatigue}</strong>
+          </p>
+          {sheet.resources.conditions.length > 0 && (
+            <div className="condition-view-list">
+              {sheet.resources.conditions.map((condition) => (
+                <span key={condition}>{condition}</span>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="sheet-section">
+          <SectionHeading
+            icon={Gauge}
+            index={sectionNumber(11)}
+            title="Contabilidade calculada"
+          />
+          <div className="points-ledger">
+            {(
+              [
+                ["Atributos", breakdown.abilities],
+                ["Combate e iniciativa", breakdown.combat],
+                ["Resistências", breakdown.resistances],
+                ["Perícias", breakdown.skills],
+                ["Vantagens", breakdown.advantages],
+                ["Poderes", breakdown.powers],
+                ["Ajuste documentado", breakdown.adjustments],
+              ] as const
+            ).map(([label, value]) => (
+              <div key={label}>
+                <span>{label}</span>
+                <strong>{value}</strong>
+              </div>
+            ))}
+            <div className="ledger-total">
+              <span>Total gasto</span>
+              <strong>{breakdown.total} PP</strong>
+            </div>
+          </div>
+        </section>
+      </TwoColumnSection>
+
+      {sheet.notes && (
+        <section className="sheet-section">
+          <SectionHeading
+            icon={BookOpen}
+            index={sectionNumber(12)}
+            title="Histórico e notas"
+          />
+          <p className="long-copy">{sheet.notes}</p>
+        </section>
+      )}
+
+      <footer className="sheet-footer">
+        <span>Arquivo de Heróis</span>
+        <span>Atualizado {formatDate(sheet.updatedAt)}</span>
+      </footer>
+    </article>
+  );
+}
+
+function AuditPill({ status }: { status: RuleStatus }) {
+  return (
+    <span className={`sheet-audit-pill status-${status}`}>
+      <AuditIcon status={status} />
+      {auditTitle(status)}
+    </span>
+  );
+}
+
+function AuditIcon({ status }: { status: RuleStatus }) {
+  if (status === "pass") return <CheckCircle2 aria-hidden="true" />;
+  if (status === "fail") return <XCircle aria-hidden="true" />;
+  if (status === "attention")
+    return <AlertTriangle aria-hidden="true" />;
+  return <Info aria-hidden="true" />;
+}
+
+function SectionHeading({
+  icon: Icon,
+  index,
+  title,
+}: {
+  icon: typeof Activity;
+  index: string;
+  title: string;
+}) {
+  const { t } = useLocale();
+  return (
+    <header className="section-heading">
+      <span>{index}</span>
+      <Icon size={18} aria-hidden="true" />
+      <h2>{t(title)}</h2>
+    </header>
+  );
+}
+
+function DataCell({
+  label,
+  value,
+  wide = false,
+}: {
+  label: string;
+  value?: string;
+  wide?: boolean;
+}) {
+  const { t } = useLocale();
+  return (
+    <div className={`data-cell ${wide ? "is-wide" : ""}`}>
+      <span>{t(label)}</span>
+      <p>{value || "—"}</p>
+    </div>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: number }) {
+  const { t } = useLocale();
+  return (
+    <div>
+      <span>{t(label)}</span>
+      <strong>{signed(value)}</strong>
+    </div>
+  );
+}
+
+function TwoColumnSection({ children }: { children: React.ReactNode }) {
+  return <div className="sheet-columns">{children}</div>;
+}
+
+function EntryList({
+  entries,
+  empty,
+  columns = false,
+}: {
+  entries: { title: string; meta: string; body: string }[];
+  empty: string;
+  columns?: boolean;
+}) {
+  const { t } = useLocale();
+  if (!entries.length) return <EmptyState text={t(empty)} />;
+  return (
+    <div className={`entry-list ${columns ? "has-columns" : ""}`}>
+      {entries.map((entry, index) => (
+        <article key={`${entry.title}-${index}`}>
+          <p>{entry.meta}</p>
+          <h3>{entry.title || t("Sem nome")}</h3>
+          {entry.body && <span>{entry.body}</span>}
+        </article>
+      ))}
+    </div>
+  );
+}
+
+function DataTable({
+  headers,
+  rows,
+  empty,
+}: {
+  headers: string[];
+  rows: string[][];
+  empty: string;
+}) {
+  const { t } = useLocale();
+  if (!rows.length) return <EmptyState text={t(empty)} />;
+  return (
+    <div className="data-table-wrap">
+      <table className="data-table">
+        <thead>
+          <tr>
+            {headers.map((header) => (
+              <th key={header}>{t(header)}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, rowIndex) => (
+            <tr key={rowIndex}>
+              {row.map((cell, index) => (
+                <td key={`${rowIndex}-${index}`}>{cell || "—"}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function EmptyState({ text }: { text: string }) {
+  return <p className="sheet-empty">{text}</p>;
+}
+
+function auditTitle(status: RuleStatus) {
+  if (status === "pass") return "Ficha validada";
+  if (status === "fail") return "Erros encontrados";
+  if (status === "attention") return "Revisão pendente";
+  return "Regras liberais · Narrador e NPCs";
+}
+
+function formatCount(value: number, singular: string, plural: string) {
+  return `${value} ${value === 1 ? singular : plural}`;
+}
+
+function arrayRoleLabel(role: string) {
+  if (role === "base") return "Base da matriz";
+  if (role === "alternate") return "Efeito alternativo";
+  if (role === "dynamic") return "Alternativo dinâmico";
+  return "Poder";
+}
+
+function removableLabel(value: string) {
+  if (value === "removable") return "Removível";
+  if (value === "easily-removable") return "Facilmente Removível";
+  if (value === "equipment") return "Grau Equipamento";
+  return "";
+}
+
+function traitLabelsSafe(key: string) {
+  const labels: Record<string, string> = {
+    strength: "Força",
+    stamina: "Vigor",
+    agility: "Agilidade",
+    intellect: "Intelecto",
+    awareness: "Consciência",
+    presence: "Presença",
+    attack: "Ataque",
+    closeAttack: "Ataque corpo a corpo",
+    rangedAttack: "Ataque à distância",
+    defense: "Defesa",
+    closeDefense: "Defesa corpo a corpo",
+    rangedDefense: "Defesa à distância",
+    initiative: "Iniciativa",
+    dodge: "Esquiva",
+    fortitude: "Fortitude",
+    toughness: "Robustez",
+    will: "Vontade",
+  };
+  return labels[key] ?? key;
+}
+
+function signed(value: number) {
+  const numeric = Number(value) || 0;
+  return numeric > 0 ? `+${formatNumber(numeric)}` : formatNumber(numeric);
+}
+
+function formatNumber(value: number) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(2);
+}
+
+function formatDate(value?: string) {
+  if (!value) return "agora";
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "medium",
+  }).format(new Date(value));
+}

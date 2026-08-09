@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <title>Arquivo de Heróis</title>
+  <defs>
+    <linearGradient id="cyan" x1="65" y1="52" x2="450" y2="470" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00DDEB"/>
+      <stop offset="1" stop-color="#007F91"/>
+    </linearGradient>
+    <pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="4" cy="4" r="3" fill="#080C10" opacity=".15"/>
+    </pattern>
+  </defs>
+  <path d="M40 154 256 34l216 120v240L256 486 40 394Z" fill="#FFD400" stroke="#F8F3E8" stroke-width="16"/>
+  <path d="m256 72 177 99v193L256 447 79 364V171Z" fill="url(#cyan)" stroke="#080C10" stroke-width="34"/>
+  <path d="m256 72 177 99v193L256 447 79 364V171Z" fill="url(#dots)"/>
+  <path d="m124 116 75 15-52 55Z" fill="#EF3F46" stroke="#080C10" stroke-width="12"/>
+  <path d="m388 399-75-15 52-55Z" fill="#EF3F46" stroke="#080C10" stroke-width="12"/>
+  <path d="m132 331 73-176h57l-24 64h73l25-64h57l-73 176h-57l24-63h-74l-24 63Z" fill="#F8F3E8" stroke="#080C10" stroke-width="17" stroke-linejoin="round"/>
+</svg>
