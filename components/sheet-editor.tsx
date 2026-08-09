@@ -39,6 +39,7 @@ import {
   createPower,
   createPowerEffect,
   getEffectiveAbsentTraits,
+  getStoredAbsentTraits,
   isResistanceAbsent,
   newId,
   requiresSpecializedSkillCost,
@@ -702,11 +703,12 @@ function IdentityEditor({
 function TraitsEditor({ sheet, patch }: EditorChildProps) {
   const { t } = useLocale();
   const derived = getDerivedTraits(sheet);
+  const storedAbsentTraits = getStoredAbsentTraits(sheet);
   const absentTraits = getEffectiveAbsentTraits(sheet);
   const setAbsent = (key: AbsentTraitKey, absent: boolean) => {
     const next = absent
-      ? [...new Set([...sheet.absentTraits, key])]
-      : sheet.absentTraits.filter((entry) => entry !== key);
+      ? [...new Set([...storedAbsentTraits, key])]
+      : storedAbsentTraits.filter((entry) => entry !== key);
     patch({ absentTraits: next });
   };
   return (
@@ -741,7 +743,7 @@ function TraitsEditor({ sheet, patch }: EditorChildProps) {
             absentLocked={
               key === "presence" &&
               absentTraits.has("awareness") &&
-              !sheet.absentTraits.includes("presence")
+              !storedAbsentTraits.includes("presence")
             }
             onAbsentChange={(absent) => setAbsent(key, absent)}
             onChange={(value) =>

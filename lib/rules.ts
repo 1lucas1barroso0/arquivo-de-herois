@@ -2,7 +2,9 @@ import {
   abilityLabels,
   coreAbilityKeys,
   getEffectiveAbsentTraits,
+  getStoredAbsentTraits,
   isResistanceAbsent,
+  normalizeSheet,
   requiresSpecializedSkillCost,
   resistanceKeys,
   resistanceLabels,
@@ -810,6 +812,7 @@ export function getRuleAudit(sheet: CharacterSheet): RuleAudit {
   const checks: RuleCheck[] = [];
   const pl = finite(sheet.powerLevel);
   const npc = sheet.buildType === "npc";
+  const storedAbsentTraits = getStoredAbsentTraits(sheet);
   const absentTraits = getEffectiveAbsentTraits(sheet);
   const activePowerBonuses = getActivePowerBonuses(sheet);
   const advantageBonuses = getAdvantageBonuses(sheet);
@@ -841,7 +844,7 @@ export function getRuleAudit(sheet: CharacterSheet): RuleAudit {
       group: "pl",
     });
 
-  if (sheet.absentTraits.length) {
+  if (storedAbsentTraits.length) {
     add({
       key: "absent-traits-permission",
       label: "Traços ausentes",
@@ -852,7 +855,7 @@ export function getRuleAudit(sheet: CharacterSheet): RuleAudit {
         : "Personagens do Jogador precisam da permissão do Narrador para possuir traços ausentes.",
     });
   }
-  if (sheet.absentTraits.includes("awareness")) {
+  if (storedAbsentTraits.includes("awareness")) {
     add({
       key: "absent-awareness-presence",
       label: "Consciência ausente implica Presença ausente",
@@ -2080,28 +2083,31 @@ export function getPowerEffectOptions(sheet: CharacterSheet) {
   );
 }
 
-export function createSummary(sheet: CharacterSheet): SheetSummary {
-  const derived = getDerivedTraits(sheet);
+export function createSummary(
+  sheet: CharacterSheet | Partial<CharacterSheet>,
+): SheetSummary {
+  const safeSheet = normalizeSheet(sheet);
+  const derived = getDerivedTraits(safeSheet);
   return {
-    id: sheet.id,
-    heroName: sheet.heroName,
-    civilName: sheet.civilName,
-    concept: sheet.concept,
-    powerLevel: sheet.powerLevel,
-    pointsTotal: getPointBudget(sheet),
-    pointsSpent: pointsSpent(sheet),
-    imageUrl: sheet.imageUrl,
-    accent: sheet.accent,
+    id: safeSheet.id,
+    heroName: safeSheet.heroName,
+    civilName: safeSheet.civilName,
+    concept: safeSheet.concept,
+    powerLevel: safeSheet.powerLevel,
+    pointsTotal: getPointBudget(safeSheet),
+    pointsSpent: pointsSpent(safeSheet),
+    imageUrl: safeSheet.imageUrl,
+    accent: safeSheet.accent,
     abilities: derived.abilities,
     combat: {
       attack: derived.attack,
       defense: derived.defense,
     },
     resistances: derived.resistances,
-    auditStatus: getRuleAudit(sheet).status,
-    shareEnabled: sheet.shareEnabled,
-    shareToken: sheet.shareToken,
-    updatedAt: sheet.updatedAt,
+    auditStatus: getRuleAudit(safeSheet).status,
+    shareEnabled: safeSheet.shareEnabled,
+    shareToken: safeSheet.shareToken,
+    updatedAt: safeSheet.updatedAt,
   };
 }
 

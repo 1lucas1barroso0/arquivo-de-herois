@@ -15,6 +15,8 @@ Navegador/PWA
 
 Com D1 disponível, o servidor é a fonte de verdade e o armazenamento local mantém rascunhos interrompidos. Sem bindings persistentes, a interface detecta a indisponibilidade e usa IndexedDB como fonte de verdade no dispositivo; nesse modo, retratos são guardados como dados locais.
 
+O fallback só é ativado por falha de rede ou por uma resposta `503` marcada explicitamente como modo local. Erros inesperados do servidor não são mascarados. Registros antigos do IndexedDB são normalizados em cópias de memória para cálculos e exibição, sem regravar o JSON original; rascunhos pendentes só são removidos após salvamento confirmado ou exclusão explícita.
+
 ## Compartilhamento permanente
 
 Ao publicar uma ficha, o servidor cria um token estável e um registro independente em `shared_sheets`. A ficha pública:

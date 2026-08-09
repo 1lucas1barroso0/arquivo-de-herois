@@ -36,6 +36,12 @@ import {
 import { lazy, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { createEmptySheet, normalizeSheet, type CharacterSheet, type SheetSummary } from "../lib/character";
 import {
+  listBrowserStorageKeys,
+  readBrowserStorage,
+  removeBrowserStorage,
+  writeBrowserStorage,
+} from "../lib/browser-storage";
+import {
   getDeviceOwnerId,
   LEGACY_OPEN_CHARACTER_KEY,
   OPEN_CHARACTER_KEY,
@@ -48,6 +54,7 @@ import {
 } from "../lib/portable";
 import { parsePortableShare } from "../lib/portable-share";
 import { translateRuleText } from "../lib/localization";
+import { isLocalStorageFallbackResponse } from "../lib/storage-mode";
 import {
   createSummary,
   getPointBudget,
@@ -123,11 +130,11 @@ export function HeroArchiveApp() {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       const storedMode =
-        window.localStorage.getItem(EDITING_MODE_KEY) ??
-        window.localStorage.getItem(LEGACY_EDITING_MODE_KEY);
+        readBrowserStorage(EDITING_MODE_KEY) ??
+        readBrowserStorage(LEGACY_EDITING_MODE_KEY);
       const storedTheme =
-        window.localStorage.getItem(THEME_KEY) ??
-        window.localStorage.getItem(LEGACY_THEME_KEY);
+        readBrowserStorage(THEME_KEY) ??
+        readBrowserStorage(LEGACY_THEME_KEY);
       preferencesLoaded.current = true;
       if (storedMode === "guided" || storedMode === "free") {
         setEditingMode(storedMode);
@@ -153,7 +160,7 @@ export function HeroArchiveApp() {
 
   useEffect(() => {
     if (!preferencesLoaded.current) return;
-    window.localStorage.setItem(EDITING_MODE_KEY, editingMode);
+    writeBrowserStorage(EDITING_MODE_KEY, editingMode);
   }, [editingMode]);
 
   useEffect(() => {
@@ -192,7 +199,7 @@ export function HeroArchiveApp() {
 
   useEffect(() => {
     if (!preferencesLoaded.current) return;
-    window.localStorage.setItem(THEME_KEY, themePreference);
+    writeBrowserStorage(THEME_KEY, themePreference);
   }, [themePreference]);
 
   const apiFetch = useCallback(async (url: string, init: RequestInit = {}) => {
@@ -206,8 +213,16 @@ export function HeroArchiveApp() {
     if (init.body && !(init.body instanceof FormData)) {
       headers.set("Content-Type", "application/json");
     }
-    let response = await fetch(url, { ...init, headers });
-    if (response.status >= 500) {
+    let response: Response;
+    try {
+      response = await fetch(url, { ...init, headers });
+    } catch (error) {
+      if (!(error instanceof TypeError)) throw error;
+      localStorageMode.current = true;
+      const { localApiFetch } = await import("../lib/local-api");
+      return localApiFetch(url, init);
+    }
+    if (isLocalStorageFallbackResponse(response)) {
       localStorageMode.current = true;
       const { localApiFetch } = await import("../lib/local-api");
       response = await localApiFetch(url, init);
@@ -232,8 +247,8 @@ export function HeroArchiveApp() {
     void refreshList()
       .then(async (items) => {
         const requestedId =
-          window.localStorage.getItem(OPEN_CHARACTER_KEY) ??
-          window.localStorage.getItem(LEGACY_OPEN_CHARACTER_KEY);
+          readBrowserStorage(OPEN_CHARACTER_KEY) ??
+          readBrowserStorage(LEGACY_OPEN_CHARACTER_KEY);
         const target = items.find((item) => item.id === requestedId) || items[0];
         if (target) {
           const response = await apiFetch(`/api/characters/${target.id}`);
@@ -242,8 +257,10 @@ export function HeroArchiveApp() {
           setActiveSheet(pending || normalizeSheet(payload.character));
           if (pending) setSaveState("offline");
           if (requestedId === target.id) {
-            window.localStorage.removeItem(OPEN_CHARACTER_KEY);
-            window.localStorage.removeItem(LEGACY_OPEN_CHARACTER_KEY);
+            removeBrowserStorage(
+              OPEN_CHARACTER_KEY,
+              LEGACY_OPEN_CHARACTER_KEY,
+            );
             setScreen("edit");
           }
         }
@@ -265,7 +282,11 @@ export function HeroArchiveApp() {
   useEffect(() => {
     const synchronize = () => void syncPendingSaves(apiFetch, refreshList, showToast).then((count) => {
       const current = latestSheet.current;
-      if (count && current?.id && !window.localStorage.getItem(`${PENDING_SAVE_PREFIX}${current.id}`)) {
+      if (
+        count &&
+        current?.id &&
+        !readBrowserStorage(`${PENDING_SAVE_PREFIX}${current.id}`)
+      ) {
         setSaveState("saved");
       }
     });
@@ -378,17 +399,24 @@ export function HeroArchiveApp() {
           .sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt))),
       );
       setSaveState(hasNewerChanges ? "dirty" : "saved");
-      window.localStorage.removeItem(`${PENDING_SAVE_PREFIX}${sheet.id}`);
-      window.localStorage.removeItem(`${LEGACY_PENDING_SAVE_PREFIX}${sheet.id}`);
+      removeBrowserStorage(
+        `${PENDING_SAVE_PREFIX}${sheet.id}`,
+        `${LEGACY_PENDING_SAVE_PREFIX}${sheet.id}`,
+      );
       if (!silent) showToast("Ficha salva.");
       return !hasNewerChanges;
     } catch (error) {
       if (!navigator.onLine || error instanceof TypeError) {
         try {
-          window.localStorage.setItem(
+          const stored = writeBrowserStorage(
             `${PENDING_SAVE_PREFIX}${sheet.id}`,
-            JSON.stringify({ version: 1, sheet, queuedAt: new Date().toISOString() }),
+            JSON.stringify({
+              version: 1,
+              sheet,
+              queuedAt: new Date().toISOString(),
+            }),
           );
+          if (!stored) throw new Error("O armazenamento local está indisponível.");
           setSaveState("offline");
           showToast("Sem conexão. As alterações ficaram guardadas neste dispositivo e serão sincronizadas automaticamente.", "warning");
         } catch {
@@ -1315,8 +1343,8 @@ function downloadText(content: string, filename: string, type: string) {
 function readPendingSheet(id: string) {
   try {
     const stored =
-      window.localStorage.getItem(`${PENDING_SAVE_PREFIX}${id}`) ??
-      window.localStorage.getItem(`${LEGACY_PENDING_SAVE_PREFIX}${id}`);
+      readBrowserStorage(`${PENDING_SAVE_PREFIX}${id}`) ??
+      readBrowserStorage(`${LEGACY_PENDING_SAVE_PREFIX}${id}`);
     if (!stored) return null;
     const value = JSON.parse(stored) as { sheet?: CharacterSheet };
     return value.sheet ? normalizeSheet(value.sheet) : null;
@@ -1330,8 +1358,8 @@ async function syncPendingSaves(
   refreshList: () => Promise<SheetSummary[]>,
   notify: (message: string) => void,
 ) {
-  const keys = Array.from({ length: window.localStorage.length }, (_, index) => window.localStorage.key(index))
-    .filter((key): key is string =>
+  const keys = listBrowserStorageKeys()
+    .filter((key) =>
       Boolean(
         key?.startsWith(PENDING_SAVE_PREFIX) ||
         key?.startsWith(LEGACY_PENDING_SAVE_PREFIX),
@@ -1341,16 +1369,17 @@ async function syncPendingSaves(
   let synchronized = 0;
   for (const key of keys) {
     try {
-      const value = JSON.parse(window.localStorage.getItem(key) || "{}") as { sheet?: CharacterSheet };
+      const value = JSON.parse(readBrowserStorage(key) || "{}") as { sheet?: CharacterSheet };
       if (!value.sheet?.id) {
-        window.localStorage.removeItem(key);
+        // Preserve unreadable or legacy drafts for manual recovery. Pending
+        // data is removed only after a confirmed save or explicit deletion.
         continue;
       }
       await apiFetch(`/api/characters/${value.sheet.id}`, {
         method: "PUT",
         body: JSON.stringify({ sheet: value.sheet }),
       });
-      window.localStorage.removeItem(key);
+      removeBrowserStorage(key);
       synchronized += 1;
     } catch {
       // Keep the latest local draft queued for the next `online` event.

@@ -14,6 +14,10 @@ import {
   translateUi,
   type AppLanguage,
 } from "../lib/localization";
+import {
+  readBrowserStorage,
+  writeBrowserStorage,
+} from "../lib/browser-storage";
 
 type LocaleContextValue = {
   language: AppLanguage;
@@ -33,8 +37,8 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       const stored =
-        window.localStorage.getItem(APP_LANGUAGE_KEY) ??
-        window.localStorage.getItem(LEGACY_LANGUAGE_KEY);
+        readBrowserStorage(APP_LANGUAGE_KEY) ??
+        readBrowserStorage(LEGACY_LANGUAGE_KEY);
       if (stored === "en") setLanguageState("en");
     }, 0);
     return () => window.clearTimeout(timer);
@@ -47,7 +51,7 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
 
   const setLanguage = useCallback((next: AppLanguage) => {
     setLanguageState(next);
-    window.localStorage.setItem(APP_LANGUAGE_KEY, next);
+    writeBrowserStorage(APP_LANGUAGE_KEY, next);
   }, []);
 
   const value = useMemo<LocaleContextValue>(
