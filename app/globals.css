@@ -3073,6 +3073,46 @@ input:disabled {
   line-height: 1.5;
 }
 
+.calculated-number-card.is-absent {
+  border-color: var(--cyan-soft);
+  background: rgba(66, 215, 232, .035);
+}
+
+.calculated-number-card.is-absent > div strong,
+.calculated-number-card.is-absent > em {
+  color: var(--cyan);
+}
+
+.absent-trait-control {
+  display: inline-flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: 7px;
+  color: var(--cyan);
+  cursor: pointer;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.number-card .absent-trait-control input {
+  width: 16px;
+  min-height: 16px;
+  accent-color: var(--cyan);
+}
+
+.absent-trait-control:has(input:disabled) {
+  cursor: default;
+  opacity: .72;
+}
+
+.number-card input:disabled,
+.derived-resistance-card input:disabled {
+  cursor: not-allowed;
+  opacity: .45;
+}
+
 .derived-resistance-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3133,6 +3173,11 @@ input:disabled {
   color: var(--cyan);
   font-size: 8px;
   font-style: normal;
+}
+
+.derived-resistance-card.is-absent {
+  border-color: var(--cyan-soft);
+  background: rgba(66, 215, 232, .035);
 }
 
 .skill-row-v2 {
@@ -6704,6 +6749,56 @@ input:disabled {
   font-size: 8px;
 }
 
+.size-reference {
+  margin-top: 22px;
+}
+
+.size-reference > header h4 {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--heading);
+  font-size: 17px;
+}
+
+.size-reference > header p {
+  margin: 5px 0 12px;
+  color: var(--muted-2);
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.size-profile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 7px;
+}
+
+.size-profile-grid article {
+  display: grid;
+  gap: 3px;
+  padding: 10px;
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  background: var(--surface-deep);
+}
+
+.size-profile-grid strong {
+  color: var(--cyan);
+  font-family: var(--heading);
+  font-size: 17px;
+}
+
+.size-profile-grid span {
+  color: var(--ink);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.size-profile-grid small {
+  color: var(--muted);
+  font-size: 7px;
+}
+
 .reference-rule-grid,
 .reference-catalog-grid {
   display: grid;
@@ -6761,6 +6856,25 @@ input:disabled {
   font-family: var(--body);
   font-size: 9px;
   white-space: normal;
+}
+
+.reference-source {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding-top: 9px;
+  margin-top: 10px;
+  border-top: 1px solid var(--line-soft);
+  color: var(--muted);
+  font-size: 7px;
+  line-height: 1.45;
+}
+
+.reference-source svg {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+  color: var(--cyan);
 }
 
 .reference-catalog-grid em {

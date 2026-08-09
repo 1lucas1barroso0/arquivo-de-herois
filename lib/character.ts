@@ -9,7 +9,7 @@ import {
   skillCatalog,
 } from "./catalog";
 
-export const CURRENT_SCHEMA_VERSION = 5 as const;
+export const CURRENT_SCHEMA_VERSION = 6 as const;
 
 export const coreAbilityKeys = [
   "strength",
@@ -22,6 +22,14 @@ export const coreAbilityKeys = [
 
 export type CoreAbilityKey = (typeof coreAbilityKeys)[number];
 export type AbilityKey = CoreAbilityKey;
+
+export const absentTraitKeys = [
+  ...coreAbilityKeys,
+  "attack",
+  "defense",
+] as const;
+
+export type AbsentTraitKey = (typeof absentTraitKeys)[number];
 
 export const combatKeys = [
   "attack",
@@ -81,6 +89,8 @@ export type CharacterSheet = {
   descriptors: string;
   appearance: string;
   personality: string;
+  sizeRank: number;
+  absentTraits: AbsentTraitKey[];
   buildType: BuildType;
   powerLevel: number;
   budgetMode: BudgetMode;
@@ -477,6 +487,8 @@ export function createEmptySheet(): CharacterSheet {
     descriptors: "",
     appearance: "",
     personality: "",
+    sizeRank: 0,
+    absentTraits: [],
     buildType: "hero",
     powerLevel: 10,
     budgetMode: "recommended",
@@ -643,6 +655,14 @@ export function normalizeSheet(value: unknown): CharacterSheet {
     descriptors: stringValue(raw.descriptors),
     appearance: stringValue(raw.appearance),
     personality: stringValue(raw.personality),
+    sizeRank: numberValue(raw.sizeRank, 0),
+    absentTraits: normalizeAbsentTraits(
+      Array.isArray(raw.absentTraits)
+        ? raw.absentTraits
+        : Array.isArray(raw.absentAbilities)
+          ? raw.absentAbilities
+          : [],
+    ),
     buildType: raw.buildType === "npc" ? "npc" : "hero",
     powerLevel,
     budgetMode,
@@ -1132,6 +1152,46 @@ function isTraitKey(value: unknown): value is TraitKey {
     typeof value === "string" &&
     Object.prototype.hasOwnProperty.call(traitLabels, value)
   );
+}
+
+function normalizeAbsentTraits(value: unknown[]): AbsentTraitKey[] {
+  return absentTraitKeys.filter((key) => value.includes(key));
+}
+
+/**
+ * Awareness ausente implica Presence ausente. A função mantém essa dependência
+ * fora dos dados persistidos para que desmarcar Awareness restaure a escolha
+ * anterior do usuário sem apagar informação.
+ */
+export function getEffectiveAbsentTraits(
+  sheet: Pick<CharacterSheet, "absentTraits">,
+): ReadonlySet<AbsentTraitKey> {
+  const absent = new Set(sheet.absentTraits);
+  if (absent.has("awareness")) absent.add("presence");
+  return absent;
+}
+
+export function isTraitAbsent(
+  sheet: Pick<CharacterSheet, "absentTraits">,
+  key: AbsentTraitKey,
+) {
+  return getEffectiveAbsentTraits(sheet).has(key);
+}
+
+export function isResistanceAbsent(
+  sheet: Pick<CharacterSheet, "absentTraits">,
+  key: ResistanceKey,
+) {
+  const absent = getEffectiveAbsentTraits(sheet);
+  if (key === "fortitude") return absent.has("stamina");
+  if (key === "will") {
+    return (
+      absent.has("intellect") ||
+      absent.has("awareness") ||
+      absent.has("presence")
+    );
+  }
+  return false;
 }
 
 function isArrayRole(

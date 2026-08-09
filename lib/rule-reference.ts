@@ -1,4 +1,26 @@
+import { detailedRuleReferenceEntries } from "./detailed-rule-reference";
+
 export type RuleReferenceCoverage = "automatic" | "assisted" | "reference";
+export type RuleReferenceKind =
+  | "rule"
+  | "condition"
+  | "action"
+  | "scene"
+  | "hazard";
+
+export type RuleReferenceSource = {
+  document: string;
+  chapter: string;
+  chapterEn: string;
+  pages: string;
+};
+
+export type RuleReferenceTranslation = {
+  category: string;
+  title: string;
+  summary: string;
+  formula?: string;
+};
 
 export type RuleReferenceEntry = {
   id: string;
@@ -7,6 +29,9 @@ export type RuleReferenceEntry = {
   summary: string;
   formula?: string;
   coverage: RuleReferenceCoverage;
+  kind: RuleReferenceKind;
+  source: RuleReferenceSource;
+  english?: RuleReferenceTranslation;
   tags: string[];
 };
 
@@ -233,7 +258,7 @@ export function localizeRuleReference(
   language: RuleReferenceLanguage,
 ): RuleReferenceEntry {
   if (language === "pt") return entry;
-  const translated = englishRuleReferences[entry.id];
+  const translated = entry.english ?? englishRuleReferences[entry.id];
   return translated
     ? { ...entry, ...translated, tags: [...entry.tags, translated.title, translated.summary] }
     : entry;
@@ -245,7 +270,10 @@ export function localizeRuleReference(
  * o que o modo assistido mantém coerente e o que continua sendo uma decisão de
  * mesa. A distinção evita prometer automação onde o contexto narrativo é essencial.
  */
-export const ruleReferenceEntries: RuleReferenceEntry[] = [
+const coreRuleReferenceEntries: Omit<
+  RuleReferenceEntry,
+  "kind" | "source"
+>[] = [
   {
     id: "creation-concept",
     category: "Criação",
@@ -608,6 +636,74 @@ export const ruleReferenceEntries: RuleReferenceEntry[] = [
   },
 ];
 
+const previewDocument = "Compilação fornecida da 4E";
+
+function source(
+  chapter: string,
+  chapterEn: string,
+  pages: string,
+): RuleReferenceSource {
+  return { document: previewDocument, chapter, chapterEn, pages };
+}
+
+function getCoreRuleSource(entry: (typeof coreRuleReferenceEntries)[number]) {
+  if (entry.id === "creation-concept") {
+    return source("Capítulo 2 · Criação de Heróis", "Chapter 2 · Hero Creation", "33–106");
+  }
+  if (entry.id === "creation-motivation") {
+    return source("Capítulo 2 · Criação de Heróis", "Chapter 2 · Hero Creation", "97–105");
+  }
+  if (
+    entry.category === "Nível de Poder" ||
+    entry.id === "point-budget"
+  ) {
+    return source("Capítulo 2 · Criação de Heróis", "Chapter 2 · Hero Creation", "91–97");
+  }
+  if (entry.id === "ability-cost" || entry.id === "combat-cost") {
+    return source("Capítulo 3 · Atributos", "Chapter 3 · Abilities", "107–123");
+  }
+  if (entry.id === "skill-checks" || entry.id === "graded-checks" || entry.id === "bonus-penalty-dice" || entry.id === "opposed-team-group-checks" || entry.id === "check-sequences") {
+    return source("Capítulo 1 · O Básico", "Chapter 1 · The Basics", "6–14");
+  }
+  if (entry.category === "Perícias") {
+    return source("Capítulo 4 · Perícias", "Chapter 4 · Skills", "124–153");
+  }
+  if (entry.category === "Vantagens") {
+    return source("Capítulo 5 · Vantagens", "Chapter 5 · Advantages", "154–179");
+  }
+  if (entry.category === "Recursos heroicos") {
+    return source("Capítulo 1 · O Básico", "Chapter 1 · The Basics", "21–28");
+  }
+  if (entry.category === "Poderes") {
+    return source("Capítulo 6 · Poderes", "Chapter 6 · Powers", "180–297");
+  }
+  if (entry.category === "Conflitos") {
+    return source("Capítulo 8 · Ação e Aventura", "Chapter 8 · Action & Adventure", "352–370");
+  }
+  if (entry.category === "Cenas") {
+    return source("Capítulo 8 · Ação e Aventura", "Chapter 8 · Action & Adventure", "347–393");
+  }
+  if (entry.category === "Condições") {
+    return source("Capítulo 1 · O Básico", "Chapter 1 · The Basics", "29–32");
+  }
+  if (entry.category === "Escalas") {
+    return source("Capítulo 1 · O Básico", "Chapter 1 · The Basics", "15–20");
+  }
+  if (entry.category === "Equipamento") {
+    return source("Capítulo 7 · Equipamento", "Chapter 7 · Equipment", "298–345");
+  }
+  return source("Capítulo 2 · Criação de Heróis", "Chapter 2 · Hero Creation", "33–106");
+}
+
+export const ruleReferenceEntries: RuleReferenceEntry[] = [
+  ...coreRuleReferenceEntries.map((entry) => ({
+    ...entry,
+    kind: "rule" as const,
+    source: getCoreRuleSource(entry),
+  })),
+  ...detailedRuleReferenceEntries,
+];
+
 export const ruleReferenceCategories = [
   ...new Set(ruleReferenceEntries.map((entry) => entry.category)),
 ];
@@ -627,6 +723,11 @@ export function searchRuleReference(entry: RuleReferenceEntry, query: string) {
       english.title,
       english.summary,
       english.formula ?? "",
+      entry.source.document,
+      "provided 4E compilation",
+      entry.source.chapter,
+      entry.source.chapterEn,
+      `PDF ${entry.source.pages}`,
     ].join(" "),
   ).includes(normalized);
 }

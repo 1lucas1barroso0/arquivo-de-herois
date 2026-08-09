@@ -26,6 +26,9 @@ test("the reference center indexes every structured creation group", () => {
       group.items.length,
       `${group.id}: identificador duplicado`,
     );
+    assert.equal(group.source.document, "Compilação fornecida da 4E");
+    assert.ok(group.source.chapter.trim(), `${group.id}: capítulo ausente`);
+    assert.match(group.source.pages, /\d/);
   }
 
   const motivations = referenceCatalogGroups.find((group) => group.id === "motivations")!;
@@ -38,7 +41,7 @@ test("the reference center indexes every structured creation group", () => {
 });
 
 test("the rule index is complete, unique, searchable, and explicit about automation", () => {
-  assert.ok(ruleReferenceEntries.length >= 28);
+  assert.equal(ruleReferenceEntries.length, 145);
   assert.equal(
     new Set(ruleReferenceEntries.map((entry) => entry.id)).size,
     ruleReferenceEntries.length,
@@ -52,6 +55,10 @@ test("the rule index is complete, unique, searchable, and explicit about automat
     assert.ok(entry.title.trim(), `${entry.id}: título ausente`);
     assert.ok(entry.summary.trim(), `${entry.id}: resumo ausente`);
     assert.ok(entry.tags.length, `${entry.id}: termos de pesquisa ausentes`);
+    assert.equal(entry.source.document, "Compilação fornecida da 4E");
+    assert.ok(entry.source.chapter.trim(), `${entry.id}: capítulo ausente`);
+    assert.ok(entry.source.chapterEn.trim(), `${entry.id}: capítulo em inglês ausente`);
+    assert.match(entry.source.pages, /\d/);
     assert.ok(["automatic", "assisted", "reference"].includes(entry.coverage));
     const english = localizeRuleReference(entry, "en");
     assert.notEqual(english.title, entry.title, `${entry.id}: título em inglês ausente`);
@@ -62,4 +69,9 @@ test("the rule index is complete, unique, searchable, and explicit about automat
   assert.ok(ruleReferenceEntries.some((entry) => searchRuleReference(entry, "power stunt")));
   assert.ok(ruleReferenceEntries.some((entry) => searchRuleReference(entry, "modo livre")));
   assert.ok(ruleReferenceEntries.some((entry) => searchRuleReference(entry, "damage resistance")));
+  assert.equal(ruleReferenceEntries.filter((entry) => entry.kind === "condition").length, 38);
+  assert.equal(ruleReferenceEntries.filter((entry) => entry.kind === "action").length, 29);
+  assert.equal(ruleReferenceEntries.filter((entry) => entry.kind === "hazard").length, 25);
+  assert.equal(ruleReferenceEntries.filter((entry) => entry.kind === "scene").length, 4);
+  assert.ok(ruleReferenceEntries.some((entry) => searchRuleReference(entry, "PDF 115")));
 });

@@ -34,6 +34,7 @@ import {
   localizeRuleReference,
   searchRuleReference,
   type RuleReferenceCoverage,
+  type RuleReferenceKind,
 } from "../lib/rule-reference";
 import {
   abilityBenchmarkAnchors,
@@ -49,6 +50,7 @@ import {
   getTravelDistance,
   getTravelTime,
   measurementScale,
+  sizeProfiles,
   skillBenchmarkAnchors,
 } from "../lib/scales";
 import { useLocale } from "./locale-provider";
@@ -96,6 +98,7 @@ export function ScaleGuide({
   const [tab, setTab] = useState<GuideTab>("rules");
   const [query, setQuery] = useState("");
   const [catalogGroup, setCatalogGroup] = useState("all");
+  const [ruleKind, setRuleKind] = useState<"all" | RuleReferenceKind>("all");
   const [catalogLimit, setCatalogLimit] = useState(48);
   const [abilityRank, setAbilityRank] = useState(0);
   const [skillModifier, setSkillModifier] = useState(5);
@@ -182,8 +185,12 @@ export function ScaleGuide({
       : "is-failure";
   const matches = (text: string) => !normalizedQuery || normalize(text).includes(normalizedQuery);
   const visibleRules = useMemo(
-    () => ruleReferenceEntries.filter((entry) => searchRuleReference(entry, deferredQuery)),
-    [deferredQuery],
+    () => ruleReferenceEntries.filter(
+      (entry) =>
+        (ruleKind === "all" || entry.kind === ruleKind) &&
+        searchRuleReference(entry, deferredQuery),
+    ),
+    [deferredQuery, ruleKind],
   );
   const visibleCatalog = useMemo(
     () =>
@@ -236,7 +243,7 @@ export function ScaleGuide({
               }}
             />
           </label>
-          {tab === "catalog" && (
+          {(tab === "catalog" || tab === "rules") && (
             <span aria-label={t("Idioma do site")} className="catalog-language-toggle">
               <button aria-pressed={displayLanguage === "pt"} onClick={() => setLanguage("pt")} type="button">PT</button>
               <button aria-pressed={displayLanguage === "en"} onClick={() => setLanguage("en")} type="button">EN</button>
@@ -268,8 +275,25 @@ export function ScaleGuide({
               <ScaleHeading
                 id="rules-reference-title"
                 title="Regras da ficha"
-                text="Cada tópico informa se o resultado é automático, assistido ou decidido na mesa."
+                text={`${ruleReferenceEntries.length} tópicos consultáveis. Cada um informa o nível de automação e sua fonte no material fornecido.`}
               />
+              <div className="reference-catalog-toolbar">
+                <label>
+                  <span>{t("Tipo de tópico")}</span>
+                  <select
+                    value={ruleKind}
+                    onChange={(event) => setRuleKind(event.target.value as "all" | RuleReferenceKind)}
+                  >
+                    <option value="all">{t("Todos os tópicos")} ({ruleReferenceEntries.length})</option>
+                    <option value="rule">{t("Regras gerais")}</option>
+                    <option value="condition">{t("Condições")}</option>
+                    <option value="action">{t("Ações")}</option>
+                    <option value="scene">{t("Tipos de cena")}</option>
+                    <option value="hazard">{t("Perigos ambientais")}</option>
+                  </select>
+                </label>
+                <strong>{visibleRules.length} {t(visibleRules.length === 1 ? "resultado" : "resultados")}</strong>
+              </div>
               <div className="reference-rule-grid">
                 {visibleRules.map((entry) => {
                   const localized = localizeRuleReference(
@@ -284,6 +308,12 @@ export function ScaleGuide({
                     <h3>{localized.title}</h3>
                     <p>{localized.summary}</p>
                     {localized.formula && <code>{localized.formula}</code>}
+                    <footer className="reference-source">
+                      <BookOpen aria-hidden="true" />
+                      <span>
+                        {displayLanguage === "en" ? "Provided 4E compilation" : entry.source.document} · {displayLanguage === "en" ? entry.source.chapterEn : entry.source.chapter} · PDF pp. {entry.source.pages}
+                      </span>
+                    </footer>
                   </article>;
                 })}
               </div>
@@ -328,6 +358,12 @@ export function ScaleGuide({
                       <h3>{primary}</h3>
                       {normalize(primary) !== normalize(secondary) && <em>{secondary}</em>}
                       <p>{getCatalogSummary(entry, displayLanguage)}</p>
+                      <footer className="reference-source">
+                        <BookOpen aria-hidden="true" />
+                        <span>
+                          {displayLanguage === "en" ? "Provided 4E compilation" : group.source.document} · {displayLanguage === "en" ? group.source.chapterEn : group.source.chapter} · PDF pp. {group.source.pages}
+                        </span>
+                      </footer>
                     </article>
                   );
                 })}
@@ -507,6 +543,37 @@ export function ScaleGuide({
                   <button className={measureRank === entry.rank ? "is-current" : ""} key={entry.rank} onClick={() => setMeasureRank(entry.rank)} type="button"><strong>{signed(entry.rank)}</strong><span data-label="Massa">{entry.mass}</span><span data-label="Tempo">{entry.time}</span><span data-label="Distância">{entry.distance}</span><span data-label="Volume">{entry.volume}</span></button>
                 ))}
               </div>
+              <section className="size-reference" aria-labelledby="size-reference-title">
+                <header>
+                  <h4 id="size-reference-title">
+                    {displayLanguage === "en" ? "Natural size" : "Tamanho natural"}
+                  </h4>
+                  <p>
+                    {displayLanguage === "en"
+                      ? "The published table is exact from −5 to 5. Choosing natural size costs no PP and is permanent."
+                      : "A tabela publicada é exata de −5 a 5. Escolher o tamanho natural não custa PP e é permanente."}
+                  </p>
+                </header>
+                <div className="size-profile-grid">
+                  {sizeProfiles
+                    .filter((entry) => matches(`${entry.rank} ${entry.label} ${entry.canonical} ${entry.space} ${entry.reach}`))
+                    .map((entry) => (
+                      <article key={entry.rank}>
+                        <strong>{signed(entry.rank)}</strong>
+                        <span>{displayLanguage === "en" ? entry.canonical : entry.label}</span>
+                        <small>
+                          {displayLanguage === "en" ? "space" : "espaço"} {entry.space} · {displayLanguage === "en" ? "reach" : "alcance"} {entry.reach}
+                        </small>
+                      </article>
+                    ))}
+                </div>
+                <footer className="reference-source">
+                  <BookOpen aria-hidden="true" />
+                  <span>
+                    {displayLanguage === "en" ? "Provided 4E compilation" : "Compilação fornecida da 4E"} · {displayLanguage === "en" ? "Chapter 3 · Abilities" : "Capítulo 3 · Atributos"} · PDF pp. 116–117
+                  </span>
+                </footer>
+              </section>
             </section>
           )}
         </div>

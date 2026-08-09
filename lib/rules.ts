@@ -1,10 +1,13 @@
 import {
   abilityLabels,
   coreAbilityKeys,
+  getEffectiveAbsentTraits,
+  isResistanceAbsent,
   requiresSpecializedSkillCost,
   resistanceKeys,
   resistanceLabels,
   type AttackEntry,
+  type AbsentTraitKey,
   type AuditDecision,
   type CharacterSheet,
   type CoreAbilityKey,
@@ -136,6 +139,8 @@ export type DerivedTraits = {
   powerBonuses: Record<TraitKey, number>;
   advantageBonuses: Record<TraitKey, number>;
   equipmentBonuses: Record<TraitKey, number>;
+  absentTraits: ReadonlySet<AbsentTraitKey>;
+  absentResistances: ReadonlySet<ResistanceKey>;
 };
 
 export type EffectCostSegment = {
@@ -207,6 +212,7 @@ export type AttackCalculation = {
   limit: number;
   effectDc: number;
   complete: boolean;
+  blockedReason: string;
   detail: string;
 };
 
@@ -237,6 +243,10 @@ export function getPointBudget(sheet: CharacterSheet) {
 }
 
 export function getDerivedTraits(sheet: CharacterSheet): DerivedTraits {
+  const absentTraits = getEffectiveAbsentTraits(sheet);
+  const absentResistances = new Set(
+    resistanceKeys.filter((key) => isResistanceAbsent(sheet, key)),
+  );
   const powerBonuses = getActivePowerBonuses(sheet);
   const advantageBonuses = getAdvantageBonuses(sheet);
   const equipmentBonuses = getEquipmentBonuses(sheet);
@@ -245,32 +255,48 @@ export function getDerivedTraits(sheet: CharacterSheet): DerivedTraits {
   const abilities = Object.fromEntries(
     coreAbilityKeys.map((key) => [
       key,
-      finite(sheet.abilities[key]) + bonus(key),
+      absentTraits.has(key)
+        ? 0
+        : finite(sheet.abilities[key]) + bonus(key),
     ]),
   ) as Record<CoreAbilityKey, number>;
 
-  const attack = finite(sheet.combat.attack) + bonus("attack");
-  const defense = finite(sheet.combat.defense) + bonus("defense");
+  const attack = absentTraits.has("attack")
+    ? 0
+    : finite(sheet.combat.attack) + bonus("attack");
+  const defense = absentTraits.has("defense")
+    ? 0
+    : finite(sheet.combat.defense) + bonus("defense");
   const closeAttack =
-    attack +
-    finite(sheet.combat.closeAttack) +
-    bonus("closeAttack");
+    absentTraits.has("attack")
+      ? 0
+      : attack +
+        finite(sheet.combat.closeAttack) +
+        bonus("closeAttack");
   const rangedAttack =
-    attack +
-    finite(sheet.combat.rangedAttack) +
-    bonus("rangedAttack");
+    absentTraits.has("attack")
+      ? 0
+      : attack +
+        finite(sheet.combat.rangedAttack) +
+        bonus("rangedAttack");
   const closeDefense =
-    defense +
-    finite(sheet.combat.closeDefense) +
-    bonus("closeDefense");
+    absentTraits.has("defense")
+      ? 0
+      : defense +
+        finite(sheet.combat.closeDefense) +
+        bonus("closeDefense");
   const rangedDefense =
-    defense +
-    finite(sheet.combat.rangedDefense) +
-    bonus("rangedDefense");
+    absentTraits.has("defense")
+      ? 0
+      : defense +
+        finite(sheet.combat.rangedDefense) +
+        bonus("rangedDefense");
   const initiative =
-    abilities.agility +
-    finite(sheet.combat.initiativeBonus) +
-    bonus("initiative");
+    absentTraits.has("agility")
+      ? 0
+      : abilities.agility +
+        finite(sheet.combat.initiativeBonus) +
+        bonus("initiative");
 
   return {
     abilities,
@@ -287,21 +313,27 @@ export function getDerivedTraits(sheet: CharacterSheet): DerivedTraits {
         finite(sheet.resistanceAdjustments.dodge) +
         bonus("dodge"),
       fortitude:
-        abilities.stamina +
-        finite(sheet.resistanceAdjustments.fortitude) +
-        bonus("fortitude"),
+        absentResistances.has("fortitude")
+          ? 0
+          : abilities.stamina +
+            finite(sheet.resistanceAdjustments.fortitude) +
+            bonus("fortitude"),
       toughness:
         abilities.stamina +
         finite(sheet.resistanceAdjustments.toughness) +
         bonus("toughness"),
       will:
-        abilities.awareness +
-        finite(sheet.resistanceAdjustments.will) +
-        bonus("will"),
+        absentResistances.has("will")
+          ? 0
+          : abilities.awareness +
+            finite(sheet.resistanceAdjustments.will) +
+            bonus("will"),
     },
     powerBonuses,
     advantageBonuses,
     equipmentBonuses,
+    absentTraits,
+    absentResistances,
   };
 }
 
@@ -597,8 +629,11 @@ export function getPowerPortfolio(sheet: CharacterSheet): PowerPortfolio {
 }
 
 export function getPointBreakdown(sheet: CharacterSheet): PointBreakdown {
+  const absentTraits = getEffectiveAbsentTraits(sheet);
   const abilities = coreAbilityKeys.reduce(
-    (total, key) => total + finite(sheet.abilities[key]) * 2,
+    (total, key) =>
+      total +
+      (absentTraits.has(key) ? -10 : finite(sheet.abilities[key]) * 2),
     0,
   );
   const specializationCost = sheet.attackSpecializations.reduce(
@@ -607,7 +642,8 @@ export function getPointBreakdown(sheet: CharacterSheet): PointBreakdown {
     0,
   );
   const combat =
-    (finite(sheet.combat.attack) + finite(sheet.combat.defense)) * 2 +
+    (absentTraits.has("attack") ? -10 : finite(sheet.combat.attack) * 2) +
+    (absentTraits.has("defense") ? -10 : finite(sheet.combat.defense) * 2) +
     finite(sheet.combat.closeAttack) +
     finite(sheet.combat.rangedAttack) +
     finite(sheet.combat.closeDefense) +
@@ -740,6 +776,12 @@ export function getAttackCalculation(
   const complete =
     (!attack.sourceEffectId || Boolean(source)) &&
     (!attack.sourceEquipmentId || Boolean(equipmentSource));
+  const blockedReason =
+    range !== "no-check" && derived.absentTraits.has("attack")
+      ? "Ataque ausente faz testes de ataque falharem automaticamente."
+      : strengthBased && derived.absentTraits.has("strength")
+        ? "Força ausente não pode contribuir para um efeito baseado em Força."
+        : "";
   return {
     key: attack.id,
     name:
@@ -756,10 +798,11 @@ export function getAttackCalculation(
     limit,
     effectDc: 10 + effectRank,
     complete,
+    blockedReason,
     detail:
-      range === "no-check"
+      blockedReason || (range === "no-check"
         ? `Sem teste de ataque: a graduação do efeito não pode exceder o PL.`
-        : `${signed(attackBonus)} de ataque + ${effectRank} de efeito.`,
+        : `${signed(attackBonus)} de ataque + ${effectRank} de efeito.`),
   };
 }
 
@@ -767,6 +810,12 @@ export function getRuleAudit(sheet: CharacterSheet): RuleAudit {
   const checks: RuleCheck[] = [];
   const pl = finite(sheet.powerLevel);
   const npc = sheet.buildType === "npc";
+  const absentTraits = getEffectiveAbsentTraits(sheet);
+  const activePowerBonuses = getActivePowerBonuses(sheet);
+  const advantageBonuses = getAdvantageBonuses(sheet);
+  const equipmentBonuses = getEquipmentBonuses(sheet);
+  const linkedBonus = (key: TraitKey) =>
+    activePowerBonuses[key] + advantageBonuses[key] + equipmentBonuses[key];
   const add = (check: Omit<RuleCheck, "valid">) => {
     checks.push({
       ...check,
@@ -792,6 +841,90 @@ export function getRuleAudit(sheet: CharacterSheet): RuleAudit {
       group: "pl",
     });
 
+  if (sheet.absentTraits.length) {
+    add({
+      key: "absent-traits-permission",
+      label: "Traços ausentes",
+      status: npc ? "info" : "attention",
+      group: "data",
+      detail: npc
+        ? "Traços ausentes estão registrados e seus efeitos derivados foram aplicados."
+        : "Personagens do Jogador precisam da permissão do Narrador para possuir traços ausentes.",
+    });
+  }
+  if (sheet.absentTraits.includes("awareness")) {
+    add({
+      key: "absent-awareness-presence",
+      label: "Consciência ausente implica Presença ausente",
+      status: "info",
+      group: "data",
+      detail: "Presença também é tratada como ausente e recebe custo de -10 PP enquanto Consciência estiver ausente.",
+    });
+  }
+  for (const key of absentTraits) {
+    if (linkedBonus(key) === 0) continue;
+    add({
+      key: `absent-trait-bonus-${key}`,
+      label: `${abilityLabels[key as CoreAbilityKey] ?? (key === "attack" ? "Ataque" : "Defesa")}: bônus em traço ausente`,
+      status: "attention",
+      group: "data",
+      detail: "O bônus vinculado foi preservado, mas não funciona enquanto o traço não existe. Se ele pertencer a uma forma alternativa, registre essa configuração separadamente.",
+    });
+  }
+  if (
+    absentTraits.has("stamina") &&
+    (finite(sheet.resistanceAdjustments.fortitude) !== 0 ||
+      linkedBonus("fortitude") !== 0)
+  ) {
+    add({
+      key: "absent-stamina-fortitude",
+      label: "Vigor ausente não possui Fortitude",
+      status: "fail",
+      group: "data",
+      detail: "As graduações de Fortitude registradas não funcionam. Use Imunidade a Fortitude quando o conceito exigir proteção de construto.",
+    });
+  }
+  if (
+    isResistanceAbsent(sheet, "will") &&
+    (finite(sheet.resistanceAdjustments.will) !== 0 ||
+      linkedBonus("will") !== 0)
+  ) {
+    add({
+      key: "absent-mental-will",
+      label: "Traço mental ausente não possui Vontade",
+      status: "fail",
+      group: "data",
+      detail: "As graduações de Vontade registradas não funcionam. A ausência de Intelecto, Consciência ou Presença concede Imunidade a Vontade em vez de uma resistência numérica.",
+    });
+  }
+  if (
+    absentTraits.has("attack") &&
+    (finite(sheet.combat.closeAttack) !== 0 ||
+      finite(sheet.combat.rangedAttack) !== 0 ||
+      sheet.attackSpecializations.some((entry) => finite(entry.rank) !== 0))
+  ) {
+    add({
+      key: "absent-attack-ranks",
+      label: "Ataque ausente com graduações especializadas",
+      status: "attention",
+      group: "data",
+      detail: "Ataque ausente falha automaticamente. As graduações específicas permanecem preservadas, mas não funcionam enquanto o traço estiver ausente.",
+    });
+  }
+  if (
+    absentTraits.has("defense") &&
+    (finite(sheet.combat.closeDefense) !== 0 ||
+      finite(sheet.combat.rangedDefense) !== 0)
+  ) {
+    add({
+      key: "absent-defense-ranks",
+      label: "Defesa ausente com graduações específicas",
+      status: "attention",
+      group: "data",
+      detail: "Defesa ausente deixa o personagem Indefeso. As graduações específicas permanecem preservadas, mas não funcionam enquanto o traço estiver ausente.",
+    });
+  }
+
   const attackCalculations = sheet.attacks.map((attack) =>
     getAttackCalculation(sheet, attack),
   );
@@ -809,6 +942,16 @@ export function getRuleAudit(sheet: CharacterSheet): RuleAudit {
         status: "attention",
         group: "data",
         detail: "A origem vinculada não existe mais; selecione outro poder ou equipamento.",
+      });
+      continue;
+    }
+    if (calculation.blockedReason) {
+      add({
+        key: `attack-absent-trait-${calculation.key}`,
+        label: `${calculation.name}: traço ausente`,
+        status: "fail",
+        group: "data",
+        detail: calculation.blockedReason,
       });
       continue;
     }
@@ -843,6 +986,16 @@ export function getRuleAudit(sheet: CharacterSheet): RuleAudit {
         notes: "",
       };
       const calculation = getAttackCalculation(sheet, synthetic);
+      if (calculation.blockedReason) {
+        add({
+          key: `attack-effect-absent-trait-${effect.id}`,
+          label: `${calculation.name}: traço ausente`,
+          status: "fail",
+          group: "data",
+          detail: calculation.blockedReason,
+        });
+        continue;
+      }
       plCheck(
         `attack-effect-${effect.id}`,
         calculation.range === "no-check"
@@ -925,8 +1078,21 @@ export function getRuleAudit(sheet: CharacterSheet): RuleAudit {
       sheet,
       (derived) => getSkillTotal(skill, derived, true),
     );
-    if (!highestSkill || total > highestSkill.total) {
+    const unavailable = absentTraits.has(skill.ability);
+    if (!unavailable && (!highestSkill || total > highestSkill.total)) {
       highestSkill = { skill, total };
+    }
+    if (
+      unavailable &&
+      (finite(skill.rank) !== 0 || finite(skill.specializationRank) !== 0)
+    ) {
+      add({
+        key: `skill-absent-ability-${skill.id}`,
+        label: `${skill.name}: atributo ausente`,
+        status: "attention",
+        group: "data",
+        detail: "Testes que exigem um atributo ausente falham automaticamente. As graduações foram preservadas para formas alternativas ou decisões do Narrador.",
+      });
     }
     if (
       finite(skill.specializationRank) > 0 &&
@@ -1102,7 +1268,10 @@ export function getRuleAudit(sheet: CharacterSheet): RuleAudit {
   });
 
   for (const key of coreAbilityKeys) {
-    if (finite(sheet.abilities[key]) < -5) {
+    if (
+      !getEffectiveAbsentTraits(sheet).has(key) &&
+      finite(sheet.abilities[key]) < -5
+    ) {
       add({
         key: `ability-min-${key}`,
         label: `${abilityLabels[key]} abaixo de -5`,
@@ -1115,7 +1284,10 @@ export function getRuleAudit(sheet: CharacterSheet): RuleAudit {
     }
   }
   for (const key of ["attack", "defense"] as const) {
-    if (finite(sheet.combat[key]) < -5) {
+    if (
+      !getEffectiveAbsentTraits(sheet).has(key) &&
+      finite(sheet.combat[key]) < -5
+    ) {
       add({
         key: `combat-min-${key}`,
         label: `${key === "attack" ? "Ataque" : "Defesa"} abaixo de -5`,
@@ -1145,6 +1317,25 @@ export function getRuleAudit(sheet: CharacterSheet): RuleAudit {
     }
   }
 
+  if (absentTraits.has("agility") && sheet.combat.initiativeBonus !== 0) {
+    add({
+      key: "absent-agility-initiative",
+      label: "Agilidade ausente com aumento de Iniciativa",
+      status: "attention",
+      group: "data",
+      detail: "Agilidade ausente deixa o personagem Paralisado; o aumento de Iniciativa fica preservado, mas não funciona nesse estado.",
+    });
+  }
+  if (sheet.sizeRank < -5 || sheet.sizeRank > 5) {
+    add({
+      key: "size-outside-published-table",
+      label: "Tamanho fora da tabela publicada",
+      status: "attention",
+      group: "data",
+      detail: "A prévia fornecida publica espaço e alcance apenas entre tamanho -5 e 5. O valor foi preservado sem inventar medidas; registre a decisão do Narrador.",
+    });
+  }
+
   const numericIssues: string[] = [];
   const requireInteger = (
     value: number,
@@ -1159,6 +1350,7 @@ export function getRuleAudit(sheet: CharacterSheet): RuleAudit {
   };
 
   requireInteger(sheet.powerLevel, "Nível de Poder", 0);
+  requireInteger(sheet.sizeRank, "Tamanho");
   if (sheet.budgetMode === "custom") {
     requireInteger(sheet.customPointBudget, "Orçamento personalizado", 0);
   }

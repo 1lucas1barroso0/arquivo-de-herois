@@ -47,7 +47,9 @@ Vínculos de efeitos distinguem bônus por graduação, bônus fixos e referênc
 
 `lib/example-sheets.ts` gera os modelos didáticos pela mesma estrutura usada no editor. A suíte de testes exige Espectro Rubro NP 8/120 PP, Sentinela Solar NP 10/150 PP e Atlas Zero NP 12/180 PP, todos com auditoria integralmente verde; assim, as fichas de exemplo não podem divergir silenciosamente da base de cálculo.
 
-`lib/rule-reference.ts` distingue regras calculadas, coerências mantidas pelo modo assistido e decisões de mesa. `lib/reference-catalog.ts` reúne em um único índice todas as opções e sugestões do material disponível. `lib/calculators.ts` resolve testes graduados, rotina e resistência a dano; `lib/scales.ts` relaciona velocidade, tempo, distância, Força e massa. As Referências usam essas fontes apenas quando abertas, mantendo o fluxo principal enxuto.
+`lib/rule-reference.ts` distingue regras calculadas, coerências mantidas pelo modo assistido e decisões de mesa. `lib/detailed-rule-reference.ts` acrescenta condições, ações, cenas, perigos e características com resumos bilíngues e procedência por capítulo/página. `lib/reference-catalog.ts` reúne em um único índice todas as opções e sugestões do material disponível e liga cada grupo à sua fonte. `lib/calculators.ts` resolve testes graduados, rotina e resistência a dano; `lib/scales.ts` relaciona tamanho, velocidade, tempo, distância, Força e massa. As Referências usam essas fontes apenas quando abertas, mantendo o fluxo principal enxuto.
+
+A matriz auditável da compilação fornecida fica em `docs/4E-COVERAGE.md`. Ela separa cobertura do material recebido de qualquer afirmação sobre publicações posteriores.
 
 ## Portabilidade
 

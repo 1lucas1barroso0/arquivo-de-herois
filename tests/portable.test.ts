@@ -21,6 +21,8 @@ function exampleSheet() {
   sheet.concept = "Heroína cósmica — ciência & coragem";
   sheet.notes = "Texto com acentos: á, ç, ã e símbolos ⚡.";
   sheet.abilities.strength = 7;
+  sheet.sizeRank = 2;
+  sheet.absentTraits = ["stamina"];
   sheet.shareEnabled = true;
   sheet.shareToken = "private-token";
   return sheet;
@@ -31,6 +33,8 @@ test("portable JSON round-trips all sheet data without private identifiers", () 
   assert.equal(imported.heroName, "Aurora Ômega");
   assert.equal(imported.notes, "Texto com acentos: á, ç, ã e símbolos ⚡.");
   assert.equal(imported.abilities.strength, 7);
+  assert.equal(imported.sizeRank, 2);
+  assert.deepEqual(imported.absentTraits, ["stamina"]);
   assert.equal(imported.id, "");
   assert.equal(imported.shareEnabled, false);
   assert.equal(imported.shareToken, null);
