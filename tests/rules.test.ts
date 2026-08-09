@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  CURRENT_SCHEMA_VERSION,
   conditions,
   createEmptySheet,
   createPower,
@@ -11,6 +12,7 @@ import {
 } from "../lib/character";
 import { CUSTOM_CATALOG_KEY } from "../lib/catalog";
 import {
+  getAttackCalculation,
   getDerivedTraits,
   getEffectCostBreakdown,
   getEquipmentTotals,
@@ -21,6 +23,115 @@ import {
   getRuleReviewFingerprint,
   getSkillTotal,
 } from "../lib/rules";
+
+test("schema 6 migrates natural size and absent traits without losing legacy data", () => {
+  const legacy = createEmptySheet();
+  const migrated = normalizeSheet({
+    ...legacy,
+    schemaVersion: 5,
+    heroName: "Autômato legado",
+    sizeRank: undefined,
+    absentTraits: undefined,
+    absentAbilities: ["stamina", "attack", "not-a-trait"],
+  });
+
+  assert.equal(migrated.schemaVersion, CURRENT_SCHEMA_VERSION);
+  assert.equal(migrated.heroName, "Autômato legado");
+  assert.equal(migrated.sizeRank, 0);
+  assert.deepEqual(migrated.absentTraits, ["stamina", "attack"]);
+});
+
+test("absent traits apply their costs, dependencies, and resistance consequences", () => {
+  const sheet = createEmptySheet();
+  sheet.absentTraits = ["stamina", "awareness"];
+  sheet.resistanceAdjustments.toughness = 3;
+
+  const derived = getDerivedTraits(sheet);
+  const points = getPointBreakdown(sheet);
+
+  assert.equal(derived.absentTraits.has("presence"), true);
+  assert.equal(derived.absentResistances.has("fortitude"), true);
+  assert.equal(derived.absentResistances.has("will"), true);
+  assert.equal(derived.resistances.fortitude, 0);
+  assert.equal(derived.resistances.will, 0);
+  assert.equal(derived.resistances.toughness, 3);
+  assert.equal(points.abilities, -30);
+  assert.equal(points.resistances, 3);
+
+  const permission = getRuleAudit(sheet).checks.find(
+    (check) => check.key === "absent-traits-permission",
+  );
+  assert.equal(permission?.status, "attention");
+
+  sheet.buildType = "npc";
+  assert.equal(
+    getRuleAudit(sheet).checks.find(
+      (check) => check.key === "absent-traits-permission",
+    )?.status,
+    "info",
+  );
+});
+
+test("absent Attack and Strength block attacks instead of producing false valid totals", () => {
+  const sheet = createEmptySheet();
+  const attack = {
+    id: "absent-attack",
+    name: "Golpe impossível",
+    sourceEffectId: "",
+    sourceEquipmentId: "",
+    range: "close" as const,
+    effectRank: 5,
+    strengthBased: false,
+    manualEffectSource: "other" as const,
+    manualEffectSourceNote: "",
+    specializationId: "",
+    miscellaneousAttackBonus: 0,
+    miscellaneousAttackSource: "",
+    resistance: "Robustez",
+    notes: "",
+  };
+  sheet.attacks = [attack];
+  sheet.absentTraits = ["attack"];
+
+  assert.match(
+    getAttackCalculation(sheet, attack).blockedReason,
+    /Ataque ausente/,
+  );
+  assert.equal(
+    getRuleAudit(sheet).checks.some(
+      (check) => check.key.startsWith("attack-absent-trait-") && check.status === "fail",
+    ),
+    true,
+  );
+
+  sheet.absentTraits = ["strength"];
+  const strengthBased = { ...attack, strengthBased: true };
+  assert.match(
+    getAttackCalculation(sheet, strengthBased).blockedReason,
+    /Força ausente/,
+  );
+});
+
+test("natural size is persistent, free, and flags values beyond the published table", () => {
+  const sheet = createEmptySheet();
+  const baseline = getPointBreakdown(sheet).total;
+  sheet.sizeRank = 5;
+  assert.equal(getPointBreakdown(sheet).total, baseline);
+  assert.equal(
+    getRuleAudit(sheet).checks.some(
+      (check) => check.key === "size-outside-published-table",
+    ),
+    false,
+  );
+
+  sheet.sizeRank = 6;
+  assert.equal(
+    getRuleAudit(sheet).checks.find(
+      (check) => check.key === "size-outside-published-table",
+    )?.status,
+    "attention",
+  );
+});
 
 test("motivation is recognized from identity text or a selected catalog option", () => {
   const identitySheet = createEmptySheet();

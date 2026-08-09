@@ -38,11 +38,14 @@ import {
   coreAbilityKeys,
   createPower,
   createPowerEffect,
+  getEffectiveAbsentTraits,
+  isResistanceAbsent,
   newId,
   requiresSpecializedSkillCost,
   resistanceKeys,
   resistanceLabels,
   traitLabels,
+  type AbsentTraitKey,
   type AdvantageCategory,
   type CharacterSheet,
   type CoreAbilityKey,
@@ -116,6 +119,7 @@ import {
 import {
   getAbilityBenchmark,
   getPowerLevelMetrics,
+  getSizeProfile,
   getSkillBenchmark,
 } from "../lib/scales";
 import { useLocale } from "./locale-provider";
@@ -433,6 +437,9 @@ function IdentityEditor({
 }) {
   const { language, t } = useLocale();
   const recommendedBudget = sheet.powerLevel * 15;
+  const size = getSizeProfile(sheet.sizeRank);
+  const sizeSpace = size.space ?? (language === "en" ? "to define" : "a definir");
+  const sizeReach = size.reach ?? (language === "en" ? "to define" : "a definir");
   return (
     <>
       <EditorHeading
@@ -542,6 +549,17 @@ function IdentityEditor({
             {language === "en"
               ? `${getPowerLevelMetrics(sheet.powerLevel).recommendedPoints} suggested PP · paired limit ${getPowerLevelMetrics(sheet.powerLevel).pairedLimit} · no artificial cap.`
               : `${getPowerLevelMetrics(sheet.powerLevel).recommendedPoints} PP recomendados · limite pareado ${getPowerLevelMetrics(sheet.powerLevel).pairedLimit} · sem teto artificial.`}
+          </small>
+        </Field>
+        <Field label="Tamanho natural">
+          <NumberInput
+            value={sheet.sizeRank}
+            onChange={(sizeRank) => patch({ sizeRank })}
+          />
+          <small className="field-guidance">
+            {language === "en"
+              ? `${size.canonical} · space ${sizeSpace} · reach ${sizeReach}${size.published ? "" : " · Narrator-defined outside the published table"}`
+              : `${size.label} · espaço ${sizeSpace} · alcance ${sizeReach}${size.published ? "" : " · definido pelo Narrador fora da tabela publicada"}`}
           </small>
         </Field>
         <Field label="Orçamento de PP">
@@ -682,7 +700,15 @@ function IdentityEditor({
 }
 
 function TraitsEditor({ sheet, patch }: EditorChildProps) {
+  const { t } = useLocale();
   const derived = getDerivedTraits(sheet);
+  const absentTraits = getEffectiveAbsentTraits(sheet);
+  const setAbsent = (key: AbsentTraitKey, absent: boolean) => {
+    const next = absent
+      ? [...new Set([...sheet.absentTraits, key])]
+      : sheet.absentTraits.filter((entry) => entry !== key);
+    patch({ absentTraits: next });
+  };
   return (
     <>
       <EditorHeading
@@ -692,8 +718,7 @@ function TraitsEditor({ sheet, patch }: EditorChildProps) {
       />
 
       <FormulaNotice>
-        Atributos custam 2 PP por graduação. Valores abaixo de 0
-        devolvem 2 PP por graduação, até o mínimo de -5.
+        {t("Atributos custam 2 PP por graduação. Valores abaixo de 0 devolvem 2 PP por graduação, até o mínimo de -5. Um traço ausente vale -10 PP e aplica consequências próprias; para Personagens do Jogador, exige permissão do Narrador.")}
       </FormulaNotice>
 
       <h3 className="form-subheading">Atributos</h3>
@@ -705,9 +730,20 @@ function TraitsEditor({ sheet, patch }: EditorChildProps) {
             abbreviation={abilityAbbreviations[key]}
             value={sheet.abilities[key]}
             derived={derived.abilities[key]}
-            cost={sheet.abilities[key] * 2}
-            benchmark={getAbilityBenchmark(derived.abilities[key]).label}
+            cost={absentTraits.has(key) ? -10 : sheet.abilities[key] * 2}
+            benchmark={
+              absentTraits.has(key)
+                ? "Traço ausente"
+                : getAbilityBenchmark(derived.abilities[key]).label
+            }
             min={-5}
+            absent={absentTraits.has(key)}
+            absentLocked={
+              key === "presence" &&
+              absentTraits.has("awareness") &&
+              !sheet.absentTraits.includes("presence")
+            }
+            onAbsentChange={(absent) => setAbsent(key, absent)}
             onChange={(value) =>
               patch({
                 abilities: { ...sheet.abilities, [key]: value },
@@ -727,8 +763,10 @@ function TraitsEditor({ sheet, patch }: EditorChildProps) {
             derived={
               key === "attack" ? derived.attack : derived.defense
             }
-            cost={sheet.combat[key] * 2}
+            cost={absentTraits.has(key) ? -10 : sheet.combat[key] * 2}
             min={-5}
+            absent={absentTraits.has(key)}
+            onAbsentChange={(absent) => setAbsent(key, absent)}
             onChange={(value) =>
               patch({ combat: { ...sheet.combat, [key]: value } })
             }
@@ -780,17 +818,23 @@ function TraitsEditor({ sheet, patch }: EditorChildProps) {
           const advantageDirect = derived.advantageBonuses[key];
           const equipmentDirect = derived.equipmentBonuses[key];
           const adjustment = sheet.resistanceAdjustments[key];
+          const absent = isResistanceAbsent(sheet, key);
           return (
-            <label className="derived-resistance-card" key={key}>
+            <label
+              className={`derived-resistance-card ${absent ? "is-absent" : ""}`}
+              key={key}
+            >
               <span>{resistanceLabels[key]}</span>
               <div className="derived-equation">
                 <small>
-                  {abilityAbbreviations[baseAbility]} {signed(baseValue)}
+                  {abilityAbbreviations[baseAbility]}{" "}
+                  {absent ? "—" : signed(baseValue)}
                 </small>
                 <b>+</b>
                 <NumberInput
                   ariaLabel={`Ajuste comprado de ${resistanceLabels[key]}`}
                   value={adjustment}
+                  disabled={absent}
                   onChange={(value) =>
                     patch({
                       resistanceAdjustments: {
@@ -807,16 +851,27 @@ function TraitsEditor({ sheet, patch }: EditorChildProps) {
                   )}
                 </small>
                 <b>=</b>
-                <strong>{signed(derived.resistances[key])}</strong>
+                <strong>
+                  {absent ? "—" : signed(derived.resistances[key])}
+                </strong>
               </div>
               <em>
-                {signed(adjustment)} PP comprados · poder {signed(powerDirect)}
-                {advantageDirect
-                  ? ` · vantagem ${signed(advantageDirect)}`
-                  : ""}
-                {equipmentDirect
-                  ? ` · equipamento ${signed(equipmentDirect)}`
-                  : ""}
+                {absent ? (
+                  key === "will"
+                    ? t("Sem resistência numérica · Imunidade a Vontade decorre da ausência")
+                    : t("Sem resistência numérica · registre Imunidade quando aplicável")
+                ) : (
+                  <>
+                    {signed(adjustment)} PP comprados · poder{" "}
+                    {signed(powerDirect)}
+                    {advantageDirect
+                      ? ` · vantagem ${signed(advantageDirect)}`
+                      : ""}
+                    {equipmentDirect
+                      ? ` · equipamento ${signed(equipmentDirect)}`
+                      : ""}
+                  </>
+                )}
               </em>
             </label>
           );
@@ -827,7 +882,9 @@ function TraitsEditor({ sheet, patch }: EditorChildProps) {
 }
 
 function SkillsEditor({ sheet, patch }: EditorChildProps) {
+  const { t } = useLocale();
   const derived = getDerivedTraits(sheet);
+  const absentTraits = getEffectiveAbsentTraits(sheet);
   const limit = sheet.powerLevel + 10;
   const breakdown = getPointBreakdown(sheet);
   const missingSkills = skillCatalog.filter(
@@ -900,6 +957,7 @@ function SkillsEditor({ sheet, patch }: EditorChildProps) {
         </div>
         {sheet.skills.map((skill, index) => {
           const total = getSkillTotal(skill, derived);
+          const unavailable = absentTraits.has(skill.ability);
           const preset = findSkillPreset(skill.name, skill.catalogKey);
           const specializedCostRequired =
             requiresSpecializedSkillCost(skill.name);
@@ -917,6 +975,7 @@ function SkillsEditor({ sheet, patch }: EditorChildProps) {
                 skill.trainedOnly));
           const verified =
             structurallyValid &&
+            !unavailable &&
             Boolean(preset) &&
             skill.ability === preset?.ability &&
             skill.costClass === preset?.costClass &&
@@ -1080,9 +1139,15 @@ function SkillsEditor({ sheet, patch }: EditorChildProps) {
                 ) : (
                   <XCircle />
                 )}
-                <strong>{signed(total)}</strong>
-                <small>/ {limit}</small>
-                <em>{getSkillBenchmark(total).difficulty}</em>
+                <strong>{unavailable ? "—" : signed(total)}</strong>
+                <small>
+                  {unavailable ? t("atributo ausente") : `/ ${limit}`}
+                </small>
+                <em>
+                  {unavailable
+                    ? t("Falha automática")
+                    : getSkillBenchmark(total).difficulty}
+                </em>
               </span>
             </div>
           );
@@ -4146,6 +4211,7 @@ function NumberInput({
   max,
   step = 1,
   ariaLabel,
+  disabled = false,
 }: {
   value: number;
   onChange: (value: number) => void;
@@ -4153,6 +4219,7 @@ function NumberInput({
   max?: number;
   step?: number;
   ariaLabel?: string;
+  disabled?: boolean;
 }) {
   const normalizedValue = Number.isFinite(value) ? value : 0;
   const inputRef = useRef<HTMLInputElement>(null);
@@ -4184,6 +4251,7 @@ function NumberInput({
     <input
       aria-label={ariaLabel}
       defaultValue={normalizedValue}
+      disabled={disabled}
       inputMode={Number.isInteger(step) ? "numeric" : "decimal"}
       ref={inputRef}
       type="number"
@@ -4269,6 +4337,9 @@ function NumberCard({
   benchmark,
   formula,
   min,
+  absent = false,
+  absentLocked = false,
+  onAbsentChange,
   onChange,
 }: {
   label: string;
@@ -4279,24 +4350,47 @@ function NumberCard({
   benchmark?: string;
   formula?: string;
   min: number;
+  absent?: boolean;
+  absentLocked?: boolean;
+  onAbsentChange?: (absent: boolean) => void;
   onChange: (value: number) => void;
 }) {
   const { t } = useLocale();
   return (
-    <label className="number-card calculated-number-card">
+    <div
+      className={`number-card calculated-number-card ${absent ? "is-absent" : ""}`}
+    >
       <span>
         {t(label)}
         {abbreviation && <small>{abbreviation}</small>}
       </span>
-      <NumberInput value={value} min={min} onChange={onChange} />
+      <NumberInput
+        ariaLabel={t(label)}
+        value={value}
+        min={min}
+        disabled={absent}
+        onChange={onChange}
+      />
       <div>
         <small>{t("Total")}</small>
-        <strong>{signed(derived)}</strong>
+        <strong>{absent ? "—" : signed(derived)}</strong>
       </div>
       <em>{signed(cost)} PP</em>
-      {benchmark && <small className="number-benchmark">{benchmark}</small>}
+      {onAbsentChange && (
+        <label className="absent-trait-control">
+          <input
+            aria-label={`${t(label)} ${t("ausente")}`}
+            checked={absent}
+            disabled={absentLocked}
+            onChange={(event) => onAbsentChange(event.target.checked)}
+            type="checkbox"
+          />
+          {absentLocked ? t("Ausente por Consciência") : t("Ausente")}
+        </label>
+      )}
+      {benchmark && <small className="number-benchmark">{t(benchmark)}</small>}
       {formula && <p>{formula}</p>}
-    </label>
+    </div>
   );
 }
 

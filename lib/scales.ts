@@ -1,5 +1,46 @@
 export type AbilityBenchmark = { rank: number; label: string };
 
+export type SizeProfile = {
+  rank: number;
+  label: string;
+  canonical: string;
+  space: string | null;
+  reach: number | null;
+  published: boolean;
+  note: string;
+};
+
+export const sizeProfiles: SizeProfile[] = [
+  { rank: -5, label: "Minúsculo", canonical: "Minuscule", space: "1/16", reach: 0, published: true, note: "Tabela de Tamanho da prévia 4E." },
+  { rank: -4, label: "Ínfimo", canonical: "Fine", space: "1/8", reach: 0, published: true, note: "Tabela de Tamanho da prévia 4E." },
+  { rank: -3, label: "Diminuto", canonical: "Diminutive", space: "1/4", reach: 0, published: true, note: "Tabela de Tamanho da prévia 4E." },
+  { rank: -2, label: "Miúdo", canonical: "Tiny", space: "1/2", reach: 0, published: true, note: "Tabela de Tamanho da prévia 4E." },
+  { rank: -1, label: "Pequeno", canonical: "Small", space: "1", reach: 1, published: true, note: "Tabela de Tamanho da prévia 4E." },
+  { rank: 0, label: "Médio", canonical: "Medium", space: "1", reach: 1, published: true, note: "Tamanho padrão; a escolha do tamanho natural não custa PP." },
+  { rank: 1, label: "Grande", canonical: "Large", space: "2", reach: 1, published: true, note: "Tabela de Tamanho da prévia 4E." },
+  { rank: 2, label: "Enorme", canonical: "Huge", space: "3", reach: 2, published: true, note: "Tabela de Tamanho da prévia 4E." },
+  { rank: 3, label: "Gigantesco", canonical: "Gargantuan", space: "4", reach: 3, published: true, note: "Tabela de Tamanho da prévia 4E." },
+  { rank: 4, label: "Colossal", canonical: "Colossal", space: "6", reach: 4, published: true, note: "Tabela de Tamanho da prévia 4E." },
+  { rank: 5, label: "Assombroso", canonical: "Awesome", space: "8", reach: 6, published: true, note: "Tabela de Tamanho da prévia 4E." },
+];
+
+export function getSizeProfile(rank: number): SizeProfile {
+  const normalizedRank = Number.isFinite(rank) ? rank : 0;
+  const published = Number.isSafeInteger(normalizedRank)
+    ? sizeProfiles.find((entry) => entry.rank === normalizedRank)
+    : undefined;
+  if (published) return published;
+  return {
+    rank: normalizedRank,
+    label: "Tamanho personalizado",
+    canonical: "Custom size",
+    space: null,
+    reach: null,
+    published: false,
+    note: "A prévia fornecida publica a tabela de -5 a 5. Registre valores externos com a decisão do Narrador; o aplicativo não inventa espaço ou alcance.",
+  };
+}
+
 export const abilityBenchmarkAnchors: AbilityBenchmark[] = [
   { rank: -5, label: "Incapacitado nesse atributo" },
   { rank: -4, label: "Praticamente incapaz" },

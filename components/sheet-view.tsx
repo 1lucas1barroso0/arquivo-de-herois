@@ -23,6 +23,8 @@ import {
   abilityAbbreviations,
   abilityLabels,
   coreAbilityKeys,
+  getEffectiveAbsentTraits,
+  isResistanceAbsent,
   resistanceKeys,
   resistanceLabels,
   type CharacterSheet,
@@ -45,6 +47,7 @@ import {
 import { useLocale } from "./locale-provider";
 import { buildTypeLabel } from "../lib/localization";
 import { translateRuleText } from "../lib/localization";
+import { getSizeProfile } from "../lib/scales";
 
 type SheetViewProps = {
   sheet: CharacterSheet;
@@ -68,6 +71,10 @@ export function SheetView({
 }: SheetViewProps) {
   const { language, t } = useLocale();
   const derived = getDerivedTraits(sheet);
+  const absentTraits = getEffectiveAbsentTraits(sheet);
+  const size = getSizeProfile(sheet.sizeRank);
+  const sizeSpace = size.space ?? (language === "en" ? "to define" : "a definir");
+  const sizeReach = size.reach ?? (language === "en" ? "to define" : "a definir");
   const breakdown = getPointBreakdown(sheet);
   const budget = getPointBudget(sheet);
   const audit = showAudit ? getRuleAudit(sheet) : null;
@@ -146,6 +153,10 @@ export function SheetView({
         <DataCell label="Campanha" value={sheet.campaign} />
         <DataCell label="Arquétipo" value={sheet.archetype} />
         <DataCell
+          label="Tamanho"
+          value={`${sheet.sizeRank >= 0 ? "+" : ""}${sheet.sizeRank} · ${language === "en" ? size.canonical : size.label} · ${language === "en" ? "space" : "espaço"} ${sizeSpace} · ${language === "en" ? "reach" : "alcance"} ${sizeReach}`}
+        />
+        <DataCell
           label="Tipo"
           value={
             buildTypeLabel(sheet.buildType, language)
@@ -172,6 +183,7 @@ export function SheetView({
             const Icon = abilityIcons[key];
             const base = sheet.abilities[key];
             const total = derived.abilities[key];
+            const absent = absentTraits.has(key);
             return (
               <div className="stat-cell" key={key}>
                 <Icon size={17} aria-hidden="true" />
@@ -179,22 +191,26 @@ export function SheetView({
                   {t(abilityLabels[key])}{" "}
                   <small>{abilityAbbreviations[key]}</small>
                 </span>
-                <strong>{signed(total)}</strong>
-                {base !== total && <em>base {signed(base)}</em>}
+                <strong>{absent ? "—" : signed(total)}</strong>
+                {absent ? (
+                  <em>{t("Ausente")}</em>
+                ) : (
+                  base !== total && <em>base {signed(base)}</em>
+                )}
               </div>
             );
           })}
         </div>
 
         <div className="combat-stat-grid">
-          <Stat label="Ataque base" value={derived.attack} />
-          <Stat label="Ataque corpo a corpo" value={derived.closeAttack} />
-          <Stat label="Ataque à distância" value={derived.rangedAttack} />
-          <Stat label="Defesa base" value={derived.defense} />
-          <Stat label="Defesa corpo a corpo" value={derived.closeDefense} />
-          <Stat label="Defesa à distância" value={derived.rangedDefense} />
-          <Stat label="Iniciativa" value={derived.initiative} />
-          <Stat label="CD de Defesa base" value={derived.defense + 10} />
+          <Stat label="Ataque base" value={absentTraits.has("attack") ? null : derived.attack} />
+          <Stat label="Ataque corpo a corpo" value={absentTraits.has("attack") ? null : derived.closeAttack} />
+          <Stat label="Ataque à distância" value={absentTraits.has("attack") ? null : derived.rangedAttack} />
+          <Stat label="Defesa base" value={absentTraits.has("defense") ? null : derived.defense} />
+          <Stat label="Defesa corpo a corpo" value={absentTraits.has("defense") ? null : derived.closeDefense} />
+          <Stat label="Defesa à distância" value={absentTraits.has("defense") ? null : derived.rangedDefense} />
+          <Stat label="Iniciativa" value={absentTraits.has("agility") ? null : derived.initiative} />
+          <Stat label="CD de Defesa base" value={absentTraits.has("defense") ? null : derived.defense + 10} />
         </div>
 
         <div className="resistance-grid">
@@ -202,7 +218,7 @@ export function SheetView({
             <Stat
               key={key}
               label={resistanceLabels[key]}
-              value={derived.resistances[key]}
+              value={isResistanceAbsent(sheet, key) ? null : derived.resistances[key]}
             />
           ))}
         </div>
@@ -280,16 +296,23 @@ export function SheetView({
               )
               .map((skill) => {
                 const total = getSkillTotal(skill, derived);
+                const unavailable = absentTraits.has(skill.ability);
                 const cells = [
                   skill.specialization
                     ? `${skill.name}: ${skill.specialization}`
                     : skill.name,
                   abilityAbbreviations[skill.ability],
                   `${skill.rank}+${skill.specializationRank}`,
-                  signed(total),
+                  unavailable ? "—" : signed(total),
                 ];
                 if (showAudit) {
-                  cells.push(total <= sheet.powerLevel + 10 ? "✓" : "✕");
+                  cells.push(
+                    unavailable
+                      ? t("Ausente")
+                      : total <= sheet.powerLevel + 10
+                        ? "✓"
+                        : "✕",
+                  );
                 }
                 return cells;
               })}
@@ -690,12 +713,12 @@ function DataCell({
   );
 }
 
-function Stat({ label, value }: { label: string; value: number }) {
+function Stat({ label, value }: { label: string; value: number | null }) {
   const { t } = useLocale();
   return (
     <div>
       <span>{t(label)}</span>
-      <strong>{signed(value)}</strong>
+      <strong>{value === null ? "—" : signed(value)}</strong>
     </div>
   );
 }

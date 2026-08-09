@@ -2,6 +2,8 @@
 
 Aplicativo full-stack, instalável e responsivo para criar, conferir, salvar e compartilhar fichas de **Mutantes & Malfeitores: Quarta Edição**.
 
+A versão 0.2.0 cobre de forma estruturada a compilação fornecida **M&M4e Previews 1–9 editadas** (431 páginas), sempre mantendo o produto como um gerenciador de fichas.
+
 ## O que está pronto
 
 - Editor completo com identidade, atributos, combate, resistências, perícias, vantagens, poderes, ataques, equipamentos, complicações, recursos e Pontos de Poder.
@@ -10,7 +12,9 @@ Aplicativo full-stack, instalável e responsivo para criar, conferir, salvar e c
 - Modo Assistido como padrão: corrige apenas dependências determinísticas, mantém matrizes exclusivas coerentes, cobre PE, limita usos aos recursos realmente comprados e impede a publicação de uma ficha com erro ou pendência. O Modo Livre é uma escolha explícita para regras próprias.
 - Uma única base de cálculo para custos, dependências, limites de NP e auditoria: verde confirma a regra ou uma aprovação consciente; amarelo pode ser mantido, aprovado ou reprovado; vermelho reúne erros objetivos e reprovações; azul identifica regras mais liberais para o Narrador e seus NPCs.
 - Três fichas didáticas mecanicamente distintas — Espectro Rubro NP 8/120 PP, Sentinela Solar NP 10/150 PP e Atlas Zero NP 12/180 PP — com pontos, ataques, resistências, perícias, matrizes e equipamentos auditados automaticamente.
-- Referências pesquisáveis com regras da ficha, todos os grupos do catálogo, atributos, perícias, CDs, Níveis de Poder de 5–20 ou mais, graduações de efeito e medidas métricas de -5 a 30. Inclui calculadoras de testes graduados, rotina, resistência a dano, percurso, duração de viagem e arremesso. As fórmulas extrapolam sem teto artificial.
+- Referências pesquisáveis com 145 tópicos de regra e fonte por documento, capítulo e página: 38 condições, 29 ações, 25 perigos ambientais, 4 tipos de cena e 49 regras gerais ou de características. Todos os 625 itens do catálogo também indicam a seção de origem.
+- Traços ausentes e tamanho natural integrados à ficha: custo, travessão, falhas automáticas, consequências derivadas, permissão do Narrador, migração sem perda e a tabela completa de tamanho −5 a 5.
+- Escalas de atributos, perícias, CDs, NP, efeitos e medidas, com calculadoras de testes graduados, rotina, resistência a dano, percurso, duração de viagem e arremesso. Fórmulas abertas continuam sem teto artificial quando a fonte estabelece extrapolação.
 - Interface global em português e inglês. A busca ignora acentos, tolera plurais e pequenos erros de digitação; nomes, categorias e descrições das opções acompanham o idioma escolhido.
 - Salvamento automático no D1 e retratos no R2 quando esses recursos existem. Em outros ambientes, a aplicação muda automaticamente para IndexedDB e imagens locais, sem interromper o trabalho.
 - Biblioteca pesquisável, ordenável e navegável por rolagem, com visualização completa e impressão em PDF.
@@ -42,7 +46,7 @@ npm run test:rules
 npm run build
 ```
 
-Os testes cobrem integridade e completude dos catálogos e das Referências, termos bilíngues, escalas abertas, testes graduados, dano, relações entre medidas, configurações prontas, propagação de atributos, vantagens e equipamentos, ataques vinculados, custos, valores muito altos, frações e modificadores de poderes, Removível, matrizes, limites de NP, decisões persistentes sobre avisos, recursos heroicos, criação assistida, exemplos NP 8/10/12, NPCs, migração de fichas antigas e ida e volta dos formatos JSON/TXT.
+Os testes cobrem integridade e completude dos catálogos e das Referências, procedência por página, termos bilíngues, tamanho natural, traços ausentes, escalas abertas, testes graduados, dano, relações entre medidas, configurações prontas, propagação de atributos, vantagens e equipamentos, ataques vinculados, custos, valores muito altos, frações e modificadores de poderes, Removível, matrizes, limites de NP, decisões persistentes sobre avisos, recursos heroicos, criação assistida, exemplos NP 8/10/12, NPCs, migração de fichas antigas e ida e volta dos formatos JSON/TXT.
 
 ## Estrutura
 
@@ -57,7 +61,7 @@ tests/                testes das regras, dos cálculos e dos formatos
 docs/                 arquitetura, deploy e formato de dados
 ```
 
-Leia [Arquitetura](docs/ARCHITECTURE.md), [Implantação](docs/DEPLOYMENT.md) e [Formato de dados](docs/DATA-FORMAT.md).
+Leia [Cobertura da 4E](docs/4E-COVERAGE.md), [Arquitetura](docs/ARCHITECTURE.md), [Implantação](docs/DEPLOYMENT.md) e [Formato de dados](docs/DATA-FORMAT.md).
 
 ## Implantação
 

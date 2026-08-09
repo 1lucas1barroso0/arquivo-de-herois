@@ -17,12 +17,32 @@ import {
   skillCatalog,
   type CatalogEntry,
 } from "./catalog";
+import type { RuleReferenceSource } from "./rule-reference";
 
 export type ReferenceCatalogGroup = {
   id: string;
   label: string;
   items: CatalogEntry[];
+  source: RuleReferenceSource;
 };
+
+const previewDocument = "Compilação fornecida da 4E";
+
+function catalogGroup(
+  id: string,
+  label: string,
+  items: CatalogEntry[],
+  chapter: string,
+  chapterEn: string,
+  pages: string,
+): ReferenceCatalogGroup {
+  return {
+    id,
+    label,
+    items,
+    source: { document: previewDocument, chapter, chapterEn, pages },
+  };
+}
 
 const nonMotivationComplications = complicationCatalog.filter(
   (entry) => entry.category !== "Motivação",
@@ -62,30 +82,22 @@ function suggestionEntries(
 
 /** Todos os dados de criação pesquisáveis, inclusive sugestões sem custo. */
 export const referenceCatalogGroups: ReferenceCatalogGroup[] = [
-  { id: "archetypes", label: "Arquétipos", items: archetypeCatalog },
-  { id: "origins", label: "Origens", items: heroOriginCatalog },
-  { id: "motivations", label: "Motivações", items: motivationCatalog },
-  { id: "complications", label: "Outras complicações", items: nonMotivationComplications },
-  { id: "skills", label: "Perícias", items: skillCatalog },
-  { id: "advantages", label: "Vantagens", items: advantageCatalog },
-  { id: "effects", label: "Efeitos", items: powerEffectCatalog },
-  { id: "configurations", label: "Configurações de poder", items: powerConfigurationCatalog },
-  { id: "extras", label: "Extras", items: extraCatalog },
-  { id: "features", label: "Recursos", items: featureCatalog },
-  { id: "flaws", label: "Falhas", items: flawCatalog },
-  { id: "drawbacks", label: "Desvantagens", items: drawbackCatalog },
-  { id: "equipment", label: "Equipamento", items: equipmentCatalog },
-  { id: "descriptors", label: "Descritores", items: descriptorEntries },
-  {
-    id: "attack-specializations",
-    label: "Especializações de ataque",
-    items: suggestionEntries("attack", "Especialização de ataque", attackSpecializationSuggestions),
-  },
-  {
-    id: "resistances",
-    label: "Resistências sugeridas",
-    items: suggestionEntries("resistance", "Resistência", resistanceSuggestions),
-  },
+  catalogGroup("archetypes", "Arquétipos", archetypeCatalog, "Capítulo 2 · Criação de Heróis", "Chapter 2 · Hero Creation", "34–90"),
+  catalogGroup("origins", "Origens", heroOriginCatalog, "Capítulo 2 · Criação de Heróis", "Chapter 2 · Hero Creation", "98–99"),
+  catalogGroup("motivations", "Motivações", motivationCatalog, "Capítulo 2 · Criação de Heróis", "Chapter 2 · Hero Creation", "99–100"),
+  catalogGroup("complications", "Outras complicações", nonMotivationComplications, "Capítulo 2 · Criação de Heróis", "Chapter 2 · Hero Creation", "97–105"),
+  catalogGroup("skills", "Perícias", skillCatalog, "Capítulo 4 · Perícias", "Chapter 4 · Skills", "124–153"),
+  catalogGroup("advantages", "Vantagens", advantageCatalog, "Capítulo 5 · Vantagens", "Chapter 5 · Advantages", "154–179"),
+  catalogGroup("effects", "Efeitos", powerEffectCatalog, "Capítulo 6 · Poderes", "Chapter 6 · Powers", "180–271"),
+  catalogGroup("configurations", "Configurações de poder", powerConfigurationCatalog, "Capítulo 6 · Poderes", "Chapter 6 · Powers", "183–271"),
+  catalogGroup("extras", "Extras", extraCatalog, "Capítulo 6 · Poderes", "Chapter 6 · Powers", "272–297"),
+  catalogGroup("features", "Recursos", featureCatalog, "Capítulo 6 · Poderes", "Chapter 6 · Powers", "272–297"),
+  catalogGroup("flaws", "Falhas", flawCatalog, "Capítulo 6 · Poderes", "Chapter 6 · Powers", "272–297"),
+  catalogGroup("drawbacks", "Desvantagens", drawbackCatalog, "Capítulo 6 · Poderes", "Chapter 6 · Powers", "272–297"),
+  catalogGroup("equipment", "Equipamento", equipmentCatalog, "Capítulo 7 · Equipamento", "Chapter 7 · Equipment", "298–345"),
+  catalogGroup("descriptors", "Descritores", descriptorEntries, "Capítulo 6 · Poderes", "Chapter 6 · Powers", "180–182"),
+  catalogGroup("attack-specializations", "Especializações de ataque", suggestionEntries("attack", "Especialização de ataque", attackSpecializationSuggestions), "Capítulo 3 · Atributos", "Chapter 3 · Abilities", "107–123"),
+  catalogGroup("resistances", "Resistências sugeridas", suggestionEntries("resistance", "Resistência", resistanceSuggestions), "Capítulo 3 · Atributos", "Chapter 3 · Abilities", "107–123"),
 ];
 
 export const referenceCatalogTotal = referenceCatalogGroups.reduce(
