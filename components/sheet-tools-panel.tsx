@@ -324,10 +324,10 @@ function ComparisonTable({
       rightDerived.rangedDefense,
     ],
 
-    ["Dodge", a.defense.dodge, b.defense.dodge],
-    ["Toughness", a.defense.toughness, b.defense.toughness],
-    ["Fortitude", a.defense.fortitude, b.defense.fortitude],
-    ["Will", a.defense.will, b.defense.will],
+    [t("Esquiva"), a.defense.dodge, b.defense.dodge],
+    [t("Robustez"), a.defense.toughness, b.defense.toughness],
+    [t("Fortitude"), a.defense.fortitude, b.defense.fortitude],
+    [t("Vontade"), a.defense.will, b.defense.will],
 
     [m("analysis.trainedSkills"), a.skills.trained, b.skills.trained],
     [m("analysis.powers"), a.utility.powers, b.utility.powers],
