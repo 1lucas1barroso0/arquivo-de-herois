@@ -52,6 +52,7 @@ import {
   buildTypeLabel,
   relationshipKindLabel,
   translateRuleText,
+  type AppLanguage,
 } from "../lib/localization";
 import type { MessageKey } from "../lib/messages";
 import { getSizeProfile } from "../lib/scales";
@@ -176,7 +177,7 @@ export function SheetView({
               {t("Saldo")}
             </span>
           </div>
-          {audit && <AuditPill status={audit.status} />}
+          {audit && <AuditPill status={audit.status} language={language} />}
         </div>
       </header>
 
@@ -273,7 +274,7 @@ export function SheetView({
           <div className={`audit-summary-view status-${audit.status}`}>
             <AuditIcon status={audit.status} />
             <div>
-              <strong>{auditTitle(audit.status)}</strong>
+              <strong>{auditTitle(audit.status, language)}</strong>
               <span>
                 {formatCount(audit.failures, "erro", "erros")} ·{" "}
                 {formatCount(
@@ -776,11 +777,11 @@ export function SheetView({
   );
 }
 
-function AuditPill({ status }: { status: RuleStatus }) {
+function AuditPill({ status, language }: { status: RuleStatus; language: AppLanguage }) {
   return (
     <span className={`sheet-audit-pill status-${status}`}>
       <AuditIcon status={status} />
-      {auditTitle(status)}
+      {auditTitle(status, language)}
     </span>
   );
 }
@@ -907,10 +908,16 @@ function EmptyState({ text }: { text: string }) {
   return <p className="sheet-empty">{text}</p>;
 }
 
-function auditTitle(status: RuleStatus) {
+function auditTitle(status: RuleStatus, language: AppLanguage) {
+  if (language === "en") {
+    if (status === "pass") return "Validated sheet";
+    if (status === "fail") return "Errors found";
+    if (status === "attention") return "Attention";
+    return "Flexible rules · Game Master and NPCs";
+  }
   if (status === "pass") return "Ficha validada";
   if (status === "fail") return "Erros encontrados";
-  if (status === "attention") return "Revisão pendente";
+  if (status === "attention") return "Atenção";
   return "Regras liberais · Narrador e NPCs";
 }
 

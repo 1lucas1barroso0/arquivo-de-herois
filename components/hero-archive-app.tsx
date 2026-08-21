@@ -1401,7 +1401,7 @@ function CharacterCard({
   onArchive: () => void;
 }) {
   const [menu, setMenu] = useState(false);
-  const { language, t } = useLocale();
+  const { language, m, t } = useLocale();
   return (
     <article
       className={`character-card ${active ? "is-active" : ""} ${sheet.archived ? "is-archived" : ""}`}
@@ -1439,7 +1439,7 @@ function CharacterCard({
           <h2>{sheet.heroName}</h2>
           <p>{sheet.civilName || sheet.concept || t("Identidade reservada")}</p>
         </div>
-        <span>NP {sheet.powerLevel}</span>
+        <span>{m("common.powerLevelShort")} {sheet.powerLevel}</span>
       </div>
       <footer>
         <span><FileText /> {sheet.pointsSpent}/{sheet.pointsTotal} PP</span>
@@ -1480,7 +1480,7 @@ function LimitPanel({
       : audit.status === "fail"
         ? plural(audit.failures, "Erro", "Erros")
         : audit.status === "attention"
-          ? "Revisar"
+          ? "Atenção"
           : "Narrador / NPC";
   return (
     <aside className="limit-panel">
@@ -1588,7 +1588,7 @@ function Workspace({
 }) {
   const [moreOpen, setMoreOpen] = useState(false);
   const [printMode, setPrintMode] = useState<"full" | "compact">("full");
-  const { t } = useLocale();
+  const { m, t } = useLocale();
   function printSheet(mode: "full" | "compact") {
     setPrintMode(mode);
     setMoreOpen(false);
@@ -1615,14 +1615,14 @@ function Workspace({
         <div className="workspace-tabs" role="tablist">
           <button className={screen === "edit" ? "is-active" : ""} type="button" onClick={() => onScreen("edit")}><Pencil /> {t("Editar")}</button>
           <button className={screen === "view" ? "is-active" : ""} type="button" onClick={() => onScreen("view")}><Eye /> {t("Visualizar")}</button>
-          <button className={screen === "analysis" ? "is-active" : ""} type="button" onClick={() => onScreen("analysis")}><BarChart3 /> Análise</button>
-          <button className={screen === "session" ? "is-active" : ""} type="button" onClick={() => onScreen("session")}><Gamepad2 /> Sessão</button>
-          <button className={screen === "relations" ? "is-active" : ""} type="button" onClick={() => onScreen("relations")}><Share2 /> Vínculos</button>
+          <button className={screen === "analysis" ? "is-active" : ""} type="button" onClick={() => onScreen("analysis")}><BarChart3 /> {m("character.analysis")}</button>
+          <button className={screen === "session" ? "is-active" : ""} type="button" onClick={() => onScreen("session")}><Gamepad2 /> {m("character.session")}</button>
+          <button className={screen === "relations" ? "is-active" : ""} type="button" onClick={() => onScreen("relations")}><Share2 /> {m("character.links")}</button>
         </div>
         <div className="workspace-actions">
           <SaveIndicator state={saveState} />
-          <button className="icon-button" type="button" onClick={onUndo} disabled={!canUndo} aria-label="Desfazer"><Undo2 /></button>
-          <button className="icon-button" type="button" onClick={onRedo} disabled={!canRedo} aria-label="Refazer"><Redo2 /></button>
+          <button className="icon-button" type="button" onClick={onUndo} disabled={!canUndo} aria-label={t("Desfazer")}><Undo2 /></button>
+          <button className="icon-button" type="button" onClick={onRedo} disabled={!canRedo} aria-label={t("Refazer")}><Redo2 /></button>
           {screen !== "view" && <button className="icon-button" type="button" onClick={onSave} aria-label={t("Salvar agora")}><Save /></button>}
           <button className="button button-secondary compact" type="button" onClick={() => onShare(sheet.shareMode)}><Share2 /> {t("Compartilhar")}</button>
           <div className="more-menu-wrap">
@@ -1631,13 +1631,13 @@ function Workspace({
               <div className="more-menu">
                 <button type="button" onClick={() => { onExport("json"); setMoreOpen(false); }}><FileJson /> {t("Exportar JSON")}</button>
                 <button type="button" onClick={() => { onExport("txt"); setMoreOpen(false); }}><FileText /> {t("Exportar TXT")}</button>
-                <button type="button" onClick={() => { onShare("read-only"); setMoreOpen(false); }}><Eye /> Compartilhar somente leitura</button>
-                <button type="button" onClick={() => { onShare("duplicable"); setMoreOpen(false); }}><Share2 /> Compartilhar como duplicável</button>
-                <button type="button" onClick={() => { onBackup(); setMoreOpen(false); }}><FolderArchive /> Backup completo</button>
-                <button type="button" onClick={() => { onScreen("history"); setMoreOpen(false); }}><History /> Histórico</button>
-                <button type="button" onClick={() => { onScreen("compare"); setMoreOpen(false); }}><ArrowDownUp /> Comparar</button>
-                {screen === "view" && <button type="button" onClick={() => printSheet("full")}><Printer /> Ficha completa / PDF</button>}
-                {screen === "view" && <button type="button" onClick={() => printSheet("compact")}><Printer /> Ficha compacta / PDF</button>}
+                <button type="button" onClick={() => { onShare("read-only"); setMoreOpen(false); }}><Eye /> {t("Compartilhar somente leitura")}</button>
+                <button type="button" onClick={() => { onShare("duplicable"); setMoreOpen(false); }}><Share2 /> {t("Compartilhar como duplicável")}</button>
+                <button type="button" onClick={() => { onBackup(); setMoreOpen(false); }}><FolderArchive /> {t("Backup completo")}</button>
+                <button type="button" onClick={() => { onScreen("history"); setMoreOpen(false); }}><History /> {t("Histórico")}</button>
+                <button type="button" onClick={() => { onScreen("compare"); setMoreOpen(false); }}><ArrowDownUp /> {t("Comparar")}</button>
+                {screen === "view" && <button type="button" onClick={() => printSheet("full")}><Printer /> {t("Ficha completa / PDF")}</button>}
+                {screen === "view" && <button type="button" onClick={() => printSheet("compact")}><Printer /> {t("Ficha compacta / PDF")}</button>}
                 {sheet.shareToken && <p className="more-menu-note">{t("O link desta ficha é permanente.")}</p>}
                 <button className="is-danger" type="button" onClick={() => { onDelete(); setMoreOpen(false); }}><Trash2 /> {t("Excluir ficha")}</button>
               </div>

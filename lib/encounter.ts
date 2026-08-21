@@ -73,7 +73,7 @@ export const encounterPressures: readonly EncounterPressure[] = [
 ] as const;
 
 /**
- * Optional Arquivo de Heróis CE table recovered from the project's own
+ * Optional encounter-estimate table recovered from the project's own
  * balance document. This is a project aid, not an official M&M rule.
  */
 export const threatCeByDifference = new Map<number, number>([
@@ -186,7 +186,7 @@ export function analyzeEncounter(
       issues.push({
         participantId: participant.id,
         message:
-          "A diferença de NP está fora da faixa P−4 a P+7 documentada para CE.",
+          "A diferença de NP está fora da faixa P−4 a P+7 documentada para esta estimativa não oficial.",
       });
       continue;
     }

@@ -2,7 +2,7 @@
 
 Aplicativo full-stack, instalável e responsivo para criar, conferir, salvar e compartilhar fichas de **Mutantes & Malfeitores: Quarta Edição**.
 
-A versão 1.0.0 cobre de forma estruturada a compilação fornecida **M&M4e Previews 1–9 editadas** (431 páginas), sempre mantendo o produto como um gerenciador de fichas. O aplicativo identifica esse material como prévia: não afirma incorporar uma edição final posterior que não esteja nas fontes do projeto.
+A versão 1.0.1 cobre de forma estruturada a compilação fornecida **M&M4e Previews 1–9 editadas** (431 páginas), sempre mantendo o produto como um gerenciador de fichas. O aplicativo identifica esse material como prévia: não afirma incorporar uma edição final posterior que não esteja nas fontes do projeto.
 
 ## O que está pronto
 
@@ -13,10 +13,10 @@ A versão 1.0.0 cobre de forma estruturada a compilação fornecida **M&M4e Prev
 - Modo Assistido como padrão: corrige apenas dependências determinísticas, mantém matrizes exclusivas coerentes, cobre PE, limita usos aos recursos realmente comprados e impede a publicação de uma ficha com erro ou pendência. O Modo Livre é uma escolha explícita para regras próprias.
 - Uma única base de cálculo para custos, dependências, limites de NP e auditoria: verde confirma a regra ou uma aprovação consciente; amarelo pode ser mantido, aprovado ou reprovado; vermelho reúne erros objetivos e reprovações; azul identifica regras mais liberais para o Narrador e seus NPCs.
 - Dashboard com recentes, favoritos, campanhas, NPCs, fichas incompletas, alertas e atalhos de RPG; busca universal por fichas, campanhas, regras, opções e notas.
-- Campanhas para reunir fichas, equipes, organizações, locais, recursos, encontros e notas, sem funções de VTT. Relações entre fichas cobrem aliados, inimigos, rivais, mentores, parceiros, invocações, formas, veículos, bases e constructos.
+- Campanhas para reunir fichas, equipes, organizações, locais, recursos, encontros e notas, com exclusão segura sem apagar fichas vinculadas. Relações entre fichas cobrem aliados, inimigos, rivais, mentores, parceiros, invocações, formas, veículos, bases e constructos.
 - Modo de jogo separado dos valores-base, com dano, condições, Pontos Heroicos, Sorte, penalidades, recursos temporários, efeitos ativos e poderes sustentados; restaurar a sessão não altera a construção.
 - Histórico de versões, desfazer/refazer, duplicação, arquivamento, favoritos e backup completo de fichas e campanhas. A importação de backup valida o conjunto e cria cópias com todos os vínculos remapeados.
-- Ferramentas do Narrador com modelos editáveis de NPC, condições e estimativa de encontros. A métrica CE recuperada do próprio projeto é apresentada explicitamente como ferramenta opcional, não como regra oficial de M&M4e.
+- Ferramentas do Narrador com modelos editáveis de NPC, condições e uma estimativa auxiliar de encontros, sempre identificada como opcional e não oficial.
 - Painel numérico da construção, comparação sem previsão de vencedor e impressão completa ou compacta para A4/PDF.
 - Três fichas didáticas mecanicamente distintas — Espectro Rubro NP 8/120 PP, Sentinela Solar NP 10/150 PP e Atlas Zero NP 12/180 PP — com pontos, ataques, resistências, perícias, matrizes e equipamentos auditados automaticamente.
 - Referências pesquisáveis com 145 tópicos de regra e fonte por documento, capítulo e página: 38 condições, 29 ações, 25 perigos ambientais, 4 tipos de cena e 49 regras gerais ou de características. Todos os 625 itens do catálogo também indicam a seção de origem.

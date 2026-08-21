@@ -40,7 +40,7 @@ Uma entrega distribuída em três arquivos contém o código `.tar.gz`, sua soma
 clone do repositório, execute somente:
 
 ```bash
-bash instalar-arquivo-de-herois-v1.0.0.sh
+bash instalar-arquivo-de-herois-v1.0.1.sh
 ```
 
 O instalador confere a soma, cria um bundle Git de segurança antes de alterar o

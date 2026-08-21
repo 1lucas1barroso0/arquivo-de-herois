@@ -67,4 +67,4 @@ A matriz auditável da compilação fornecida fica em `docs/4E-COVERAGE.md`. Ela
 - regra do material 4e fornecido: motor, catálogo, referências e auditoria;
 - interpretação documentada: mantida explícita nas Referências quando a fonte é ambígua;
 - ferramenta auxiliar: análise e comparação numérica, sem julgamento subjetivo;
-- regra opcional do Arquivo de Heróis: CE e leitura de pressão de encontros, sempre rotuladas como estimativa não oficial.
+- ferramenta opcional do projeto: leitura estimada de pressão de encontros, sempre rotulada como não oficial.

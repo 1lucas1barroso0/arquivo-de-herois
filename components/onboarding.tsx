@@ -31,14 +31,14 @@ export function Onboarding({ onCreate }: { onCreate: () => void }) {
     ? [
         ["Create", "Choose New sheet or a quick NPC template."],
         ["Edit", "Quick, Guided, and Free modes always use the same data."],
-        ["Review", "Green confirms; yellow asks for review; red identifies an error; blue informs."],
+        ["Check", "Green confirms; yellow calls for attention; red identifies an error; blue informs."],
         ["Look up", "Search rules and creation options without leaving the app."],
         ["Protect", "Autosave, history, exports, and full backups protect your work."],
       ]
     : [
         ["Crie", "Use Nova ficha ou um modelo rápido de NPC."],
         ["Edite", "Os modos Rápido, Guiado e Livre usam sempre os mesmos dados."],
-        ["Confira", "Verde confirma; amarelo pede revisão; vermelho aponta erro; azul informa."],
+        ["Confira", "Verde confirma; amarelo chama atenção; vermelho aponta erro; azul informa."],
         ["Consulte", "Busque regras e opções de criação sem sair do aplicativo."],
         ["Proteja", "Autosave, histórico, exportações e backup completo protegem seu trabalho."],
       ];

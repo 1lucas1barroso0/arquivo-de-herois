@@ -56,7 +56,10 @@ export function CampaignsWorkspace({
   const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
-    const target = initialCampaignId || summaries.find((entry) => !entry.archived)?.id;
+    const requested = summaries.some((entry) => entry.id === initialCampaignId)
+      ? initialCampaignId
+      : null;
+    const target = requested || summaries.find((entry) => !entry.archived)?.id || summaries[0]?.id;
     if (!target || campaign?.id === target) return;
     let active = true;
     // This effect synchronizes the selected campaign with durable storage.
@@ -129,6 +132,25 @@ export function CampaignsWorkspace({
     }
   }
 
+  async function deleteCurrentCampaign() {
+    if (!campaign?.id || !window.confirm(m("campaign.deleteConfirm"))) return;
+    setBusy(true);
+    try {
+      const response = await apiFetch(`/api/campaigns/${encodeURIComponent(campaign.id)}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("campaign-delete-failed");
+      setCampaign(null);
+      setDirty(false);
+      await onRefresh();
+      notify(m("campaign.deleted"));
+    } catch {
+      notify(m("campaign.deleteError"), "error");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function change(next: Campaign) {
     setCampaign(next);
     setDirty(true);
@@ -151,7 +173,11 @@ export function CampaignsWorkspace({
           <>
             <header className="campaign-editor-head">
               <div><p className="eyebrow">{m("campaign.title")}</p><h1>{campaign.name}</h1></div>
-              <div><span className={dirty ? "is-dirty" : ""}>{m(dirty ? "common.unsaved" : "common.saved")}</span><button className="button button-primary compact" disabled={busy || !dirty} type="button" onClick={() => void saveCampaign()}>{busy ? <LoaderCircle className="spin" /> : <Save />} {m("common.save")}</button></div>
+              <div>
+                <span className={dirty ? "is-dirty" : ""}>{m(dirty ? "common.unsaved" : "common.saved")}</span>
+                <button className="button button-danger compact" disabled={busy} type="button" onClick={() => void deleteCurrentCampaign()}><Trash2 /> {m("campaign.delete")}</button>
+                <button className="button button-primary compact" disabled={busy || !dirty} type="button" onClick={() => void saveCampaign()}>{busy ? <LoaderCircle className="spin" /> : <Save />} {m("common.save")}</button>
+              </div>
             </header>
             <nav className="campaign-tabs" aria-label={m("campaign.sections")}>
               <button className={tab === "overview" ? "is-active" : ""} type="button" onClick={() => setTab("overview")}>{m("campaign.overview")}</button>
@@ -242,7 +268,7 @@ export function EncounterEditor({ encounter, characters, onChange, onDelete }: {
     <header><label><span className="sr-only">{m("campaign.encounterName")}</span><input value={encounter.name} onChange={(event) => onChange({ ...encounter, name: event.target.value })} /></label>{onDelete ? <button type="button" onClick={onDelete} aria-label={m("campaign.deleteEncounter")}><Trash2 /></button> : null}</header>
     <div className="encounter-settings"><label><span>{m("encounter.referencePl")}</span><input type="number" placeholder={String(analysis.referencePowerLevel)} value={encounter.referencePowerLevel ?? ""} onChange={(event) => onChange({ ...encounter, referencePowerLevel: event.target.value === "" ? null : Number(event.target.value) })} /></label><label><span>{m("encounter.pressure")}</span><select value={encounter.pressure} onChange={(event) => onChange({ ...encounter, pressure: event.target.value as EncounterDefinition["pressure"] })}>{encounterPressures.map((entry) => <option key={entry.id} value={entry.id}>{language === "en" ? entry.labelEn : entry.labelPt} · {entry.targetRatio * 100}%</option>)}</select></label></div>
     <div className="encounter-sides">{(["ally", "threat"] as const).map((side) => <section key={side}><header><strong>{side === "ally" ? m("encounter.party") : m("encounter.opposition")}</strong><select aria-label={side === "ally" ? m("encounter.addAlly") : m("encounter.addThreat")} defaultValue="" onChange={(event) => { add(side, event.target.value); event.target.value = ""; }}><option value="" disabled>{side === "ally" ? m("encounter.addAlly") : m("encounter.addThreat")}</option>{characters.map((sheet) => <option key={sheet.id} value={sheet.id}>{sheet.heroName} · {m("common.powerLevelShort")} {sheet.powerLevel}</option>)}</select></header>{encounter.participants.filter((entry) => entry.side === side).map((entry) => <div className="encounter-participant" key={entry.id}><span><strong>{entry.name}</strong><small>{m("common.powerLevelShort")} {entry.powerLevel}</small></span><label><span className="sr-only">{m("encounter.quantity")}</span><input type="number" min="1" value={entry.quantity} onChange={(event) => updateParticipant(entry.id, { quantity: Number(event.target.value) })} /></label><button type="button" onClick={() => onChange({ ...encounter, participants: encounter.participants.filter((candidate) => candidate.id !== entry.id) })} aria-label={m("common.remove")}><Trash2 /></button></div>)}</section>)}</div>
-    <section className="encounter-analysis" aria-label={m("encounter.estimate")}><header><div><p className="eyebrow">{m("encounter.estimate")}</p><h3>{analysis.estimatedPressure ? (language === "en" ? analysis.estimatedPressure.labelEn : analysis.estimatedPressure.labelPt) : "—"}</h3></div><span>{m("common.powerLevelShort")} {analysis.referencePowerLevel}</span></header><div><p><span>{m("encounter.capacity")}</span><strong>{analysis.groupCapacity} CE</strong></p><p><span>{m("encounter.threat")}</span><strong>{analysis.effectiveThreatCe} CE</strong></p><p><span>{m("encounter.difficulty")}</span><strong>{analysis.ratio === null ? "—" : `${Math.round(analysis.ratio * 100)}%`}</strong></p></div><small>{m("encounter.optionalNotice")}</small>{analysis.issues.map((issue) => <p className="encounter-issue" key={`${issue.participantId}:${issue.message}`}><CircleAlert /> {m("encounter.outsideRange")}</p>)}</section>
+    <section className="encounter-analysis" aria-label={m("encounter.estimate")}><header><div><p className="eyebrow">{m("encounter.estimate")}</p><h3>{analysis.estimatedPressure ? (language === "en" ? analysis.estimatedPressure.labelEn : analysis.estimatedPressure.labelPt) : "—"}</h3></div><span>{m("common.powerLevelShort")} {analysis.referencePowerLevel}</span></header><div><p><span>{m("encounter.capacity")}</span><strong>{analysis.groupCapacity}</strong></p><p><span>{m("encounter.threat")}</span><strong>{analysis.effectiveThreatCe}</strong></p><p><span>{m("encounter.difficulty")}</span><strong>{analysis.ratio === null ? "—" : `${Math.round(analysis.ratio * 100)}%`}</strong></p></div><small>{m("encounter.optionalNotice")}</small>{analysis.issues.map((issue) => <p className="encounter-issue" key={`${issue.participantId}:${issue.message}`}><CircleAlert /> {m("encounter.outsideRange")}</p>)}</section>
     <label className="encounter-notes"><span>{m("campaign.encounterNotes")}</span><textarea rows={4} value={encounter.notes} onChange={(event) => onChange({ ...encounter, notes: event.target.value })} /></label>
   </div>;
 }

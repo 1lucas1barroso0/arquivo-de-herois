@@ -41,7 +41,7 @@ modelo novo.
 | Histórico | Revisões limitadas, desfazer/refazer, restauração e duplicação | Restaurar cria nova revisão; nenhuma versão é sobrescrita silenciosamente |
 | Busca universal | Fichas, campanhas, catálogo, regras e notas | Busca local tolerante a acentos/variações, sem publicar conteúdo privado |
 | Ferramentas do Narrador | NPC rápido, encontros e condições | Modelos são atalhos editáveis; estimativas não alteram fichas |
-| Encontros | Abordagem oficial disponível e ferramenta CE opcional do Arquivo de Heróis | Proveniência visível; CE é estimativa mecânica e não regra oficial |
+| Encontros | Abordagem oficial disponível e estimativa auxiliar opcional | Proveniência visível; a estimativa é mecânica e não oficial |
 | Análise | PP, distribuição, ofensiva, defesa, mobilidade, perícias, utilidade e alertas | Mostra números derivados; não atribui nota subjetiva ao personagem |
 | Comparação | Duas fichas lado a lado | Não determina vencedor e não altera as fichas comparadas |
 | Backup | Pacote completo de fichas, campanhas e metadados | Importação valida tudo antes de gravar e nunca substitui por padrão |

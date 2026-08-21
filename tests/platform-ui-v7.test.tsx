@@ -78,9 +78,11 @@ test("the dashboard exposes RPG-focused empty states and actionable summaries", 
   assert.match(html, /Favoritos/);
   assert.match(html, /Ferramentas do Narrador|Narrador/);
   assert.match(html, /Organize fichas e contexto de jogo/);
+  assert.match(html, /fichas incompletas/);
+  assert.doesNotMatch(html, /pedem revisão/);
 });
 
-test("GM tools label CE as an optional estimate, never as an official rule", () => {
+test("GM tools present the optional estimate without naming an unofficial metric", () => {
   const html = renderToStaticMarkup(
     <GmTools
       characters={[]}
@@ -92,9 +94,19 @@ test("GM tools label CE as an optional estimate, never as an official rule", () 
   assert.match(html, /Estimativa mecânica/);
   assert.match(
     html,
-    /CE é uma ferramenta opcional do Arquivo de Heróis, não uma regra oficial de M&amp;M4e/,
+    /ferramenta auxiliar opcional, não uma regra oficial de M&amp;M4e/,
   );
+  assert.doesNotMatch(html, /\bCE\b|VTT/);
   assert.doesNotMatch(html, /resultado garantido|verdade absoluta/i);
+});
+
+test("campaigns expose deletion and translated navigation never breaks words", () => {
+  const campaignSource = readFileSync("components/campaigns-workspace.tsx", "utf8");
+  const css = readFileSync("app/globals.css", "utf8");
+  assert.match(campaignSource, /method: "DELETE"/);
+  assert.match(campaignSource, /campaign\.deleteConfirm/);
+  assert.match(css, /white-space:\s*nowrap/);
+  assert.match(css, /word-break:\s*normal/);
 });
 
 test("every stable interface message has complete PT-BR and English text", () => {
@@ -139,7 +151,7 @@ test("PWA updates are user-controlled, data-safe, and never cache API data", () 
     "utf8",
   );
 
-  assert.match(serviceWorker, /arquivo-herois-v16/);
+  assert.match(serviceWorker, /arquivo-herois-v17/);
   assert.match(serviceWorker, /if \(url\.pathname\.startsWith\("\/api\/"\)\) return/);
   assert.match(serviceWorker, /SKIP_WAITING/);
   assert.match(manager, /hasUnsavedChanges/);

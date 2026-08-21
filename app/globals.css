@@ -9483,6 +9483,76 @@ body {
   }
 }
 
+/* 1.0.1 — keep translated navigation labels intact. */
+.topbar-inner {
+  width: min(1600px, 100%);
+}
+
+.brand strong,
+.topbar nav button {
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.topbar nav button {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 1500px) {
+  .topbar-inner {
+    gap: 10px;
+  }
+
+  .topbar nav button {
+    padding-right: 8px;
+    padding-left: 8px;
+  }
+
+  .topbar-search span,
+  .theme-button span {
+    display: none;
+  }
+}
+
+@media (max-width: 1350px) and (min-width: 681px) {
+  .topbar nav .topbar-utility {
+    width: 38px;
+    padding: 0;
+    overflow: hidden;
+    font-size: 0;
+  }
+}
+
+@media (max-width: 680px) {
+  .topbar-search span,
+  .theme-button span {
+    display: inline;
+  }
+
+  .topbar nav .topbar-utility {
+    width: auto;
+    padding: 0 11px;
+    overflow: visible;
+    font-size: inherit;
+  }
+
+  .sheet-view-options,
+  .sheet-view-mode-toggle {
+    width: 100%;
+  }
+
+  .sheet-view-mode-toggle button {
+    flex: 1 1 0;
+    min-height: 44px;
+  }
+
+  .shared-banner-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
