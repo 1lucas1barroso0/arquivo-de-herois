@@ -214,12 +214,63 @@ function HistoryPanel({ sheet, onChange, apiFetch, notify }: { sheet: CharacterS
   return <section className="sheet-tool-page history-page"><header><div><p className="eyebrow">{m("history.title")}</p><h1>{sheet.heroName}</h1><p>{m("history.description")}</p></div></header>{loading ? <div className="workspace-loading"><LoaderCircle className="spin" /></div> : revisions.length ? <ol>{revisions.map((revision) => <li key={revision.id}><span><History /><span><strong>{revision.label}</strong><small>{new Intl.DateTimeFormat(language === "en" ? "en" : "pt-BR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(revision.createdAt))}</small></span></span><button type="button" onClick={() => void restore(revision.id)}>{m("history.restore")}</button></li>)}</ol> : <p className="inline-empty">{m("history.empty")}</p>}</section>;
 }
 
-function ComparisonPanel({ sheet, characters, apiFetch }: { sheet: CharacterSheet; characters: SheetSummary[]; apiFetch: ApiFetch }) {
-  const { m } = useLocale();
-  const [comparison, setComparison] = useState<CharacterSheet | null>(null);
-  const [loading, setLoading] = useState(false);
-  async function select(id: string) { if (!id) { setComparison(null); return; } setLoading(true); try { const response = await apiFetch(`/api/characters/${encodeURIComponent(id)}`); const payload = (await response.json()) as { character: CharacterSheet }; setComparison(normalizeSheet(payload.character)); } finally { setLoading(false); } }
-  return <section className="sheet-tool-page comparison-page"><header><div><p className="eyebrow">{m("character.compare")}</p><h1>{sheet.heroName}</h1><p>{m("compare.description")}</p></div><select defaultValue="" onChange={(event) => void select(event.target.value)}><option value="">{m("compare.choose")}</option>{characters.filter((entry) => entry.id !== sheet.id).map((entry) => <option key={entry.id} value={entry.id}>{entry.heroName}</option>)}</select></header>{loading ? <div className="workspace-loading"><LoaderCircle className="spin" /></div> : comparison ? <ComparisonTable left={sheet} right={comparison} /> : <p className="inline-empty"><ArrowDownUp /> {m("compare.empty")}</p>}</section>;
+function ComparisonTable({
+  left,
+  right,
+}: {
+  left: CharacterSheet;
+  right: CharacterSheet;
+}) {
+  const { m, t } = useLocale();
+
+  const a = getCharacterAnalysis(left);
+  const b = getCharacterAnalysis(right);
+
+  const leftDerived = getDerivedTraits(left);
+  const rightDerived = getDerivedTraits(right);
+
+  const rows: Array<[string, string | number, string | number]> = [
+    [m("common.powerLevelShort"), a.powerLevel, b.powerLevel],
+    ["PP", `${a.points.spent}/${a.points.budget}`, `${b.points.spent}/${b.points.budget}`],
+    [m("analysis.attacks"), a.offense.attacks, b.offense.attacks],
+
+    [
+      t("Defesa corpo a corpo"),
+      leftDerived.closeDefense,
+      rightDerived.closeDefense,
+    ],
+    [
+      t("Defesa à distância"),
+      leftDerived.rangedDefense,
+      rightDerived.rangedDefense,
+    ],
+
+    ["Dodge", a.defense.dodge, b.defense.dodge],
+    ["Toughness", a.defense.toughness, b.defense.toughness],
+    ["Fortitude", a.defense.fortitude, b.defense.fortitude],
+    ["Will", a.defense.will, b.defense.will],
+
+    [m("analysis.trainedSkills"), a.skills.trained, b.skills.trained],
+    [m("analysis.powers"), a.utility.powers, b.utility.powers],
+  ];
+
+  return (
+    <div className="comparison-table">
+      <header>
+        <span>{m("compare.measure")}</span>
+        <strong>{left.heroName}</strong>
+        <strong>{right.heroName}</strong>
+      </header>
+
+      {rows.map(([label, leftValue, rightValue]) => (
+        <p key={label}>
+          <span>{label}</span>
+          <strong>{leftValue}</strong>
+          <strong>{rightValue}</strong>
+        </p>
+      ))}
+    </div>
+  );
 }
 
 function ComparisonTable({ left, right }: { left: CharacterSheet; right: CharacterSheet }) { const { language, m } = useLocale(); const a = getCharacterAnalysis(left); const b = getCharacterAnalysis(right); const rows: Array<[string, string | number, string | number]> = [["NP / PL", a.powerLevel, b.powerLevel], ["PP", `${a.points.spent}/${a.points.budget}`, `${b.points.spent}/${b.points.budget}`], [m("analysis.attacks"), a.offense.attacks, b.offense.attacks], ["Dodge", a.defense.dodge, b.defense.dodge], [language === "en" ? "Parry" : "Aparar", a.defense.parry, b.defense.parry], ["Toughness", a.defense.toughness, b.defense.toughness], ["Fortitude", a.defense.fortitude, b.defense.fortitude], ["Will", a.defense.will, b.defense.will], [m("analysis.trainedSkills"), a.skills.trained, b.skills.trained], [m("analysis.powers"), a.utility.powers, b.utility.powers]]; return <div className="comparison-table"><header><span>{m("compare.measure")}</span><strong>{left.heroName}</strong><strong>{right.heroName}</strong></header>{rows.map(([label, leftValue, rightValue]) => <p key={label}><span>{label}</span><strong>{leftValue}</strong><strong>{rightValue}</strong></p>)}</div>; }
