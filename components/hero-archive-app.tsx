@@ -2,6 +2,9 @@
 
 import {
   ArrowLeft,
+  ArrowDownUp,
+  Archive,
+  BarChart3,
   BadgeCheck,
   BookOpen,
   ChevronLeft,
@@ -13,7 +16,12 @@ import {
   FileJson,
   FileText,
   Filter,
+  FolderKanban,
   FolderArchive,
+  Gamepad2,
+  Heart,
+  History,
+  Home,
   ImagePlus,
   Import,
   LoaderCircle,
@@ -28,8 +36,11 @@ import {
   Save,
   Search,
   Share2,
+  Shield,
   Sun,
   Trash2,
+  Undo2,
+  Redo2,
   Upload,
   X,
 } from "lucide-react";
@@ -54,6 +65,17 @@ import {
 } from "../lib/portable";
 import { parsePortableShare } from "../lib/portable-share";
 import { translateRuleText } from "../lib/localization";
+import { humanizeError } from "../lib/errors";
+import type { Campaign, CampaignSummary } from "../lib/workspace";
+import {
+  archiveBackupToJson,
+  BACKUP_FORMAT,
+  createArchiveBackup,
+  parseArchiveBackup,
+  remapImportedCampaign,
+  remapImportedCharacter,
+} from "../lib/backup";
+import { addCatalogEntryToSheet } from "../lib/catalog-actions";
 import { isLocalStorageFallbackResponse } from "../lib/storage-mode";
 import {
   createSummary,
@@ -73,6 +95,7 @@ import { SheetViewModeToggle } from "./sheet-view-mode-toggle";
 import { useSheetAuditVisibility } from "./use-sheet-audit-visibility";
 import { useDialogFocus } from "./use-dialog-focus";
 import { useLocale } from "./locale-provider";
+import type { SheetTool } from "./sheet-tools-panel";
 
 const SheetEditor = lazy(async () => ({
   default: (await import("./sheet-editor")).SheetEditor,
@@ -83,8 +106,27 @@ const SheetView = lazy(async () => ({
 const ScaleGuide = lazy(async () => ({
   default: (await import("./scale-guide")).ScaleGuide,
 }));
+const DashboardScreen = lazy(async () => ({
+  default: (await import("./dashboard-screen")).DashboardScreen,
+}));
+const CampaignsWorkspace = lazy(async () => ({
+  default: (await import("./campaigns-workspace")).CampaignsWorkspace,
+}));
+const GmTools = lazy(async () => ({
+  default: (await import("./gm-tools")).GmTools,
+}));
+const UniversalSearch = lazy(async () => ({
+  default: (await import("./universal-search")).UniversalSearch,
+}));
+const Onboarding = lazy(async () => ({
+  default: (await import("./onboarding")).Onboarding,
+}));
+const SheetToolsPanel = lazy(async () => ({
+  default: (await import("./sheet-tools-panel")).SheetToolsPanel,
+}));
 
-type Screen = "library" | "edit" | "view";
+type WorkspaceScreen = "edit" | "view" | SheetTool;
+type Screen = "dashboard" | "library" | "campaigns" | "gm" | WorkspaceScreen;
 type SaveState = "idle" | "dirty" | "saving" | "saved" | "offline" | "error";
 type ToastTone = "success" | "warning" | "error";
 type ThemePreference = "system" | "light" | "dark";
@@ -95,10 +137,16 @@ const THEME_KEY = "arquivo-de-herois:tema:v2";
 const LEGACY_THEME_KEY = "mm4e-theme:v1";
 
 export function HeroArchiveApp() {
-  const { t } = useLocale();
+  const { language, t } = useLocale();
   const [characters, setCharacters] = useState<SheetSummary[]>([]);
+  const [campaigns, setCampaigns] = useState<CampaignSummary[]>([]);
   const [activeSheet, setActiveSheet] = useState<CharacterSheet | null>(null);
-  const [screen, setScreen] = useState<Screen>("library");
+  const [screen, setScreen] = useState<Screen>("dashboard");
+  const [activeCampaignId, setActiveCampaignId] = useState<string | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchSheets, setSearchSheets] = useState<CharacterSheet[]>([]);
+  const [searchCampaigns, setSearchCampaigns] = useState<Campaign[]>([]);
+  const [referenceQuery, setReferenceQuery] = useState("");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<"updated" | "name" | "pl">("updated");
   const [loading, setLoading] = useState(true);
@@ -126,6 +174,18 @@ export function HeroArchiveApp() {
   const automationNotice = useRef({ signature: "", time: 0 });
   const preferencesLoaded = useRef(false);
   const localStorageMode = useRef(false);
+  const undoStack = useRef<CharacterSheet[]>([]);
+  const redoStack = useRef<CharacterSheet[]>([]);
+  const lastUndoSnapshot = useRef(0);
+
+  const showToast = useCallback((message: string, tone: ToastTone = "success") => {
+    const next = { message, tone };
+    setToast(next);
+    window.setTimeout(
+      () => setToast((current) => (current?.message === message ? null : current)),
+      4200,
+    );
+  }, []);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -136,7 +196,11 @@ export function HeroArchiveApp() {
         readBrowserStorage(THEME_KEY) ??
         readBrowserStorage(LEGACY_THEME_KEY);
       preferencesLoaded.current = true;
-      if (storedMode === "guided" || storedMode === "free") {
+      if (
+        storedMode === "quick" ||
+        storedMode === "guided" ||
+        storedMode === "free"
+      ) {
         setEditingMode(storedMode);
       }
       if (
@@ -241,11 +305,18 @@ export function HeroArchiveApp() {
     return payload.characters;
   }, [apiFetch]);
 
+  const refreshCampaigns = useCallback(async () => {
+    const response = await apiFetch("/api/campaigns");
+    const payload = (await response.json()) as { campaigns: CampaignSummary[] };
+    setCampaigns(payload.campaigns);
+    return payload.campaigns;
+  }, [apiFetch]);
+
   useEffect(() => {
     // External synchronization: hydrate the UI from the durable API.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    void refreshList()
-      .then(async (items) => {
+    void Promise.all([refreshList(), refreshCampaigns()])
+      .then(async ([items]) => {
         const requestedId =
           readBrowserStorage(OPEN_CHARACTER_KEY) ??
           readBrowserStorage(LEGACY_OPEN_CHARACTER_KEY);
@@ -254,7 +325,11 @@ export function HeroArchiveApp() {
           const response = await apiFetch(`/api/characters/${target.id}`);
           const payload = (await response.json()) as { character: CharacterSheet };
           const pending = readPendingSheet(target.id);
-          setActiveSheet(pending || normalizeSheet(payload.character));
+          const opened = pending || normalizeSheet(payload.character);
+          setActiveSheet(opened);
+          setEditingMode(opened.creationMode);
+          undoStack.current = [];
+          redoStack.current = [];
           if (pending) setSaveState("offline");
           if (requestedId === target.id) {
             removeBrowserStorage(
@@ -265,9 +340,9 @@ export function HeroArchiveApp() {
           }
         }
       })
-      .catch((error) => showToast(error instanceof Error ? error.message : "Erro ao carregar.", "error"))
+      .catch((error) => showToast(humanizeError(error, "Não foi possível abrir o arquivo.", language, "The archive could not be opened."), "error"))
       .finally(() => setLoading(false));
-  }, [apiFetch, refreshList]);
+  }, [apiFetch, language, refreshCampaigns, refreshList, showToast]);
 
   useEffect(() => {
     if (loading || bootActionHandled.current) return;
@@ -293,7 +368,7 @@ export function HeroArchiveApp() {
     window.addEventListener("online", synchronize);
     if (navigator.onLine) synchronize();
     return () => window.removeEventListener("online", synchronize);
-  }, [apiFetch, refreshList]);
+  }, [apiFetch, refreshList, showToast]);
 
   useEffect(() => {
     latestSheet.current = activeSheet;
@@ -337,11 +412,22 @@ export function HeroArchiveApp() {
       const payload = (await response.json()) as { character: CharacterSheet };
       const sheet = normalizeSheet(payload.character);
       setActiveSheet(sheet);
+      setEditingMode(sheet.creationMode);
+      undoStack.current = [];
+      redoStack.current = [];
       setSaveState("idle");
       if (nextScreen) setScreen(nextScreen);
       return sheet;
     } catch (error) {
-      showToast(error instanceof Error ? error.message : "Não foi possível abrir a ficha.", "error");
+      showToast(
+        humanizeError(
+          error,
+          "Não foi possível abrir a ficha.",
+          language,
+          "The sheet could not be opened.",
+        ),
+        "error",
+      );
       return null;
     } finally {
       setLoadingSheet(false);
@@ -351,12 +437,14 @@ export function HeroArchiveApp() {
   async function createSheet(template?: CharacterSheet) {
     try {
       let draft = template ? normalizeSheet(template) : createEmptySheet();
+      draft = { ...draft, creationMode: editingMode };
       if (editingMode === "guided") {
         draft = applyGuidedAutomation(draft).sheet;
       }
       draft.id = "";
       draft.shareEnabled = false;
       draft.shareToken = null;
+      draft.shareMode = "duplicable";
       const response = await apiFetch("/api/characters", {
         method: "POST",
         body: JSON.stringify({ sheet: draft }),
@@ -364,12 +452,22 @@ export function HeroArchiveApp() {
       const payload = (await response.json()) as { character: CharacterSheet };
       const sheet = normalizeSheet(payload.character);
       setActiveSheet(sheet);
+      undoStack.current = [];
+      redoStack.current = [];
       setCharacters((current) => [summaryFromSheet(sheet), ...current]);
       setSaveState("saved");
       setScreen("edit");
       showToast(template ? "Ficha importada com sucesso." : "Nova ficha criada.");
     } catch (error) {
-      showToast(error instanceof Error ? error.message : "Não foi possível criar a ficha.", "error");
+      showToast(
+        humanizeError(
+          error,
+          "Não foi possível criar a ficha.",
+          language,
+          "The sheet could not be created.",
+        ),
+        "error",
+      );
     }
   }
 
@@ -426,12 +524,31 @@ export function HeroArchiveApp() {
         return false;
       }
       setSaveState("error");
-      showToast(error instanceof Error ? error.message : "Erro ao salvar.", "error");
+      showToast(
+        humanizeError(
+          error,
+          "Não foi possível salvar a ficha.",
+          language,
+          "The sheet could not be saved.",
+        ),
+        "error",
+      );
       return false;
     }
   }
 
   function updateSheet(sheet: CharacterSheet) {
+    const previous = latestSheet.current;
+    const now = Date.now();
+    if (
+      previous?.id === sheet.id &&
+      JSON.stringify(previous) !== JSON.stringify(sheet) &&
+      (now - lastUndoSnapshot.current > 500 || undoStack.current.length === 0)
+    ) {
+      undoStack.current = [...undoStack.current.slice(-49), previous];
+      redoStack.current = [];
+      lastUndoSnapshot.current = now;
+    }
     const result =
       editingMode === "guided"
         ? applyGuidedAutomation(sheet)
@@ -451,20 +568,46 @@ export function HeroArchiveApp() {
     }
   }
 
+  function undoSheet() {
+    if (!activeSheet || !undoStack.current.length) return;
+    const previous = undoStack.current.at(-1);
+    if (!previous) return;
+    undoStack.current = undoStack.current.slice(0, -1);
+    redoStack.current = [...redoStack.current.slice(-49), activeSheet];
+    setActiveSheet(previous);
+    setEditingMode(previous.creationMode);
+    setSaveState("dirty");
+  }
+
+  function redoSheet() {
+    if (!activeSheet || !redoStack.current.length) return;
+    const next = redoStack.current.at(-1);
+    if (!next) return;
+    redoStack.current = redoStack.current.slice(0, -1);
+    undoStack.current = [...undoStack.current.slice(-49), activeSheet];
+    setActiveSheet(next);
+    setEditingMode(next.creationMode);
+    setSaveState("dirty");
+  }
+
   function changeEditingMode(mode: EditingMode) {
     setEditingMode(mode);
-    if (mode !== "guided" || !activeSheet) return;
-    const result = applyGuidedAutomation(activeSheet);
-    if (result.changes.length) {
-      setActiveSheet(result.sheet);
+    if (!activeSheet) return;
+    const modeSheet = { ...activeSheet, creationMode: mode };
+    if (mode !== "guided") {
+      setActiveSheet(modeSheet);
       setSaveState("dirty");
-      showToast(
-        `Proteção assistida aplicada: ${result.changes.join(" ")}`,
-        "warning",
-      );
-    } else {
-      showToast("Proteção assistida ativada.");
+      return;
     }
+    const result = applyGuidedAutomation(modeSheet);
+    setActiveSheet(result.sheet);
+    setSaveState("dirty");
+    showToast(
+      result.changes.length
+        ? `Proteção guiada aplicada: ${result.changes.join(" ")}`
+        : "Criação guiada ativada.",
+      result.changes.length ? "warning" : "success",
+    );
   }
 
   async function removeCharacter() {
@@ -478,7 +621,15 @@ export function HeroArchiveApp() {
       }
       showToast("Ficha excluída.");
     } catch (error) {
-      showToast(error instanceof Error ? error.message : "Não foi possível excluir.", "error");
+      showToast(
+        humanizeError(
+          error,
+          "Não foi possível excluir a ficha.",
+          language,
+          "The sheet could not be deleted.",
+        ),
+        "error",
+      );
     } finally {
       setDeleteTarget(null);
     }
@@ -496,13 +647,23 @@ export function HeroArchiveApp() {
       updateSheet({ ...activeSheet, imageUrl: payload.url });
       showToast("Imagem anexada.");
     } catch (error) {
-      showToast(error instanceof Error ? error.message : "Falha ao enviar a imagem.", "error");
+      showToast(
+        humanizeError(
+          error,
+          "Não foi possível anexar a imagem.",
+          language,
+          "The image could not be attached.",
+        ),
+        "error",
+      );
     } finally {
       setImageUploading(false);
     }
   }
 
-  async function shareSheet() {
+  async function shareSheet(
+    mode: CharacterSheet["shareMode"] = activeSheet?.shareMode ?? "duplicable",
+  ) {
     if (!activeSheet) return;
     if (editingMode === "guided") {
       const audit = getRuleAudit(activeSheet);
@@ -529,19 +690,25 @@ export function HeroArchiveApp() {
       }
       const response = await apiFetch(`/api/characters/${activeSheet.id}/share`, {
         method: "POST",
-        body: JSON.stringify({ enabled: true }),
+        body: JSON.stringify({ enabled: true, mode }),
       });
       const payload = (await response.json()) as {
         token?: string | null;
         path?: string;
         portableUrl?: string;
+        mode?: CharacterSheet["shareMode"];
       };
       const url = payload.portableUrl
         ? payload.portableUrl
         : new URL(payload.path || "/", window.location.origin).toString();
       await copyToClipboard(url);
       const shareToken = payload.token || null;
-      setActiveSheet({ ...activeSheet, shareEnabled: Boolean(shareToken), shareToken });
+      setActiveSheet({
+        ...activeSheet,
+        shareEnabled: Boolean(shareToken),
+        shareToken,
+        shareMode: payload.mode ?? mode,
+      });
       setCharacters((current) =>
         current.map((item) =>
           item.id === activeSheet.id
@@ -557,7 +724,15 @@ export function HeroArchiveApp() {
             : "Link permanente criado e copiado.",
       );
     } catch (error) {
-      showToast(error instanceof Error ? error.message : "Não foi possível compartilhar.", "error");
+      showToast(
+        humanizeError(
+          error,
+          "Não foi possível compartilhar a ficha.",
+          language,
+          "The sheet could not be shared.",
+        ),
+        "error",
+      );
     }
   }
 
@@ -569,18 +744,130 @@ export function HeroArchiveApp() {
     showToast(`Ficha exportada em ${format.toUpperCase()}.`);
   }
 
+  async function loadCompleteArchive() {
+    const [sheets, fullCampaigns] = await Promise.all([
+      Promise.all(
+        characters.map(async (summary) => {
+          if (activeSheet?.id === summary.id) return activeSheet;
+          const response = await apiFetch(`/api/characters/${encodeURIComponent(summary.id)}`);
+          const payload = (await response.json()) as { character: CharacterSheet };
+          return normalizeSheet(payload.character);
+        }),
+      ),
+      Promise.all(
+        campaigns.map(async (summary) => {
+          const response = await apiFetch(`/api/campaigns/${encodeURIComponent(summary.id)}`);
+          const payload = (await response.json()) as { campaign: Campaign };
+          return payload.campaign;
+        }),
+      ),
+    ]);
+    return { sheets, campaigns: fullCampaigns };
+  }
+
+  async function exportBackup() {
+    try {
+      const complete = await loadCompleteArchive();
+      downloadText(
+        archiveBackupToJson(createArchiveBackup(complete.sheets, complete.campaigns)),
+        `arquivo-de-herois-backup-${new Date().toISOString().slice(0, 10)}.json`,
+        "application/json",
+      );
+      showToast(language === "en" ? "Full backup exported." : "Backup completo exportado.");
+    } catch (error) {
+      showToast(
+        humanizeError(error, "Não foi possível criar o backup.", language, "The backup could not be created."),
+        "error",
+      );
+    }
+  }
+
+  async function openUniversalSearch() {
+    setSearchOpen(true);
+    try {
+      const complete = await loadCompleteArchive();
+      setSearchSheets(complete.sheets);
+      setSearchCampaigns(complete.campaigns);
+    } catch (error) {
+      showToast(
+        humanizeError(error, "A busca abriu apenas com os dados já carregados.", language, "Search opened with the data already loaded."),
+        "warning",
+      );
+      setSearchSheets(activeSheet ? [activeSheet] : []);
+    }
+  }
+
+  async function updateSheetMetadata(
+    summary: SheetSummary,
+    values: Partial<Pick<CharacterSheet, "favorite" | "archived">>,
+  ) {
+    try {
+      let source = activeSheet?.id === summary.id ? activeSheet : null;
+      if (!source) {
+        const sourceResponse = await apiFetch(
+          `/api/characters/${encodeURIComponent(summary.id)}`,
+        );
+        const sourcePayload = (await sourceResponse.json()) as {
+          character: CharacterSheet;
+        };
+        source = normalizeSheet(sourcePayload.character);
+      }
+      const changed = { ...source, ...values };
+      const response = await apiFetch(`/api/characters/${encodeURIComponent(summary.id)}`, {
+        method: "PUT",
+        body: JSON.stringify({ sheet: changed }),
+      });
+      const payload = (await response.json()) as { character: CharacterSheet };
+      const saved = normalizeSheet(payload.character);
+      if (activeSheet?.id === saved.id) setActiveSheet(saved);
+      await refreshList();
+      showToast(
+        values.favorite !== undefined
+          ? values.favorite
+            ? language === "en" ? "Added to favorites." : "Ficha adicionada aos favoritos."
+            : language === "en" ? "Removed from favorites." : "Ficha removida dos favoritos."
+          : values.archived
+            ? language === "en" ? "Sheet archived." : "Ficha arquivada."
+            : language === "en" ? "Sheet unarchived." : "Ficha desarquivada.",
+      );
+    } catch (error) {
+      showToast(
+        humanizeError(error, "Não foi possível atualizar a ficha.", language),
+        "error",
+      );
+    }
+  }
+
   async function importSheet(file: File) {
     try {
       const text = await file.text();
       await importFromText(text);
     } catch (error) {
-      showToast(error instanceof Error ? error.message : "Não foi possível importar esta ficha.", "error");
+      showToast(
+        humanizeError(
+          error,
+          "Não foi possível importar esta ficha.",
+          language,
+          "This sheet could not be imported.",
+        ),
+        "error",
+      );
     } finally {
       if (importRef.current) importRef.current.value = "";
     }
   }
 
   async function importFromText(text: string) {
+    const parsedJson = tryParseJson(text);
+    if (
+      parsedJson &&
+      typeof parsedJson === "object" &&
+      (parsedJson as { format?: unknown }).format === BACKUP_FORMAT
+    ) {
+      await importBackup(text);
+      setImportOpen(false);
+      return;
+    }
     const portableShare = await parsePortableShare(text);
     if (portableShare) {
       await createSheet(portableShare);
@@ -601,12 +888,57 @@ export function HeroArchiveApp() {
     setImportOpen(false);
   }
 
-  function showToast(message: string, tone: ToastTone = "success") {
-    const next = { message, tone };
-    setToast(next);
-    window.setTimeout(
-      () => setToast((current) => (current?.message === message ? null : current)),
-      4200,
+  async function importBackup(text: string) {
+    const backup = parseArchiveBackup(text);
+    const idMap = new Map<string, string>();
+    const createdSheets = new Map<string, CharacterSheet>();
+    for (const source of backup.characters) {
+      const oldId = source.id;
+      const response = await apiFetch("/api/characters", {
+        method: "POST",
+        body: JSON.stringify({
+          sheet: { ...source, id: "", shareEnabled: false, shareToken: null },
+        }),
+      });
+      const payload = (await response.json()) as { character: CharacterSheet };
+      const created = normalizeSheet(payload.character);
+      if (oldId) {
+        idMap.set(oldId, created.id);
+        createdSheets.set(oldId, created);
+      }
+    }
+    const campaignIdMap = new Map<string, string>();
+    for (const source of backup.campaigns) {
+      const response = await apiFetch("/api/campaigns", {
+        method: "POST",
+        body: JSON.stringify({
+          campaign: remapImportedCampaign(source, idMap),
+        }),
+      });
+      const payload = (await response.json()) as { campaign: Campaign };
+      if (source.id) campaignIdMap.set(source.id, payload.campaign.id);
+    }
+    for (const source of backup.characters) {
+      const created = source.id ? createdSheets.get(source.id) : undefined;
+      if (!created) continue;
+      const remapped = remapImportedCharacter(source, idMap, campaignIdMap);
+      await apiFetch(`/api/characters/${encodeURIComponent(created.id)}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          sheet: {
+            ...remapped,
+            id: created.id,
+            createdAt: created.createdAt,
+            updatedAt: created.updatedAt,
+          },
+        }),
+      });
+    }
+    await Promise.all([refreshList(), refreshCampaigns()]);
+    showToast(
+      language === "en"
+        ? `Backup imported as ${backup.characters.length} new sheets and ${backup.campaigns.length} new campaigns.`
+        : `Backup importado como ${backup.characters.length} novas fichas e ${backup.campaigns.length} novas campanhas.`,
     );
   }
 
@@ -626,16 +958,27 @@ export function HeroArchiveApp() {
         screen={screen}
         mobileMenu={mobileMenu}
         setMobileMenu={setMobileMenu}
-        onBack={() => setScreen("library")}
+        onDashboard={() => setScreen("dashboard")}
+        onCharacters={() => setScreen("library")}
+        onCampaigns={() => setScreen("campaigns")}
+        onGmTools={() => setScreen("gm")}
+        onSearch={() => void openUniversalSearch()}
         onNew={() => void createSheet()}
         onImport={() => setImportOpen(true)}
         onInstall={() => window.dispatchEvent(new CustomEvent("arquivo-de-herois:instalar"))}
-        onScales={() => setScaleOpen(true)}
+        onScales={() => {
+          setReferenceQuery("");
+          setScaleOpen(true);
+        }}
         themePreference={themePreference}
         onThemePreference={setThemePreference}
       />
 
       <PwaManager hasUnsavedChanges={saveState === "dirty" || saveState === "saving" || saveState === "offline"} />
+
+      <Suspense fallback={null}>
+        <Onboarding onCreate={() => void createSheet()} />
+      </Suspense>
 
       <input
         className="sr-only"
@@ -648,6 +991,24 @@ export function HeroArchiveApp() {
           if (file) void importSheet(file);
         }}
       />
+
+      {screen === "dashboard" && (
+        <Suspense fallback={<div className="workspace-loading"><LoaderCircle className="spin" /></div>}>
+          <DashboardScreen
+            characters={characters}
+            campaigns={campaigns}
+            onOpenSheet={(id) => void loadSheet(id, "edit")}
+            onNewSheet={() => void createSheet()}
+            onCharacters={() => setScreen("library")}
+            onCampaigns={() => setScreen("campaigns")}
+            onGmTools={() => setScreen("gm")}
+            onReferences={() => {
+              setReferenceQuery("");
+              setScaleOpen(true);
+            }}
+          />
+        </Suspense>
+      )}
 
       {screen === "library" && (
         <LibraryScreen
@@ -664,6 +1025,9 @@ export function HeroArchiveApp() {
           onEdit={(id) => void loadSheet(id, "edit")}
           onView={(id) => void loadSheet(id, "view")}
           onDelete={setDeleteTarget}
+          onDuplicate={(sheet) => void loadSheet(sheet.id).then((loaded) => loaded && createSheet({ ...loaded, heroName: `${loaded.heroName} · ${language === "en" ? "Copy" : "Cópia"}` }))}
+          onFavorite={(sheet) => void updateSheetMetadata(sheet, { favorite: !sheet.favorite })}
+          onArchive={(sheet) => void updateSheetMetadata(sheet, { archived: !sheet.archived })}
           onNew={() => void createSheet()}
           onRailScroll={(direction) =>
             railRef.current?.scrollBy({ left: direction * 420, behavior: "smooth" })
@@ -671,7 +1035,34 @@ export function HeroArchiveApp() {
         />
       )}
 
-      {(screen === "edit" || screen === "view") && activeSheet && (
+      {screen === "campaigns" && (
+        <Suspense fallback={<div className="workspace-loading"><LoaderCircle className="spin" /></div>}>
+          <CampaignsWorkspace
+            summaries={campaigns}
+            characters={characters.filter((entry) => !entry.archived)}
+            initialCampaignId={activeCampaignId}
+            apiFetch={apiFetch}
+            onRefresh={refreshCampaigns}
+            onOpenSheet={(id) => void loadSheet(id, "edit")}
+            notify={showToast}
+          />
+        </Suspense>
+      )}
+
+      {screen === "gm" && (
+        <Suspense fallback={<div className="workspace-loading"><LoaderCircle className="spin" /></div>}>
+          <GmTools
+            characters={characters.filter((entry) => !entry.archived)}
+            onCreateNpc={(sheet) => void createSheet(sheet)}
+            onOpenReferences={(value = "") => {
+              setReferenceQuery(value);
+              setScaleOpen(true);
+            }}
+          />
+        </Suspense>
+      )}
+
+      {isWorkspaceScreen(screen) && activeSheet && (
         <Workspace
           sheet={activeSheet}
           screen={screen}
@@ -685,13 +1076,40 @@ export function HeroArchiveApp() {
           showAudit={showViewAudit}
           onShowAudit={setShowViewAudit}
           onImageUpload={uploadImage}
-          onShare={() => void shareSheet()}
+          onShare={(mode) => void shareSheet(mode)}
           onExport={exportSheet}
+          onBackup={() => void exportBackup()}
           onDelete={() => {
             const summary = characters.find((item) => item.id === activeSheet.id);
             if (summary) setDeleteTarget(summary);
           }}
+          onUndo={undoSheet}
+          onRedo={redoSheet}
+          canUndo={undoStack.current.length > 0}
+          canRedo={redoStack.current.length > 0}
+          characters={characters}
+          apiFetch={apiFetch}
+          notify={showToast}
         />
+      )}
+
+      {searchOpen && (
+        <Suspense fallback={null}>
+          <UniversalSearch
+            characters={searchSheets.length ? searchSheets : activeSheet ? [activeSheet] : []}
+            campaigns={searchCampaigns}
+            onClose={() => setSearchOpen(false)}
+            onSheet={(id) => void loadSheet(id, "edit")}
+            onCampaign={(id) => {
+              setActiveCampaignId(id);
+              setScreen("campaigns");
+            }}
+            onReference={(value) => {
+              setReferenceQuery(value);
+              setScaleOpen(true);
+            }}
+          />
+        </Suspense>
       )}
 
       {importOpen && (
@@ -706,6 +1124,12 @@ export function HeroArchiveApp() {
         <Suspense fallback={null}>
           <ScaleGuide
             initialPowerLevel={activeSheet?.powerLevel ?? 10}
+            initialQuery={referenceQuery}
+            onAddCatalog={activeSheet ? (groupId, entryId) => {
+              const result = addCatalogEntryToSheet(activeSheet, groupId, entryId);
+              if (result.changed) updateSheet(result.sheet);
+              showToast(language === "en" ? result.messageEn : result.messagePt, result.changed ? "success" : "warning");
+            } : undefined}
             onClose={() => setScaleOpen(false)}
             open
           />
@@ -753,7 +1177,11 @@ function Topbar({
   screen,
   mobileMenu,
   setMobileMenu,
-  onBack,
+  onDashboard,
+  onCharacters,
+  onCampaigns,
+  onGmTools,
+  onSearch,
   onNew,
   onImport,
   onInstall,
@@ -764,7 +1192,11 @@ function Topbar({
   screen: Screen;
   mobileMenu: boolean;
   setMobileMenu: (value: boolean) => void;
-  onBack: () => void;
+  onDashboard: () => void;
+  onCharacters: () => void;
+  onCampaigns: () => void;
+  onGmTools: () => void;
+  onSearch: () => void;
   onNew: () => void;
   onImport: () => void;
   onInstall: () => void;
@@ -772,7 +1204,7 @@ function Topbar({
   themePreference: ThemePreference;
   onThemePreference: (value: ThemePreference) => void;
 }) {
-  const { language, setLanguage, t } = useLocale();
+  const { language, setLanguage, m, t } = useLocale();
 
   function run(action: () => void) {
     setMobileMenu(false);
@@ -785,11 +1217,17 @@ function Topbar({
         <button className="mobile-menu-button" type="button" onClick={() => setMobileMenu(!mobileMenu)} aria-label={t(mobileMenu ? "Fechar menu" : "Abrir menu")} aria-expanded={mobileMenu}>
           {mobileMenu ? <X /> : <Menu />}
         </button>
-        <button aria-label="Arquivo de Heróis" className="brand" type="button" onClick={() => run(onBack)}>
+        <button aria-label="Arquivo de Heróis" className="brand" type="button" onClick={() => run(onDashboard)}>
           <BrandMark />
           <span><strong>Arquivo de Heróis</strong></span>
         </button>
         <nav className={mobileMenu ? "is-open" : ""}>
+          <button className={screen === "dashboard" ? "is-active" : ""} type="button" onClick={() => run(onDashboard)}><Home size={16} /> {m("nav.dashboard")}</button>
+          <button className={screen === "library" ? "is-active" : ""} type="button" onClick={() => run(onCharacters)}><FolderArchive size={16} /> {m("nav.characters")}</button>
+          <button className={screen === "campaigns" ? "is-active" : ""} type="button" onClick={() => run(onCampaigns)}><FolderKanban size={16} /> {m("nav.campaigns")}</button>
+          <button className={screen === "gm" ? "is-active" : ""} type="button" onClick={() => run(onGmTools)}><Shield size={16} /> {m("nav.gmTools")}</button>
+          <button type="button" onClick={() => run(onScales)}><BookOpen size={16} /> {m("nav.references")}</button>
+          <button className="topbar-search" type="button" onClick={() => run(onSearch)} aria-label={m("search.label")}><Search size={16} /><span>{m("search.label")}</span></button>
           <button
             className="theme-button"
             type="button"
@@ -811,11 +1249,10 @@ function Topbar({
             <Languages size={16} aria-hidden="true" />
             <span>{language === "pt" ? "PT" : "EN"}</span>
           </button>
-          <button type="button" onClick={() => run(onScales)}><BookOpen size={16} /> {t("Referências")}</button>
-          {screen === "library" && (
+          {!isWorkspaceScreen(screen) && (
             <>
-              <button type="button" onClick={() => run(onImport)}><Import size={16} /> {t("Importar")}</button>
-              <button type="button" onClick={() => run(onInstall)}><Download size={16} /> {t("Instalar app")}</button>
+              <button className="topbar-utility" type="button" onClick={() => run(onImport)}><Import size={16} /> {t("Importar")}</button>
+              <button className="topbar-utility" type="button" onClick={() => run(onInstall)}><Download size={16} /> {t("Instalar app")}</button>
               <button className="topbar-cta" type="button" onClick={() => run(onNew)}><Plus size={16} /> {t("Nova ficha")}</button>
             </>
           )}
@@ -839,6 +1276,9 @@ function LibraryScreen({
   onEdit,
   onView,
   onDelete,
+  onDuplicate,
+  onFavorite,
+  onArchive,
   onNew,
   onRailScroll,
 }: {
@@ -855,6 +1295,9 @@ function LibraryScreen({
   onEdit: (id: string) => void;
   onView: (id: string) => void;
   onDelete: (sheet: SheetSummary) => void;
+  onDuplicate: (sheet: SheetSummary) => void;
+  onFavorite: (sheet: SheetSummary) => void;
+  onArchive: (sheet: SheetSummary) => void;
   onNew: () => void;
   onRailScroll: (direction: number) => void;
 }) {
@@ -914,6 +1357,9 @@ function LibraryScreen({
                   onEdit={() => onEdit(sheet.id)}
                   onView={() => onView(sheet.id)}
                   onDelete={() => onDelete(sheet)}
+                  onDuplicate={() => onDuplicate(sheet)}
+                  onFavorite={() => onFavorite(sheet)}
+                  onArchive={() => onArchive(sheet)}
                 />
               ))}
             </div>
@@ -940,6 +1386,9 @@ function CharacterCard({
   onEdit,
   onView,
   onDelete,
+  onDuplicate,
+  onFavorite,
+  onArchive,
 }: {
   sheet: SheetSummary;
   active: boolean;
@@ -947,12 +1396,15 @@ function CharacterCard({
   onEdit: () => void;
   onView: () => void;
   onDelete: () => void;
+  onDuplicate: () => void;
+  onFavorite: () => void;
+  onArchive: () => void;
 }) {
   const [menu, setMenu] = useState(false);
   const { language, t } = useLocale();
   return (
     <article
-      className={`character-card ${active ? "is-active" : ""}`}
+      className={`character-card ${active ? "is-active" : ""} ${sheet.archived ? "is-archived" : ""}`}
       style={{ "--card-accent": sheet.accent } as React.CSSProperties}
     >
       <button className="card-select-hitbox" type="button" onClick={onSelect} aria-label={`${language === "en" ? "Select" : "Selecionar"} ${sheet.heroName}`} />
@@ -975,6 +1427,9 @@ function CharacterCard({
           <div className="card-menu">
             <button type="button" onClick={(event) => { event.stopPropagation(); onView(); setMenu(false); }}><Eye /> {t("Visualizar")}</button>
             <button type="button" onClick={(event) => { event.stopPropagation(); onEdit(); setMenu(false); }}><Pencil /> {t("Editar")}</button>
+            <button type="button" onClick={(event) => { event.stopPropagation(); onFavorite(); setMenu(false); }}><Heart /> {language === "en" ? (sheet.favorite ? "Remove favorite" : "Favorite") : (sheet.favorite ? "Remover favorito" : "Favoritar")}</button>
+            <button type="button" onClick={(event) => { event.stopPropagation(); onDuplicate(); setMenu(false); }}><FileText /> {language === "en" ? "Duplicate" : "Duplicar"}</button>
+            <button type="button" onClick={(event) => { event.stopPropagation(); onArchive(); setMenu(false); }}><Archive /> {language === "en" ? (sheet.archived ? "Unarchive" : "Archive") : (sheet.archived ? "Desarquivar" : "Arquivar")}</button>
             <button className="is-danger" type="button" onClick={(event) => { event.stopPropagation(); onDelete(); setMenu(false); }}><Trash2 /> {t("Excluir")}</button>
           </div>
         )}
@@ -988,6 +1443,8 @@ function CharacterCard({
       </div>
       <footer>
         <span><FileText /> {sheet.pointsSpent}/{sheet.pointsTotal} PP</span>
+        {sheet.favorite && <span><Heart /> {language === "en" ? "Favorite" : "Favorito"}</span>}
+        {sheet.archived && <span><Archive /> {language === "en" ? "Archived" : "Arquivada"}</span>}
         {sheet.shareEnabled && <span><Share2 /> {t("Link ativo")}</span>}
       </footer>
     </article>
@@ -1095,10 +1552,18 @@ function Workspace({
   onImageUpload,
   onShare,
   onExport,
+  onBackup,
   onDelete,
+  onUndo,
+  onRedo,
+  canUndo,
+  canRedo,
+  characters,
+  apiFetch,
+  notify,
 }: {
   sheet: CharacterSheet;
-  screen: "edit" | "view";
+  screen: WorkspaceScreen;
   saveState: SaveState;
   imageUploading: boolean;
   onScreen: (screen: Screen) => void;
@@ -1109,12 +1574,26 @@ function Workspace({
   showAudit: boolean;
   onShowAudit: (visible: boolean) => void;
   onImageUpload: (file: File) => Promise<void>;
-  onShare: () => void;
+  onShare: (mode?: CharacterSheet["shareMode"]) => void;
   onExport: (format: "json" | "txt") => void;
+  onBackup: () => void;
   onDelete: () => void;
+  onUndo: () => void;
+  onRedo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
+  characters: SheetSummary[];
+  apiFetch: (url: string, init?: RequestInit) => Promise<Response>;
+  notify: (message: string, tone?: ToastTone) => void;
 }) {
   const [moreOpen, setMoreOpen] = useState(false);
+  const [printMode, setPrintMode] = useState<"full" | "compact">("full");
   const { t } = useLocale();
+  function printSheet(mode: "full" | "compact") {
+    setPrintMode(mode);
+    setMoreOpen(false);
+    window.setTimeout(() => window.print(), 0);
+  }
   return (
     <div className="workspace-page">
       <header className="workspace-toolbar">
@@ -1124,9 +1603,11 @@ function Workspace({
             <p className="eyebrow">
               {screen === "edit"
                 ? t("Editando a ficha")
-                : showAudit
+                : screen === "view" && showAudit
                   ? t("Visualização com auditoria")
-                  : t("Visualização limpa")}
+                  : screen === "view"
+                    ? t("Visualização limpa")
+                    : toolScreenLabel(screen, t)}
             </p>
             <h1>{sheet.heroName}</h1>
           </div>
@@ -1134,18 +1615,29 @@ function Workspace({
         <div className="workspace-tabs" role="tablist">
           <button className={screen === "edit" ? "is-active" : ""} type="button" onClick={() => onScreen("edit")}><Pencil /> {t("Editar")}</button>
           <button className={screen === "view" ? "is-active" : ""} type="button" onClick={() => onScreen("view")}><Eye /> {t("Visualizar")}</button>
+          <button className={screen === "analysis" ? "is-active" : ""} type="button" onClick={() => onScreen("analysis")}><BarChart3 /> Análise</button>
+          <button className={screen === "session" ? "is-active" : ""} type="button" onClick={() => onScreen("session")}><Gamepad2 /> Sessão</button>
+          <button className={screen === "relations" ? "is-active" : ""} type="button" onClick={() => onScreen("relations")}><Share2 /> Vínculos</button>
         </div>
         <div className="workspace-actions">
           <SaveIndicator state={saveState} />
-          {screen === "edit" && <button className="icon-button" type="button" onClick={onSave} aria-label={t("Salvar agora")}><Save /></button>}
-          <button className="button button-secondary compact" type="button" onClick={onShare}><Share2 /> {t("Compartilhar")}</button>
+          <button className="icon-button" type="button" onClick={onUndo} disabled={!canUndo} aria-label="Desfazer"><Undo2 /></button>
+          <button className="icon-button" type="button" onClick={onRedo} disabled={!canRedo} aria-label="Refazer"><Redo2 /></button>
+          {screen !== "view" && <button className="icon-button" type="button" onClick={onSave} aria-label={t("Salvar agora")}><Save /></button>}
+          <button className="button button-secondary compact" type="button" onClick={() => onShare(sheet.shareMode)}><Share2 /> {t("Compartilhar")}</button>
           <div className="more-menu-wrap">
             <button className="icon-button" type="button" onClick={() => setMoreOpen(!moreOpen)} aria-label={t("Mais ações")}><MoreVertical /></button>
             {moreOpen && (
               <div className="more-menu">
                 <button type="button" onClick={() => { onExport("json"); setMoreOpen(false); }}><FileJson /> {t("Exportar JSON")}</button>
                 <button type="button" onClick={() => { onExport("txt"); setMoreOpen(false); }}><FileText /> {t("Exportar TXT")}</button>
-                {screen === "view" && <button type="button" onClick={() => window.print()}><Printer /> {t("Imprimir / PDF")}</button>}
+                <button type="button" onClick={() => { onShare("read-only"); setMoreOpen(false); }}><Eye /> Compartilhar somente leitura</button>
+                <button type="button" onClick={() => { onShare("duplicable"); setMoreOpen(false); }}><Share2 /> Compartilhar como duplicável</button>
+                <button type="button" onClick={() => { onBackup(); setMoreOpen(false); }}><FolderArchive /> Backup completo</button>
+                <button type="button" onClick={() => { onScreen("history"); setMoreOpen(false); }}><History /> Histórico</button>
+                <button type="button" onClick={() => { onScreen("compare"); setMoreOpen(false); }}><ArrowDownUp /> Comparar</button>
+                {screen === "view" && <button type="button" onClick={() => printSheet("full")}><Printer /> Ficha completa / PDF</button>}
+                {screen === "view" && <button type="button" onClick={() => printSheet("compact")}><Printer /> Ficha compacta / PDF</button>}
                 {sheet.shareToken && <p className="more-menu-note">{t("O link desta ficha é permanente.")}</p>}
                 <button className="is-danger" type="button" onClick={() => { onDelete(); setMoreOpen(false); }}><Trash2 /> {t("Excluir ficha")}</button>
               </div>
@@ -1154,7 +1646,7 @@ function Workspace({
         </div>
       </header>
 
-      <div className={`workspace-content ${screen === "view" ? "is-preview" : ""}`}>
+      <div className={`workspace-content ${screen === "view" ? "is-preview" : ""} ${screen !== "edit" && screen !== "view" ? "is-tool" : ""}`}>
         {screen === "view" && (
           <div className="sheet-view-options">
             <SheetViewModeToggle
@@ -1173,8 +1665,19 @@ function Workspace({
               editingMode={editingMode}
               onEditingMode={onEditingMode}
             />
+          ) : screen === "view" ? (
+            <div className={`print-layout print-${printMode}`}>
+              <SheetView sheet={sheet} showAudit={showAudit} />
+            </div>
           ) : (
-            <SheetView sheet={sheet} showAudit={showAudit} />
+            <SheetToolsPanel
+              tool={screen}
+              sheet={sheet}
+              characters={characters}
+              onChange={onChange}
+              apiFetch={apiFetch}
+              notify={notify}
+            />
           )}
         </Suspense>
       </div>
@@ -1198,6 +1701,31 @@ function SaveIndicator({ state }: { state: SaveState }) {
       {t(copy[state])}
     </span>
   );
+}
+
+function isWorkspaceScreen(screen: Screen): screen is WorkspaceScreen {
+  return [
+    "edit",
+    "view",
+    "analysis",
+    "session",
+    "relations",
+    "history",
+    "compare",
+  ].includes(screen);
+}
+
+function toolScreenLabel(screen: WorkspaceScreen, t: (value: string) => string) {
+  const labels: Record<WorkspaceScreen, string> = {
+    edit: "Editando a ficha",
+    view: "Visualização limpa",
+    analysis: "Análise da construção",
+    session: "Estado da sessão",
+    relations: "Relações e fichas vinculadas",
+    history: "Histórico de versões",
+    compare: "Comparação de fichas",
+  };
+  return t(labels[screen]);
 }
 
 function ThemeIcon({ preference }: { preference: ThemePreference }) {
@@ -1233,7 +1761,7 @@ function ImportDialog({
   onClose: () => void;
   onImportText: (text: string) => Promise<void>;
 }) {
-  const { t } = useLocale();
+  const { language, m, t } = useLocale();
   const dialogRef = useRef<HTMLElement>(null);
   const [value, setValue] = useState("");
   const [busy, setBusy] = useState(false);
@@ -1244,7 +1772,7 @@ function ImportDialog({
 
   async function submit(text: string) {
     if (!text.trim()) {
-      setError("Cole um link ou os dados de uma ficha para continuar.");
+      setError(t("Cole um link ou os dados de uma ficha para continuar."));
       return;
     }
     setBusy(true);
@@ -1252,7 +1780,14 @@ function ImportDialog({
     try {
       await onImportText(text);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Não foi possível importar esta ficha.");
+      setError(
+        humanizeError(
+          caught,
+          "Não foi possível importar esta ficha.",
+          language,
+          "This sheet could not be imported.",
+        ),
+      );
       setBusy(false);
     }
   }
@@ -1283,7 +1818,7 @@ function ImportDialog({
           </div>
           <button className="icon-button modal-close" type="button" onClick={onClose} aria-label={t("Fechar importação")}><X /></button>
         </header>
-        <p className="import-lead">{t("Use um arquivo JSON ou TXT do Arquivo de Heróis, cole os dados exportados ou informe qualquer link permanente de ficha.")}</p>
+        <p className="import-lead">{t("Use um arquivo JSON ou TXT do Arquivo de Heróis, cole os dados exportados ou informe qualquer link permanente de ficha.")} {m("backup.safe")}</p>
         <div
           className={`import-dropzone ${dragging ? "is-dragging" : ""}`}
           onDragEnter={(event) => { event.preventDefault(); setDragging(true); }}
@@ -1438,4 +1973,12 @@ async function optimizePortrait(file: File) {
   if (!blob) return file;
   const baseName = file.name.replace(/\.[^.]+$/, "") || "retrato";
   return new File([blob], `${baseName}.webp`, { type: "image/webp" });
+}
+
+function tryParseJson(value: string) {
+  try {
+    return JSON.parse(value) as unknown;
+  } catch {
+    return null;
+  }
 }

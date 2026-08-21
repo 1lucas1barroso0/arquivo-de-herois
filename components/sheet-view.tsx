@@ -9,8 +9,11 @@ import {
   CheckCircle2,
   Dumbbell,
   Gauge,
+  Gamepad2,
   HeartPulse,
   Info,
+  Link2,
+  Move,
   Shield,
   Sparkles,
   Swords,
@@ -45,8 +48,12 @@ import {
   type RuleStatus,
 } from "../lib/rules";
 import { useLocale } from "./locale-provider";
-import { buildTypeLabel } from "../lib/localization";
-import { translateRuleText } from "../lib/localization";
+import {
+  buildTypeLabel,
+  relationshipKindLabel,
+  translateRuleText,
+} from "../lib/localization";
+import type { MessageKey } from "../lib/messages";
 import { getSizeProfile } from "../lib/scales";
 
 type SheetViewProps = {
@@ -54,6 +61,25 @@ type SheetViewProps = {
   shared?: boolean;
   showAudit?: boolean;
 };
+
+type SheetSectionKey =
+  | "identity"
+  | "traits"
+  | "audit"
+  | "skills"
+  | "advantages"
+  | "movement"
+  | "relations"
+  | "powers"
+  | "attacks"
+  | "equipment"
+  | "session"
+  | "complications"
+  | "resources"
+  | "points"
+  | "notes";
+
+type MessageLookup = (key: MessageKey) => string;
 
 const abilityIcons: Record<CoreAbilityKey, typeof Dumbbell> = {
   strength: Dumbbell,
@@ -69,7 +95,7 @@ export function SheetView({
   shared = false,
   showAudit = false,
 }: SheetViewProps) {
-  const { language, t } = useLocale();
+  const { language, t, m } = useLocale();
   const derived = getDerivedTraits(sheet);
   const absentTraits = getEffectiveAbsentTraits(sheet);
   const size = getSizeProfile(sheet.sizeRank);
@@ -81,8 +107,21 @@ export function SheetView({
   const remaining = budget - breakdown.total;
   const equipment = getEquipmentTotals(sheet);
   const heroicAdvantageCapacity = getHeroicAdvantageCapacity(sheet);
-  const sectionNumber = (index: number) =>
-    String(index - (!showAudit && index > 3 ? 1 : 0)).padStart(2, "0");
+  const sectionOrder: SheetSectionKey[] = ["identity", "traits"];
+  if (audit) sectionOrder.push("audit");
+  sectionOrder.push("skills", "advantages");
+  if (sheet.movement.length > 0 || sheet.senses.length > 0) {
+    sectionOrder.push("movement");
+  }
+  if (sheet.relationships.length > 0 || sheet.organizations.length > 0) {
+    sectionOrder.push("relations");
+  }
+  sectionOrder.push("powers", "attacks", "equipment");
+  if (sheet.session.active) sectionOrder.push("session");
+  sectionOrder.push("complications", "resources", "points");
+  if (sheet.notes) sectionOrder.push("notes");
+  const sectionNumber = (key: SheetSectionKey) =>
+    String(sectionOrder.indexOf(key) + 1).padStart(2, "0");
 
   return (
     <article
@@ -123,7 +162,7 @@ export function SheetView({
           </p>
           <div className="sheet-cover-meta">
             <span>
-              <strong>NP {sheet.powerLevel}</strong>
+              <strong>{m("common.powerLevelShort")} {sheet.powerLevel}</strong>
               {t("Nível de Poder")}
             </span>
             <span>
@@ -144,7 +183,7 @@ export function SheetView({
       <section className="sheet-section identity-grid">
         <SectionHeading
           icon={UserRound}
-          index={sectionNumber(1)}
+          index={sectionNumber("identity")}
           title="Identidade"
         />
         <DataCell label="Identidade civil" value={sheet.civilName} />
@@ -175,7 +214,7 @@ export function SheetView({
       <section className="sheet-section">
         <SectionHeading
           icon={Activity}
-          index={sectionNumber(2)}
+          index={sectionNumber("traits")}
           title="Atributos e derivados"
         />
         <div className="stat-grid">
@@ -228,7 +267,7 @@ export function SheetView({
         <section className="sheet-section">
           <SectionHeading
             icon={BadgeCheck}
-            index={sectionNumber(3)}
+            index={sectionNumber("audit")}
             title="Auditoria das regras"
           />
           <div className={`audit-summary-view status-${audit.status}`}>
@@ -282,7 +321,7 @@ export function SheetView({
         <section className="sheet-section">
           <SectionHeading
             icon={BookOpen}
-            index={sectionNumber(4)}
+            index={sectionNumber("skills")}
             title="Perícias"
           />
           <DataTable
@@ -318,7 +357,7 @@ export function SheetView({
               })}
             headers={
               showAudit
-                ? ["Perícia", "Hab.", "Grad.", "Total", "NP"]
+                ? ["Perícia", "Hab.", "Grad.", "Total", m("common.powerLevelShort")]
                 : ["Perícia", "Hab.", "Grad.", "Total"]
             }
           />
@@ -327,7 +366,7 @@ export function SheetView({
         <section className="sheet-section">
           <SectionHeading
             icon={BadgeCheck}
-            index={sectionNumber(5)}
+            index={sectionNumber("advantages")}
             title="Vantagens"
           />
           <EntryList
@@ -354,10 +393,62 @@ export function SheetView({
         </section>
       </TwoColumnSection>
 
+      {(sheet.movement.length > 0 || sheet.senses.length > 0) && (
+        <section className="sheet-section sheet-extended-section">
+          <SectionHeading
+            icon={Move}
+            index={sectionNumber("movement")}
+            title={m("sheet.movementSenses")}
+          />
+          <div className="linked-view-grid">
+            {sheet.movement.map((entry) => (
+              <article key={entry.id}>
+                <strong>{entry.name}</strong>
+                <span>{m("sheet.rank")} {entry.rank}</span>
+                {entry.notes ? <p>{entry.notes}</p> : null}
+              </article>
+            ))}
+            {sheet.senses.map((entry) => (
+              <article key={entry.id}>
+                <strong>{entry.name}</strong>
+                <span>{m("sheet.rank")} {entry.rank}</span>
+                {entry.details ? <p>{entry.details}</p> : null}
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {(sheet.relationships.length > 0 || sheet.organizations.length > 0) && (
+        <section className="sheet-section sheet-extended-section">
+          <SectionHeading
+            icon={Link2}
+            index={sectionNumber("relations")}
+            title={m("sheet.relationshipsOrganizations")}
+          />
+          <EntryList
+            empty={m("sheet.noLink")}
+            entries={[
+              ...sheet.relationships.map((entry) => ({
+                title: entry.targetName || m("sheet.linkedSheet"),
+                meta: relationshipKindLabel(entry.kind, language),
+                body: entry.notes,
+              })),
+              ...sheet.organizations.map((entry) => ({
+                title: entry.name,
+                meta: entry.role || m("sheet.organization"),
+                body: entry.notes,
+              })),
+            ]}
+            columns
+          />
+        </section>
+      )}
+
       <section className="sheet-section">
         <SectionHeading
           icon={Sparkles}
-          index={sectionNumber(6)}
+          index={sectionNumber("powers")}
           title="Poderes"
         />
         <div className="power-grid">
@@ -370,19 +461,21 @@ export function SheetView({
                     <div>
                       <p>
                         {power.arrayRole === "none"
-                          ? "Poder independente"
-                          : `${arrayRoleLabel(power.arrayRole)} · ${power.arrayName || "Matriz sem nome"}`}
+                          ? m("sheet.independentPower")
+                          : `${arrayRoleLabel(power.arrayRole, m)} · ${power.arrayName || m("sheet.unnamedArray")}`}
                       </p>
-                      <h3>{power.name || "Poder sem nome"}</h3>
+                      <h3>{power.name || m("sheet.unnamedPower")}</h3>
                     </div>
                     <span>{entryCost?.chargedCost ?? 0} PP</span>
                   </div>
                   <div className="power-container-meta">
                     <small>
-                      {power.active ? "Vínculos ativos" : "Vínculos inativos"}
+                      {power.active
+                        ? m("sheet.activeLinks")
+                        : m("sheet.inactiveLinks")}
                     </small>
                     {power.removable !== "none" && (
-                      <small>{removableLabel(power.removable)}</small>
+                      <small>{removableLabel(power.removable, m)}</small>
                     )}
                     {power.descriptors && (
                       <small>{power.descriptors}</small>
@@ -396,7 +489,7 @@ export function SheetView({
                           <header>
                             <div>
                               <h4>{effect.name || "Efeito"}</h4>
-                              <span>Graduação {effect.rank}</span>
+                              <span>{m("sheet.rank")} {effect.rank}</span>
                             </div>
                             <strong>
                               {cost.total} PP
@@ -405,17 +498,17 @@ export function SheetView({
                           </header>
                           <div className="power-parameters">
                             <small>
-                              Ação <strong>{effect.action || "—"}</strong>
+                              {t("Ação")} <strong>{effect.action || "—"}</strong>
                             </small>
                             <small>
-                              Alcance <strong>{effect.range || "—"}</strong>
+                              {t("Alcance")} <strong>{effect.range || "—"}</strong>
                             </small>
                             <small>
-                              Duração{" "}
+                              {t("Duração")}{" "}
                               <strong>{effect.duration || "—"}</strong>
                             </small>
                             <small>
-                              Resistência{" "}
+                              {t("Resistência")}{" "}
                               <strong>{effect.resistance || "—"}</strong>
                             </small>
                           </div>
@@ -511,7 +604,7 @@ export function SheetView({
         <section className="sheet-section">
           <SectionHeading
             icon={Swords}
-            index={sectionNumber(7)}
+            index={sectionNumber("attacks")}
             title="Ataques"
           />
           <DataTable
@@ -544,7 +637,7 @@ export function SheetView({
         <section className="sheet-section">
           <SectionHeading
             icon={Wrench}
-            index={sectionNumber(8)}
+            index={sectionNumber("equipment")}
             title="Equipamento"
           />
           <div
@@ -564,10 +657,34 @@ export function SheetView({
         </section>
       </TwoColumnSection>
 
+      {sheet.session.active && (
+        <section className="sheet-section sheet-session-section">
+          <SectionHeading
+            icon={Gamepad2}
+            index={sectionNumber("session")}
+            title={m("sheet.sessionState")}
+          />
+          <div className="resource-view-grid">
+            <Stat label="Dano" value={sheet.session.damage} />
+            <Stat label="Pontos Heroicos" value={sheet.session.heroPointsCurrent} />
+            <Stat label="Sorte" value={sheet.session.luckCurrent} />
+            <Stat label="Efeitos ativos" value={sheet.session.activeEffects.length} />
+          </div>
+          {sheet.session.conditions.length ? (
+            <div className="condition-view-list">
+              {sheet.session.conditions.map((condition) => (
+                <span key={condition}>{condition}</span>
+              ))}
+            </div>
+          ) : null}
+          {sheet.session.notes ? <p className="long-copy">{sheet.session.notes}</p> : null}
+        </section>
+      )}
+
       <section className="sheet-section">
         <SectionHeading
           icon={Shield}
-          index={sectionNumber(9)}
+          index={sectionNumber("complications")}
           title="Complicações"
         />
         <EntryList
@@ -585,7 +702,7 @@ export function SheetView({
         <section className="sheet-section">
           <SectionHeading
             icon={Gauge}
-            index={sectionNumber(10)}
+            index={sectionNumber("resources")}
             title="Recursos atuais"
           />
           <div className="resource-view-grid">
@@ -612,7 +729,7 @@ export function SheetView({
         <section className="sheet-section">
           <SectionHeading
             icon={Gauge}
-            index={sectionNumber(11)}
+            index={sectionNumber("points")}
             title="Contabilidade calculada"
           />
           <div className="points-ledger">
@@ -644,7 +761,7 @@ export function SheetView({
         <section className="sheet-section">
           <SectionHeading
             icon={BookOpen}
-            index={sectionNumber(12)}
+            index={sectionNumber("notes")}
             title="Histórico e notas"
           />
           <p className="long-copy">{sheet.notes}</p>
@@ -653,7 +770,7 @@ export function SheetView({
 
       <footer className="sheet-footer">
         <span>Arquivo de Heróis</span>
-        <span>Atualizado {formatDate(sheet.updatedAt)}</span>
+        <span>{m("sheet.updated")} {formatDate(sheet.updatedAt, language)}</span>
       </footer>
     </article>
   );
@@ -801,17 +918,17 @@ function formatCount(value: number, singular: string, plural: string) {
   return `${value} ${value === 1 ? singular : plural}`;
 }
 
-function arrayRoleLabel(role: string) {
-  if (role === "base") return "Base da matriz";
-  if (role === "alternate") return "Efeito alternativo";
-  if (role === "dynamic") return "Alternativo dinâmico";
-  return "Poder";
+function arrayRoleLabel(role: string, m: MessageLookup) {
+  if (role === "base") return m("array.base");
+  if (role === "alternate") return m("array.alternate");
+  if (role === "dynamic") return m("array.dynamic");
+  return m("array.power");
 }
 
-function removableLabel(value: string) {
-  if (value === "removable") return "Removível";
-  if (value === "easily-removable") return "Facilmente Removível";
-  if (value === "equipment") return "Grau Equipamento";
+function removableLabel(value: string, m: MessageLookup) {
+  if (value === "removable") return m("power.removable");
+  if (value === "easily-removable") return m("power.easilyRemovable");
+  if (value === "equipment") return m("power.equipmentRank");
   return "";
 }
 
@@ -847,9 +964,9 @@ function formatNumber(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(2);
 }
 
-function formatDate(value?: string) {
-  if (!value) return "agora";
-  return new Intl.DateTimeFormat("pt-BR", {
+function formatDate(value: string | undefined, language: "pt" | "en") {
+  if (!value) return language === "en" ? "now" : "agora";
+  return new Intl.DateTimeFormat(language === "en" ? "en-US" : "pt-BR", {
     dateStyle: "medium",
   }).format(new Date(value));
 }

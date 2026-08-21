@@ -70,7 +70,7 @@ test("public copy keeps the brand quiet and uses natural Portuguese", () => {
 
   const navigation = readProjectFile("components/hero-archive-app.tsx");
   const references = readProjectFile("components/scale-guide.tsx");
-  assert.match(navigation, /\{t\("Referências"\)\}<\/button>/);
+  assert.match(navigation, /\{m\("nav\.references"\)\}<\/button>/);
   assert.match(references, /\{t\("Referências"\)\}<\/p>/);
   assert.doesNotMatch(navigation, /> Referência<\/button>/);
   assert.doesNotMatch(navigation, /JSON, TXT ou \.mm4e/);

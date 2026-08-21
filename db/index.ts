@@ -66,6 +66,36 @@ export async function ensureDatabase() {
       env.DB.prepare(
         "CREATE INDEX IF NOT EXISTS shared_sheets_source_idx ON shared_sheets (source_character_id)",
       ),
+      env.DB.prepare(`
+        CREATE TABLE IF NOT EXISTS campaigns (
+          id TEXT PRIMARY KEY NOT NULL,
+          owner_id TEXT NOT NULL,
+          name TEXT NOT NULL,
+          campaign_json TEXT NOT NULL,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `),
+      env.DB.prepare(
+        "CREATE INDEX IF NOT EXISTS campaigns_owner_updated_idx ON campaigns (owner_id, updated_at)",
+      ),
+      env.DB.prepare(`
+        CREATE TABLE IF NOT EXISTS character_revisions (
+          id TEXT PRIMARY KEY NOT NULL,
+          character_id TEXT NOT NULL,
+          owner_id TEXT NOT NULL,
+          label TEXT NOT NULL,
+          fingerprint TEXT NOT NULL,
+          sheet_json TEXT NOT NULL,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `),
+      env.DB.prepare(
+        "CREATE INDEX IF NOT EXISTS character_revisions_character_created_idx ON character_revisions (character_id, created_at)",
+      ),
+      env.DB.prepare(
+        "CREATE INDEX IF NOT EXISTS character_revisions_owner_idx ON character_revisions (owner_id)",
+      ),
     ]);
   })().catch((error) => {
     initialization = null;

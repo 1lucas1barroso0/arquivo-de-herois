@@ -6,10 +6,11 @@ O Arquivo de Heróis é um aplicativo React 19/Next.js App Router. Ele pode usar
 
 ```text
 Navegador/PWA
-  ├─ biblioteca e editor React
-  ├─ IndexedDB + imagens locais quando não há bindings
+  ├─ dashboard, biblioteca, campanhas, editor e ferramentas React
+  ├─ IndexedDB v2: personagens, campanhas e revisões
+  ├─ rascunhos interrompidos no armazenamento local
   └─ API HTTP quando disponível
-       ├─ D1: fichas privadas e instantâneos públicos
+       ├─ D1: fichas, campanhas, revisões e instantâneos públicos
        └─ R2: retratos
 ```
 
@@ -43,6 +44,8 @@ Somente avisos originalmente amarelos aceitam decisão manual. A aprovação ou 
 
 `lib/catalog.ts` contém as opções do material disponível, e `lib/power-configurations.ts` transforma configurações prontas em efeitos calculáveis. Chaves estáveis separam a identidade da opção de seu texto visível e preservam a liberdade de criar variantes personalizadas.
 
+As responsabilidades aditivas da versão 1.0 permanecem fora dos componentes visuais: `lib/workspace.ts` modela campanhas; `lib/encounter.ts` concentra a estimativa opcional; `lib/session.ts` isola o estado temporário; `lib/history.ts` cria e restaura revisões; `lib/backup.ts` valida e remapeia backups; `lib/search.ts` indexa dados privados em memória; `lib/analysis.ts` monta o painel numérico; `lib/messages.ts` fornece mensagens estáveis PT-BR/English. Componentes apenas coordenam entrada e apresentação dessas funções.
+
 Vínculos de efeitos distinguem bônus por graduação, bônus fixos e referências sem bônus. O terceiro modo representa modificadores como Aprimorada ou Impenetrável aplicados a graduações de resistência já compradas, evitando cobrar ou somar a resistência duas vezes.
 
 `lib/guided.ts` aplica apenas correções determinísticas no Modo Assistido. Ele não escolhe poderes, não gasta PP restantes e não reescreve conteúdo autoral. Regras próprias permanecem disponíveis no Modo Livre e continuam visíveis na auditoria.
@@ -56,3 +59,12 @@ A matriz auditável da compilação fornecida fica em `docs/4E-COVERAGE.md`. Ela
 ## Portabilidade
 
 `lib/portable.ts` define o formato versionado `arquivo-de-herois`. JSON e TXT carregam a mesma ficha normalizada; o TXT mantém uma seção legível e uma linha final completa para reimportação sem perda. `lib/portable-share.ts` compacta esse mesmo pacote em links autocontidos.
+
+`db/workspace.ts` persiste campanhas e histórico quando D1 está disponível. No modo autônomo, `lib/local-api.ts` oferece a mesma superfície HTTP sobre IndexedDB. A atualização do banco local cria apenas os novos object stores; não existe chamada de exclusão de banco ou de store.
+
+## Separação de procedência
+
+- regra do material 4e fornecido: motor, catálogo, referências e auditoria;
+- interpretação documentada: mantida explícita nas Referências quando a fonte é ambígua;
+- ferramenta auxiliar: análise e comparação numérica, sem julgamento subjetivo;
+- regra opcional do Arquivo de Heróis: CE e leitura de pressão de encontros, sempre rotuladas como estimativa não oficial.

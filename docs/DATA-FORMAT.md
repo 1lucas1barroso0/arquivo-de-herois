@@ -5,7 +5,7 @@ O formato atual é identificado por:
 ```json
 {
   "format": "arquivo-de-herois",
-  "version": 6,
+  "version": 7,
   "application": "Arquivo de Heróis",
   "exportedAt": "2026-07-31T00:00:00.000Z",
   "sheet": {}
@@ -23,7 +23,11 @@ Antes de exportar, identificadores privados e tokens de compartilhamento são re
 
 O normalizador em `lib/character.ts` preserva compatibilidade com estruturas anteriores e introduz valores padrão para campos adicionados em versões novas.
 
-Na versão 6 da ficha, `sizeRank` registra o tamanho natural e `absentTraits` guarda os atributos ou traços de combate explicitamente ausentes. Importações anteriores recebem tamanho 0 e nenhuma ausência; o campo legado `absentAbilities`, quando encontrado, é migrado para as chaves válidas sem copiar valores desconhecidos. A ausência implícita de Presença causada por Consciência ausente é derivada durante os cálculos, sem apagar a escolha anterior do usuário.
+Na versão 6 da ficha, `sizeRank` passou a registrar o tamanho natural e `absentTraits` os atributos ou traços de combate explicitamente ausentes. Importações anteriores recebem tamanho 0 e nenhuma ausência; o campo legado `absentAbilities`, quando encontrado, é migrado para as chaves válidas sem copiar valores desconhecidos. A ausência implícita de Presença causada por Consciência ausente é derivada durante os cálculos, sem apagar a escolha anterior do usuário.
+
+A versão 7 é aditiva. Ela introduz `creationMode`, etapa guiada, papel de NPC, favorito, arquivo, etiquetas, campanhas, movimento, sentidos, organizações, relações e um objeto `session` isolado. Dados v1–v6 recebem padrões seguros em memória; seus campos anteriores não são removidos nem reescritos no IndexedDB apenas por serem lidos.
+
+O estado de sessão contém dano, condições, penalidades, recursos temporários, efeitos ativos e referências de poderes sustentados. Ele nunca é usado para substituir silenciosamente atributos, defesas, recursos ou custos-base da ficha.
 
 As decisões sobre avisos da auditoria fazem parte da ficha portátil. Cada aprovação ou reprovação é vinculada ao conteúdo exato que foi conferido; qualquer mudança relevante devolve o item ao estado amarelo até uma nova decisão. Por isso, copiar, compartilhar, exportar e reimportar preserva decisões válidas sem transformar uma aprovação antiga em autorização genérica.
 
@@ -37,5 +41,10 @@ Entradas do catálogo guardam chaves estáveis. Isso permite recalcular dependê
 - armas criam ataques vinculados; armaduras e escudos ativos alteram as defesas correspondentes;
 - motivações e complicações de mesmo nome continuam distinguíveis pelo tipo.
 - tamanho natural e traços ausentes permanecem idênticos em JSON, TXT e links portáteis.
+- movimento, sentidos, relações, organizações, modo de criação e estado de sessão permanecem idênticos no envelope v7.
 
 Ao converter uma entrada do catálogo em personalizada, a ficha registra explicitamente essa decisão. Assim, salvar, compartilhar, exportar e reimportar não transforma silenciosamente uma regra da campanha em uma opção de mesmo nome.
+
+## Backup integral
+
+O envelope `arquivo-de-herois-backup` versão 1 reúne fichas e campanhas. Antes de qualquer gravação, a importação valida formato, versão, presença das coleções e IDs duplicados ou ausentes. A importação cria novas entidades e remapeia IDs de fichas, campanhas, participantes, equipes, organizações e relações; compartilhamento privado e tokens nunca são copiados.

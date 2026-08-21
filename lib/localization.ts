@@ -1,3 +1,5 @@
+import type { RelationshipKind } from "./character";
+
 export type AppLanguage = "pt" | "en";
 
 export const APP_LANGUAGE_KEY = "arquivo-de-herois:idioma:v1";
@@ -438,6 +440,38 @@ export function buildTypeLabel(
 ): string {
   if (type === "npc") return "NPC";
   return language === "en" ? "Player Character" : "Personagem do Jogador";
+}
+
+const relationshipKindLabels: Record<
+  RelationshipKind,
+  { pt: string; en: string }
+> = {
+  ally: { pt: "Aliado", en: "Ally" },
+  enemy: { pt: "Inimigo", en: "Enemy" },
+  rival: { pt: "Rival", en: "Rival" },
+  mentor: { pt: "Mentor", en: "Mentor" },
+  partner: { pt: "Parceiro", en: "Partner" },
+  "team-member": { pt: "Membro de equipe", en: "Team member" },
+  subordinate: { pt: "Subordinado", en: "Subordinate" },
+  summoner: { pt: "Invocador", en: "Summoner" },
+  summon: { pt: "Invocação", en: "Summon" },
+  "alternate-identity": {
+    pt: "Identidade alternativa",
+    en: "Alternate identity",
+  },
+  transformation: { pt: "Transformação", en: "Transformation" },
+  "alternate-form": { pt: "Forma alternativa", en: "Alternate form" },
+  vehicle: { pt: "Veículo", en: "Vehicle" },
+  base: { pt: "Base", en: "Base" },
+  construct: { pt: "Constructo", en: "Construct" },
+  other: { pt: "Outro", en: "Other" },
+};
+
+export function relationshipKindLabel(
+  kind: RelationshipKind,
+  language: AppLanguage = "pt",
+): string {
+  return relationshipKindLabels[kind][language];
 }
 
 export function languageName(language: AppLanguage): string {

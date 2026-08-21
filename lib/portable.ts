@@ -17,7 +17,7 @@ import {
 } from "./rules";
 
 export const PORTABLE_FORMAT = "arquivo-de-herois";
-export const PORTABLE_VERSION = 6;
+export const PORTABLE_VERSION = 7;
 export const APPLICATION_NAME = "Arquivo de Heróis";
 const TEXT_MARKER = "ARQUIVO-DE-HEROIS-DADOS:";
 const LEGACY_TEXT_MARKERS = ["MM4E-DADOS-PORTATEIS:"];
@@ -130,12 +130,37 @@ export function portableSheetToText(sheet: CharacterSheet) {
     "COMPLICAÇÕES",
     ...clean.complications.map((item) => `${item.name} [${item.type}] — ${item.description}`),
     "",
+    "MOVIMENTO E SENTIDOS",
+    ...clean.movement.map(
+      (item) => `${item.name}: graduação ${item.rank}${item.notes ? ` — ${item.notes}` : ""}`,
+    ),
+    ...clean.senses.map(
+      (item) => `${item.name}: graduação ${item.rank}${item.details ? ` — ${item.details}` : ""}`,
+    ),
+    "",
+    "RELAÇÕES E VÍNCULOS",
+    ...clean.organizations.map(
+      (item) => `${item.name}${item.role ? ` [${item.role}]` : ""}${item.notes ? ` — ${item.notes}` : ""}`,
+    ),
+    ...clean.relationships.map(
+      (item) => `${item.targetName || "Ficha não localizada"} [${item.kind}]${item.notes ? ` — ${item.notes}` : ""}`,
+    ),
+    "",
     "RECURSOS ATUAIS",
     `Pontos Heroicos: ${clean.resources.heroPoints}`,
     `Usos de vantagens heroicas: ${clean.resources.heroicAdvantageUses}/${Math.floor(clean.powerLevel / 2)}`,
     `Sorte disponível: ${clean.resources.luckCurrent}/${getLuckCapacity(clean)}`,
     `Fadiga: ${clean.resources.fatigue}`,
     `Condições: ${clean.resources.conditions.join(", ") || "nenhuma"}`,
+    "",
+    "ESTADO TEMPORÁRIO DA SESSÃO",
+    `Sessão ativa: ${clean.session.active ? "sim" : "não"}`,
+    `Dano: ${clean.session.damage}`,
+    `Pontos Heroicos atuais: ${clean.session.heroPointsCurrent}`,
+    `Sorte atual: ${clean.session.luckCurrent}`,
+    `Condições temporárias: ${clean.session.conditions.join(", ") || "nenhuma"}`,
+    `Efeitos ativos: ${clean.session.activeEffects.join(", ") || "nenhum"}`,
+    clean.session.notes,
     "",
     "CONTABILIDADE DE PP",
     `Atributos: ${breakdown.abilities}`,

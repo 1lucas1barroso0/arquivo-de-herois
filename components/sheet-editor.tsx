@@ -179,7 +179,7 @@ export function SheetEditor({
   }, []);
 
   return (
-    <div className="editor-shell">
+    <div className={`editor-shell editing-${editingMode}`}>
       <nav className="editor-nav" aria-label={t("Seções da ficha")}>
         {sections.map(({ id, label, icon: Icon }) => (
           <button
@@ -199,6 +199,15 @@ export function SheetEditor({
           mode={editingMode}
           onMode={onEditingMode}
         />
+        {editingMode === "guided" && (
+          <GuidedProgress
+            step={sheet.guidedStep}
+            onStep={(step, section) => {
+              patch({ guidedStep: step });
+              setActiveSection(section);
+            }}
+          />
+        )}
         <LiveCalculationBar
           audit={audit.status}
           spent={breakdown.total}
@@ -274,27 +283,41 @@ function EditingModePanel({
   mode: EditingMode;
   onMode: (mode: EditingMode) => void;
 }) {
-  const { t } = useLocale();
+  const { m, t } = useLocale();
+  const title =
+    mode === "quick"
+      ? m("creation.quick")
+      : mode === "guided"
+        ? m("creation.guided")
+        : m("creation.free");
+  const detail =
+    mode === "quick"
+      ? m("creation.quickHelp")
+      : mode === "guided"
+        ? m("creation.guidedHelp")
+        : m("creation.freeHelp");
   return (
     <section className={`editing-mode-panel mode-${mode}`}>
       <div className="editing-mode-copy">
-        <strong>
-          {t(mode === "guided" ? "Criação assistida" : "Criação livre")}
-        </strong>
-        <small>
-          {mode === "guided"
-            ? t("Dependências seguras são mantidas automaticamente.")
-            : t("Divergências permanecem visíveis, sem bloqueios.")}
-        </small>
+        <strong>{title}</strong>
+        <small>{detail}</small>
       </div>
       <div className="editing-mode-options" role="group" aria-label={t("Modo de edição")}>
+        <button
+          aria-pressed={mode === "quick"}
+          className={mode === "quick" ? "is-active" : ""}
+          onClick={() => onMode("quick")}
+          type="button"
+        >
+          <WandSparkles aria-hidden="true" /> {m("creation.quick")}
+        </button>
         <button
           aria-pressed={mode === "guided"}
           className={mode === "guided" ? "is-active" : ""}
           onClick={() => onMode("guided")}
           type="button"
         >
-          <LockKeyhole aria-hidden="true" /> {t("Assistido")}
+          <LockKeyhole aria-hidden="true" /> {m("creation.guided")}
         </button>
         <button
           aria-pressed={mode === "free"}
@@ -302,10 +325,57 @@ function EditingModePanel({
           onClick={() => onMode("free")}
           type="button"
         >
-          <SlidersHorizontal aria-hidden="true" /> {t("Livre")}
+          <SlidersHorizontal aria-hidden="true" /> {m("creation.free")}
         </button>
       </div>
     </section>
+  );
+}
+
+const guidedSteps: Array<{
+  step: number;
+  labelPt: string;
+  labelEn: string;
+  section: SectionId;
+}> = [
+  { step: 1, labelPt: "Conceito", labelEn: "Concept", section: "identity" },
+  { step: 2, labelPt: "NP", labelEn: "PL", section: "identity" },
+  { step: 3, labelPt: "Atributos", labelEn: "Abilities", section: "traits" },
+  { step: 4, labelPt: "Perícias", labelEn: "Skills", section: "skills" },
+  { step: 5, labelPt: "Vantagens", labelEn: "Advantages", section: "advantages" },
+  { step: 6, labelPt: "Poderes", labelEn: "Powers", section: "powers" },
+  { step: 7, labelPt: "Defesas", labelEn: "Defenses", section: "combat" },
+  { step: 8, labelPt: "Complicações", labelEn: "Complications", section: "complications" },
+  { step: 9, labelPt: "Revisão", labelEn: "Review", section: "points" },
+  { step: 10, labelPt: "Finalização", labelEn: "Finish", section: "points" },
+];
+
+function GuidedProgress({
+  step,
+  onStep,
+}: {
+  step: number;
+  onStep: (step: number, section: SectionId) => void;
+}) {
+  const { language } = useLocale();
+  return (
+    <nav
+      aria-label={language === "en" ? "Guided creation steps" : "Passos da criação guiada"}
+      className="guided-progress"
+    >
+      {guidedSteps.map((entry) => (
+        <button
+          aria-current={step === entry.step ? "step" : undefined}
+          className={step === entry.step ? "is-active" : step > entry.step ? "is-complete" : ""}
+          key={entry.step}
+          onClick={() => onStep(entry.step, entry.section)}
+          type="button"
+        >
+          <span>{entry.step}</span>
+          <small>{language === "en" ? entry.labelEn : entry.labelPt}</small>
+        </button>
+      ))}
+    </nav>
   );
 }
 
@@ -363,7 +433,9 @@ function CreationAssistant({
         <strong>
           {editingMode === "guided"
             ? "Orientação passo a passo"
-            : "Orientação disponível no modo livre"}
+            : editingMode === "quick"
+              ? "Próxima pendência"
+              : "Orientação disponível no modo livre"}
         </strong>
         <p>{t(next.detail)}</p>
       </div>
@@ -540,6 +612,35 @@ function IdentityEditor({
             ]}
           />
         </Field>
+        {sheet.buildType === "npc" && (
+          <Field label={language === "en" ? "NPC shortcut" : "Atalho de NPC"}>
+            <Select
+              value={sheet.npcRole ?? "custom"}
+              onChange={(npcRole) =>
+                patch({
+                  npcRole: npcRole as NonNullable<CharacterSheet["npcRole"]>,
+                })
+              }
+              options={[
+                { value: "minion", label: language === "en" ? "Minion" : "Capanga" },
+                { value: "ally", label: language === "en" ? "Ally" : "Aliado" },
+                { value: "rival", label: "Rival" },
+                { value: "villain", label: language === "en" ? "Villain" : "Vilão" },
+                { value: "boss", label: language === "en" ? "Boss" : "Chefe" },
+                { value: "recurring", label: language === "en" ? "Recurring character" : "Personagem recorrente" },
+                { value: "creature", label: language === "en" ? "Creature" : "Criatura" },
+                { value: "troop", label: language === "en" ? "Troop / group" : "Tropa / grupo" },
+                { value: "entity", label: language === "en" ? "High-level entity" : "Entidade de alto nível" },
+                { value: "custom", label: language === "en" ? "Custom" : "Personalizado" },
+              ]}
+            />
+            <small className="field-guidance">
+              {language === "en"
+                ? "This is an editable organization shortcut, never a structural restriction."
+                : "Este é um atalho de organização editável, nunca uma restrição estrutural."}
+            </small>
+          </Field>
+        )}
         <Field label="Nível de Poder">
           <NumberInput
             value={sheet.powerLevel}
@@ -613,6 +714,19 @@ function IdentityEditor({
             rows={3}
             value={sheet.concept}
             onChange={(event) => patch({ concept: event.target.value })}
+          />
+        </Field>
+        <Field label={language === "en" ? "Tags" : "Etiquetas"} wide>
+          <input
+            value={sheet.tags.join(", ")}
+            onChange={(event) =>
+              patch({
+                tags: event.target.value
+                  .split(",")
+                  .map((entry) => entry.trimStart()),
+              })
+            }
+            placeholder={language === "en" ? "team, street level, mystic" : "equipe, urbano, místico"}
           />
         </Field>
         <Field label="Origem" wide>
@@ -1883,6 +1997,7 @@ function EffectEditor({
   onChange: (effect: PowerEffectEntry) => void;
   onDelete: () => void;
 }) {
+  const { language } = useLocale();
   const cost = getEffectCostBreakdown(effect);
   const linkedConfiguration = effect.configurationKey
     ? findPowerConfigurationPreset(
@@ -1905,6 +2020,12 @@ function EffectEditor({
         <ChevronDown size={15} />
       </summary>
       <div className="effect-card-body">
+        <div className="effect-parameter-summary" aria-label={language === "en" ? "Effect parameters" : "Parâmetros do efeito"}>
+          <span>{effect.action === "Nenhuma" ? (language === "en" ? "Passive" : "Passivo") : effect.action === "Reação" ? (language === "en" ? "Reactive" : "Reativo") : (language === "en" ? "Requires activation" : "Exige ativação")}</span>
+          <span>{effect.range}</span>
+          <span>{effect.duration}</span>
+          {effect.resistance ? <span>{language === "en" ? "Resisted by" : "Resistido por"} {effect.resistance}</span> : null}
+        </div>
         {effect.costMode === "legacy" ? (
           <div className="legacy-cost-warning">
             <AlertTriangle />
@@ -3733,7 +3854,7 @@ function AuditEditor({
         </div>
       </div>
 
-      {editingMode === "free" ? (
+      {editingMode !== "guided" ? (
         <div className="manual-adjustment">
           <header>
             <div>

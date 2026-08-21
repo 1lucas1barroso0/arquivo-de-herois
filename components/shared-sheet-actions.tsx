@@ -14,9 +14,10 @@ import type { CharacterSheet } from "../lib/character";
 import { getDeviceOwnerId, OPEN_CHARACTER_KEY } from "../lib/device-owner";
 import { isLocalStorageFallbackResponse } from "../lib/storage-mode";
 import { useLocale } from "./locale-provider";
+import { humanizeError } from "../lib/errors";
 
 export function SharedSheetActions({ sheet }: { sheet: CharacterSheet }) {
-  const { t } = useLocale();
+  const { language, t, m } = useLocale();
   const [copying, setCopying] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [error, setError] = useState("");
@@ -62,7 +63,7 @@ export function SharedSheetActions({ sheet }: { sheet: CharacterSheet }) {
       writeBrowserStorage(OPEN_CHARACTER_KEY, payload.character.id);
       window.location.assign("/");
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Não foi possível salvar a cópia.");
+      setError(humanizeError(caught, "Não foi possível salvar a cópia.", language, "The copy could not be saved."));
       setCopying(false);
     }
   }
@@ -83,7 +84,7 @@ export function SharedSheetActions({ sheet }: { sheet: CharacterSheet }) {
       }
     } catch (caught) {
       if (caught instanceof DOMException && caught.name === "AbortError") return;
-      setError("Não foi possível compartilhar. Copie o endereço no navegador.");
+      setError(m("share.failed"));
     }
   }
 
@@ -98,11 +99,13 @@ export function SharedSheetActions({ sheet }: { sheet: CharacterSheet }) {
   }
 
   return (
-    <div className="shared-actions" aria-label="Ações da ficha compartilhada">
-      <button className="button button-primary compact" disabled={copying} type="button" onClick={() => void saveCopy()}>
-        {copying ? <LoaderCircle className="spin" /> : <Copy />}
-        {t(copying ? "Salvando…" : "Salvar uma cópia")}
-      </button>
+    <div className="shared-actions" aria-label={m("share.actions")}>
+      {sheet.shareMode === "duplicable" ? (
+        <button className="button button-primary compact" disabled={copying} type="button" onClick={() => void saveCopy()}>
+          {copying ? <LoaderCircle className="spin" /> : <Copy />}
+          {t(copying ? "Salvando…" : "Salvar uma cópia")}
+        </button>
+      ) : null}
       <button className="button button-secondary compact" type="button" onClick={() => void shareLink()}>
         {copiedLink ? <Check /> : <Share2 />}
         {t(copiedLink ? "Link copiado" : "Compartilhar")}

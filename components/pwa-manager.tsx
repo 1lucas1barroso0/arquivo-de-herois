@@ -28,6 +28,7 @@ export function PwaManager({ hasUnsavedChanges }: { hasUnsavedChanges: boolean }
   const [updateReady, setUpdateReady] = useState(false);
   const installPrompt = useRef<InstallPromptEvent | null>(null);
   const waitingWorker = useRef<ServiceWorker | null>(null);
+  const updateReloadRequested = useRef(false);
   const installDialogRef = useRef<HTMLElement>(null);
   const closeInstall = useCallback(() => setInstallOpen(false), []);
   useDialogFocus(
@@ -50,12 +51,21 @@ export function PwaManager({ hasUnsavedChanges }: { hasUnsavedChanges: boolean }
       installPrompt.current = null;
     };
     const handleRequest = () => void requestInstall();
+    const handleControllerChange = () => {
+      if (!updateReloadRequested.current) return;
+      updateReloadRequested.current = false;
+      window.location.reload();
+    };
 
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
     window.addEventListener("beforeinstallprompt", handlePrompt);
     window.addEventListener("appinstalled", handleInstalled);
     window.addEventListener("arquivo-de-herois:instalar", handleRequest);
+    navigator.serviceWorker?.addEventListener(
+      "controllerchange",
+      handleControllerChange,
+    );
 
     if ("serviceWorker" in navigator && process.env.NODE_ENV === "production") {
       void navigator.serviceWorker.register("/sw.js", { scope: "/" }).then((registration) => {
@@ -83,6 +93,10 @@ export function PwaManager({ hasUnsavedChanges }: { hasUnsavedChanges: boolean }
       window.removeEventListener("beforeinstallprompt", handlePrompt);
       window.removeEventListener("appinstalled", handleInstalled);
       window.removeEventListener("arquivo-de-herois:instalar", handleRequest);
+      navigator.serviceWorker?.removeEventListener(
+        "controllerchange",
+        handleControllerChange,
+      );
     };
 
     async function requestInstall() {
@@ -104,8 +118,15 @@ export function PwaManager({ hasUnsavedChanges }: { hasUnsavedChanges: boolean }
 
   function applyUpdate() {
     if (hasUnsavedChanges) return;
-    waitingWorker.current?.postMessage({ type: "SKIP_WAITING" });
-    window.setTimeout(() => window.location.reload(), 350);
+    const worker = waitingWorker.current;
+    if (!worker) return;
+    updateReloadRequested.current = true;
+    worker.postMessage({ type: "SKIP_WAITING" });
+    window.setTimeout(() => {
+      if (!updateReloadRequested.current) return;
+      updateReloadRequested.current = false;
+      window.location.reload();
+    }, 4_000);
   }
 
   return (

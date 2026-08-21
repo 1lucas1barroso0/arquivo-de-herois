@@ -24,7 +24,7 @@ import {
   getSkillTotal,
 } from "../lib/rules";
 
-test("schema 6 migrates natural size and absent traits without losing legacy data", () => {
+test("legacy schema migrates natural size and absent traits without losing data", () => {
   const legacy = createEmptySheet();
   const migrated = normalizeSheet({
     ...legacy,

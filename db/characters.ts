@@ -16,6 +16,10 @@ import {
   getPointBudget,
   pointsSpent,
 } from "../lib/rules";
+import {
+  deleteCharacterRevisions,
+  recordCharacterRevision,
+} from "./workspace";
 
 function parseRow(row: typeof characters.$inferSelect): CharacterSheet {
   const stored = JSON.parse(row.sheetJson) as Record<string, unknown>;
@@ -127,14 +131,16 @@ export async function updateCharacter(
   await ensureDatabase();
   const db = await getDb();
   const [current] = await db
-    .select({
-      shareEnabled: characters.shareEnabled,
-      shareToken: characters.shareToken,
-    })
+    .select()
     .from(characters)
     .where(and(eq(characters.id, id), eq(characters.ownerId, ownerId)))
     .limit(1);
   if (!current) return null;
+  await recordCharacterRevision(
+    parseRow(current),
+    ownerId,
+    "Versão anterior ao salvamento",
+  );
   const values = toValues({
     ...sheet,
     id,
@@ -161,31 +167,43 @@ export async function deleteCharacter(id: string, ownerId: string) {
     .delete(characters)
     .where(and(eq(characters.id, id), eq(characters.ownerId, ownerId)))
     .returning({ id: characters.id });
-  return deleted.length > 0;
+  if (deleted.length > 0) {
+    await deleteCharacterRevisions(id, ownerId);
+    return true;
+  }
+  return false;
 }
 
 export async function setCharacterSharing(
   id: string,
   ownerId: string,
   enabled: boolean,
+  mode: CharacterSheet["shareMode"] = "duplicable",
 ) {
   await ensureDatabase();
   const db = await getDb();
   const existing = await getCharacter(id, ownerId);
   if (!existing) return null;
   const token = existing.shareToken || randomShareToken();
+  const publicSource: CharacterSheet = {
+    ...existing,
+    shareEnabled: enabled,
+    shareToken: token,
+    shareMode: mode,
+  };
   const [row] = await db
     .update(characters)
     .set({
       shareEnabled: enabled,
       shareToken: token,
+      sheetJson: JSON.stringify(publicSource),
       updatedAt: new Date().toISOString(),
     })
     .where(and(eq(characters.id, id), eq(characters.ownerId, ownerId)))
     .returning();
   if (!row) return null;
   const parsed = parseRow(row);
-  if (enabled) await upsertSharedSnapshot(parsed);
+  if (enabled) await upsertSharedSnapshot({ ...parsed, shareMode: mode });
   return parsed;
 }
 

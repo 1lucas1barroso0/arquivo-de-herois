@@ -15,6 +15,11 @@ import {
   type AppLanguage,
 } from "../lib/localization";
 import {
+  translateMessage,
+  type MessageKey,
+  type MessageVariables,
+} from "../lib/messages";
+import {
   readBrowserStorage,
   writeBrowserStorage,
 } from "../lib/browser-storage";
@@ -23,12 +28,14 @@ type LocaleContextValue = {
   language: AppLanguage;
   setLanguage: (language: AppLanguage) => void;
   t: (value: string) => string;
+  m: (key: MessageKey, variables?: MessageVariables) => string;
 };
 
 const LocaleContext = createContext<LocaleContextValue>({
   language: "pt",
   setLanguage: () => undefined,
   t: (value) => value,
+  m: (key) => translateMessage(key, "pt"),
 });
 
 export function LocaleProvider({ children }: { children: React.ReactNode }) {
@@ -59,6 +66,7 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
       language,
       setLanguage,
       t: (text) => translateUi(text, language),
+      m: (key, variables) => translateMessage(key, language, variables),
     }),
     [language, setLanguage],
   );

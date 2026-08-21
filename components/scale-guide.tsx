@@ -6,6 +6,7 @@ import {
   BookOpenCheck,
   Gauge,
   LibraryBig,
+  Plus,
   Ruler,
   Search,
   ShieldCheck,
@@ -88,10 +89,14 @@ export function ScaleGuide({
   open,
   onClose,
   initialPowerLevel = 10,
+  initialQuery = "",
+  onAddCatalog,
 }: {
   open: boolean;
   onClose: () => void;
   initialPowerLevel?: number;
+  initialQuery?: string;
+  onAddCatalog?: (groupId: string, entryId: string) => void;
 }) {
   const dialogRef = useRef<HTMLElement>(null);
   const { language: displayLanguage, setLanguage, t } = useLocale();
@@ -120,6 +125,14 @@ export function ScaleGuide({
   const [throwStrengthRank, setThrowStrengthRank] = useState(12);
   const [throwMassRank, setThrowMassRank] = useState(7);
   const deferredQuery = useDeferredValue(query);
+
+  useEffect(() => {
+    if (!open || !initialQuery) return;
+    // External navigation may open the reference center at a specific term.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setQuery(initialQuery);
+    setTab("rules");
+  }, [initialQuery, open]);
 
   useEffect(() => {
     if (!open) return;
@@ -358,6 +371,15 @@ export function ScaleGuide({
                       <h3>{primary}</h3>
                       {normalize(primary) !== normalize(secondary) && <em>{secondary}</em>}
                       <p>{getCatalogSummary(entry, displayLanguage)}</p>
+                      {onAddCatalog ? (
+                        <button
+                          className="reference-add-button"
+                          onClick={() => onAddCatalog(group.id, entry.id)}
+                          type="button"
+                        >
+                          <Plus aria-hidden="true" /> {displayLanguage === "en" ? "Add to active sheet" : "Adicionar à ficha ativa"}
+                        </button>
+                      ) : null}
                       <footer className="reference-source">
                         <BookOpen aria-hidden="true" />
                         <span>

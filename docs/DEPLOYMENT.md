@@ -35,6 +35,19 @@ Depois disso, cada atualização de `main` gera uma implantação de produção,
 cada pull request recebe uma prévia isolada. A verificação de qualidade do
 GitHub roda em paralelo e não precisa de credenciais da Vercel.
 
+Uma entrega distribuída em três arquivos contém o código `.tar.gz`, sua soma
+`.sha256` e um instalador `.sh`. Coloque os três na mesma pasta e, dentro do
+clone do repositório, execute somente:
+
+```bash
+bash instalar-arquivo-de-herois-v1.0.0.sh
+```
+
+O instalador confere a soma, cria um bundle Git de segurança antes de alterar o
+clone, executa lint, typecheck, testes e build, e só então cria o commit e envia
+`main`. Se houver alterações locais, ele as guarda em um stash identificado e
+informa o comando de recuperação; nada é descartado silenciosamente.
+
 ## Persistência opcional
 
 As rotas de API reconhecem dois bindings opcionais fornecidos pelo adaptador de
@@ -55,4 +68,6 @@ origem, então um domínio próprio não exige alterações no código.
 
 Para uma instalação com persistência de servidor, faça backup do banco e do
 bucket em conjunto. As exportações `.arquivo-de-herois.json` e
-`.arquivo-de-herois.txt` também funcionam como cópias portáteis por ficha.
+`.arquivo-de-herois.txt` também funcionam como cópias portáteis por ficha. O
+backup integral da interface reúne fichas e campanhas e, ao importar, cria
+cópias em vez de substituir o arquivo existente.

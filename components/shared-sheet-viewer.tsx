@@ -9,7 +9,7 @@ import { useSheetAuditVisibility } from "./use-sheet-audit-visibility";
 import { useLocale } from "./locale-provider";
 
 export function SharedSheetViewer({ sheet }: { sheet: CharacterSheet }) {
-  const { t } = useLocale();
+  const { t, m } = useLocale();
   const [showAudit, setShowAudit] = useSheetAuditVisibility();
 
   return (
@@ -19,7 +19,9 @@ export function SharedSheetViewer({ sheet }: { sheet: CharacterSheet }) {
         <div>
           <strong>{t("Ficha compartilhada · link permanente")}</strong>
           <span>
-            {t("Consulte, imprima, exporte ou salve uma cópia editável no seu arquivo.")}
+            {sheet.shareMode === "duplicable"
+              ? t("Consulte, imprima, exporte ou salve uma cópia editável no seu arquivo.")
+              : m("share.readOnlyDescription")}
           </span>
         </div>
         <div className="shared-banner-controls">

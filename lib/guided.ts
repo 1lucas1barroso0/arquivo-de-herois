@@ -12,7 +12,7 @@ import {
   getLuckCapacity,
 } from "./rules";
 
-export type EditingMode = "guided" | "free";
+export type EditingMode = "quick" | "guided" | "free";
 
 export const EDITING_MODE_KEY = "arquivo-de-herois:modo-de-edicao:v2";
 export const LEGACY_EDITING_MODE_KEY = "mm4e-editing-mode:v1";

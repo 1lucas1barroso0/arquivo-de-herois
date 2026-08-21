@@ -8,6 +8,8 @@ import {
 
 const MAX_TEXT_LENGTH = 500_000;
 
+export class PublicRequestError extends Error {}
+
 export async function getOwnerId(request: Request) {
   const authenticatedEmail = request.headers.get("x-authenticated-user-email");
   const deviceId =
@@ -27,12 +29,12 @@ export async function getOwnerId(request: Request) {
 
 export function parseSheetPayload(payload: unknown): CharacterSheet {
   if (!payload || typeof payload !== "object") {
-    throw new Error("A ficha enviada é inválida.");
+    throw new PublicRequestError("A ficha enviada é inválida.");
   }
 
   const serialized = JSON.stringify(payload);
   if (serialized.length > MAX_TEXT_LENGTH) {
-    throw new Error("A ficha excede o limite de tamanho.");
+    throw new PublicRequestError("A ficha excede o limite de tamanho.");
   }
 
   const sheet = normalizeSheet(payload as Partial<CharacterSheet>);
@@ -58,8 +60,12 @@ export function clampInteger(value: unknown, min: number, max: number) {
 }
 
 export function apiError(error: unknown, fallback = "Não foi possível concluir a operação.") {
-  const message = error instanceof Error ? error.message : fallback;
   const storageUnavailable = error instanceof StorageUnavailableError;
+  const message = storageUnavailable
+    ? "A conexão persistente está indisponível. Seus dados locais permanecem seguros."
+    : error instanceof PublicRequestError
+      ? error.message
+      : fallback;
   return Response.json(
     { error: message },
     {

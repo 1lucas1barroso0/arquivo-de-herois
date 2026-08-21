@@ -47,3 +47,38 @@ export const sharedSheets = sqliteTable(
     index("shared_sheets_source_idx").on(table.sourceCharacterId),
   ],
 );
+
+export const campaigns = sqliteTable(
+  "campaigns",
+  {
+    id: text("id").primaryKey(),
+    ownerId: text("owner_id").notNull(),
+    name: text("name").notNull(),
+    campaignJson: text("campaign_json").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("campaigns_owner_updated_idx").on(table.ownerId, table.updatedAt),
+  ],
+);
+
+export const characterRevisions = sqliteTable(
+  "character_revisions",
+  {
+    id: text("id").primaryKey(),
+    characterId: text("character_id").notNull(),
+    ownerId: text("owner_id").notNull(),
+    label: text("label").notNull(),
+    fingerprint: text("fingerprint").notNull(),
+    sheetJson: text("sheet_json").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("character_revisions_character_created_idx").on(
+      table.characterId,
+      table.createdAt,
+    ),
+    index("character_revisions_owner_idx").on(table.ownerId),
+  ],
+);

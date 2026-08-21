@@ -1963,6 +1963,141 @@ export function getRuleAudit(sheet: CharacterSheet): RuleAudit {
     }
   }
 
+  const effectIds = new Set(
+    sheet.powers.flatMap((power) => power.effects.map((effect) => effect.id)),
+  );
+  const powerIds = new Set(sheet.powers.map((power) => power.id));
+  for (const movement of sheet.movement ?? []) {
+    if (!movement.name.trim() || !Number.isInteger(movement.rank) || movement.rank < 0) {
+      add({
+        key: `movement-data-${movement.id}`,
+        label: `${movement.name || "Movimento"}: registro incompleto`,
+        status: "fail",
+        group: "data",
+        detail:
+          "Movimento precisa de nome e graduação inteira igual ou maior que zero.",
+      });
+    }
+    if (movement.sourceEffectId && !effectIds.has(movement.sourceEffectId)) {
+      add({
+        key: `movement-source-${movement.id}`,
+        label: `${movement.name || "Movimento"}: referência quebrada`,
+        status: "fail",
+        group: "data",
+        detail:
+          "O efeito que fornecia este movimento não existe mais. Vincule outro efeito ou remova a referência.",
+      });
+    }
+  }
+  for (const sense of sheet.senses ?? []) {
+    if (!sense.name.trim() || !Number.isInteger(sense.rank) || sense.rank < 0) {
+      add({
+        key: `sense-data-${sense.id}`,
+        label: `${sense.name || "Sentido"}: registro incompleto`,
+        status: "fail",
+        group: "data",
+        detail:
+          "Sentido precisa de nome e graduação inteira igual ou maior que zero.",
+      });
+    }
+    if (sense.sourceEffectId && !effectIds.has(sense.sourceEffectId)) {
+      add({
+        key: `sense-source-${sense.id}`,
+        label: `${sense.name || "Sentido"}: referência quebrada`,
+        status: "fail",
+        group: "data",
+        detail:
+          "O efeito que fornecia este sentido não existe mais. Vincule outro efeito ou remova a referência.",
+      });
+    }
+  }
+  for (const relationship of sheet.relationships ?? []) {
+    if (!relationship.targetSheetId && !relationship.targetName.trim()) {
+      add({
+        key: `relationship-target-${relationship.id}`,
+        label: "Relação sem ficha ou nome de destino",
+        status: "fail",
+        group: "data",
+        detail:
+          "Escolha uma ficha vinculada ou registre o nome da entidade relacionada.",
+      });
+    }
+    if (relationship.targetSheetId && relationship.targetSheetId === sheet.id) {
+      add({
+        key: `relationship-self-${relationship.id}`,
+        label: "Relação aponta para a própria ficha",
+        status: "fail",
+        group: "data",
+        detail: "Escolha outra ficha como destino da relação.",
+      });
+    }
+  }
+  for (const organization of sheet.organizations ?? []) {
+    if (!organization.name.trim()) {
+      add({
+        key: `organization-name-${organization.id}`,
+        label: "Organização sem nome",
+        status: "attention",
+        group: "data",
+        detail: "Registre o nome para que o vínculo possa ser encontrado na busca.",
+      });
+    }
+  }
+  for (const powerId of sheet.session?.sustainedPowerIds ?? []) {
+    if (!powerIds.has(powerId)) {
+      add({
+        key: `session-power-${powerId}`,
+        label: "Poder sustentado não encontrado",
+        status: "attention",
+        group: "data",
+        detail:
+          "O estado temporário ainda aponta para um poder removido. Restaure a sessão para limpar o vínculo.",
+      });
+    }
+  }
+  for (const penalty of sheet.session?.penalties ?? []) {
+    if (!penalty.label.trim() || !penalty.target.trim()) {
+      add({
+        key: `session-penalty-${penalty.id}`,
+        label: "Penalidade temporária incompleta",
+        status: "attention",
+        group: "data",
+        detail:
+          "Identifique a penalidade e o valor afetado; ela permanece separada dos valores-base.",
+      });
+    }
+  }
+  for (const resource of sheet.session?.temporaryResources ?? []) {
+    if (!resource.name.trim()) {
+      add({
+        key: `session-resource-name-${resource.id}`,
+        label: "Recurso temporário sem nome",
+        status: "attention",
+        group: "data",
+        detail: "Dê um nome ao recurso para reconhecê-lo durante a sessão.",
+      });
+    }
+    if (resource.maximum !== null && resource.current > resource.maximum) {
+      add({
+        key: `session-resource-limit-${resource.id}`,
+        label: `${resource.name || "Recurso temporário"}: valor acima do máximo`,
+        status: "attention",
+        group: "data",
+        detail:
+          "O valor foi mantido porque pode ser intencional; confira o máximo registrado.",
+      });
+    }
+  }
+  if ((sheet.session?.activeEffects ?? []).some((effect) => !effect.trim())) {
+    add({
+      key: "session-active-effect-empty",
+      label: "Efeito ativo sem identificação",
+      status: "attention",
+      group: "data",
+      detail: "Identifique o efeito temporário ou remova a linha vazia.",
+    });
+  }
+
   const reviewedChecks = checks.map((check): RuleCheck => {
     if (check.status !== "attention") return check;
 
@@ -2088,6 +2223,7 @@ export function createSummary(
 ): SheetSummary {
   const safeSheet = normalizeSheet(sheet);
   const derived = getDerivedTraits(safeSheet);
+  const audit = getRuleAudit(safeSheet);
   return {
     id: safeSheet.id,
     heroName: safeSheet.heroName,
@@ -2104,11 +2240,38 @@ export function createSummary(
       defense: derived.defense,
     },
     resistances: derived.resistances,
-    auditStatus: getRuleAudit(safeSheet).status,
+    auditStatus: audit.status,
+    buildType: safeSheet.buildType,
+    favorite: safeSheet.favorite,
+    archived: safeSheet.archived,
+    campaignIds: [...safeSheet.campaignIds],
+    completion: getSheetCompletion(safeSheet),
+    alertCount: audit.failures + audit.attentions,
     shareEnabled: safeSheet.shareEnabled,
     shareToken: safeSheet.shareToken,
     updatedAt: safeSheet.updatedAt,
   };
+}
+
+export function getSheetCompletion(sheet: CharacterSheet) {
+  const motivation = getMotivationState(sheet);
+  const milestones = [
+    Boolean(sheet.heroName.trim() && sheet.heroName !== "Novo Herói"),
+    Boolean(sheet.concept.trim()),
+    sheet.powerLevel >= 0,
+    Object.values(sheet.abilities).some((value) => value !== 0),
+    sheet.skills.some((skill) => skill.rank > 0),
+    sheet.advantages.length > 0,
+    sheet.powers.length > 0 || sheet.equipment.length > 0,
+    Object.values(getDerivedTraits(sheet).resistances).some(
+      (value) => value !== 0,
+    ),
+    sheet.buildType === "npc" || motivation.complete,
+    Boolean(sheet.notes.trim() || sheet.appearance.trim() || sheet.personality.trim()),
+  ];
+  return Math.round(
+    (milestones.filter(Boolean).length / milestones.length) * 100,
+  );
 }
 
 function getActivePowerBonuses(

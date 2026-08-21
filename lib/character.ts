@@ -9,7 +9,7 @@ import {
   skillCatalog,
 } from "./catalog";
 
-export const CURRENT_SCHEMA_VERSION = 6 as const;
+export const CURRENT_SCHEMA_VERSION = 7 as const;
 
 export const coreAbilityKeys = [
   "strength",
@@ -60,6 +60,35 @@ export type TraitKey =
 
 export type BuildType = "hero" | "npc";
 export type BudgetMode = "recommended" | "custom";
+export type CreationMode = "quick" | "guided" | "free";
+export type NpcRole =
+  | "minion"
+  | "ally"
+  | "rival"
+  | "villain"
+  | "boss"
+  | "recurring"
+  | "creature"
+  | "troop"
+  | "entity"
+  | "custom";
+export type RelationshipKind =
+  | "ally"
+  | "enemy"
+  | "rival"
+  | "mentor"
+  | "partner"
+  | "team-member"
+  | "subordinate"
+  | "summoner"
+  | "summon"
+  | "alternate-identity"
+  | "transformation"
+  | "alternate-form"
+  | "vehicle"
+  | "base"
+  | "construct"
+  | "other";
 export type AuditDecision = "approved" | "rejected";
 export type AuditDecisionEntry = {
   decision: AuditDecision;
@@ -74,6 +103,68 @@ export type AdvantageCategory =
   | "Heroica"
   | "Reação"
   | "Perícia";
+
+export type MovementEntry = {
+  id: string;
+  typeId: string;
+  name: string;
+  rank: number;
+  sourceEffectId: string;
+  notes: string;
+};
+
+export type SenseEntry = {
+  id: string;
+  senseId: string;
+  name: string;
+  rank: number;
+  sourceEffectId: string;
+  details: string;
+};
+
+export type OrganizationLink = {
+  id: string;
+  organizationId: string;
+  name: string;
+  role: string;
+  notes: string;
+};
+
+export type SheetRelationship = {
+  id: string;
+  targetSheetId: string;
+  targetName: string;
+  kind: RelationshipKind;
+  notes: string;
+};
+
+export type SessionPenalty = {
+  id: string;
+  label: string;
+  target: string;
+  value: number;
+};
+
+export type SessionResource = {
+  id: string;
+  name: string;
+  current: number;
+  maximum: number | null;
+};
+
+export type SessionState = {
+  active: boolean;
+  startedAt: string | null;
+  damage: number;
+  heroPointsCurrent: number;
+  luckCurrent: number;
+  conditions: string[];
+  penalties: SessionPenalty[];
+  temporaryResources: SessionResource[];
+  activeEffects: string[];
+  sustainedPowerIds: string[];
+  notes: string;
+};
 
 export type CharacterSheet = {
   schemaVersion: typeof CURRENT_SCHEMA_VERSION;
@@ -92,6 +183,13 @@ export type CharacterSheet = {
   sizeRank: number;
   absentTraits: AbsentTraitKey[];
   buildType: BuildType;
+  creationMode: CreationMode;
+  guidedStep: number;
+  npcRole: NpcRole | null;
+  favorite: boolean;
+  archived: boolean;
+  tags: string[];
+  campaignIds: string[];
   powerLevel: number;
   budgetMode: BudgetMode;
   customPointBudget: number;
@@ -107,6 +205,10 @@ export type CharacterSheet = {
   attacks: AttackEntry[];
   equipment: EquipmentEntry[];
   complications: ComplicationEntry[];
+  movement: MovementEntry[];
+  senses: SenseEntry[];
+  organizations: OrganizationLink[];
+  relationships: SheetRelationship[];
   resources: {
     heroPoints: number;
     heroicAdvantageUses: number;
@@ -115,6 +217,7 @@ export type CharacterSheet = {
     fatigue: "Nenhuma" | "Fatigado" | "Exausto" | "Incapacitado";
     conditions: string[];
   };
+  session: SessionState;
   otherPointAdjustment: {
     value: number;
     reason: string;
@@ -123,6 +226,7 @@ export type CharacterSheet = {
   notes: string;
   shareToken?: string | null;
   shareEnabled?: boolean;
+  shareMode: "read-only" | "duplicable";
   createdAt?: string;
   updatedAt?: string;
 };
@@ -281,6 +385,12 @@ export type SheetSummary = {
   combat: SummaryCombat;
   resistances: SummaryResistances;
   auditStatus: "pass" | "fail" | "attention" | "info";
+  buildType: BuildType;
+  favorite: boolean;
+  archived: boolean;
+  campaignIds: string[];
+  completion: number;
+  alertCount: number;
   shareEnabled?: boolean;
   shareToken?: string | null;
   updatedAt?: string;
@@ -490,6 +600,13 @@ export function createEmptySheet(): CharacterSheet {
     sizeRank: 0,
     absentTraits: [],
     buildType: "hero",
+    creationMode: "guided",
+    guidedStep: 1,
+    npcRole: null,
+    favorite: false,
+    archived: false,
+    tags: [],
+    campaignIds: [],
     powerLevel: 10,
     budgetMode: "recommended",
     customPointBudget: 150,
@@ -533,6 +650,10 @@ export function createEmptySheet(): CharacterSheet {
         description: "",
       },
     ],
+    movement: [],
+    senses: [],
+    organizations: [],
+    relationships: [],
     resources: {
       heroPoints: 1,
       heroicAdvantageUses: 0,
@@ -541,11 +662,25 @@ export function createEmptySheet(): CharacterSheet {
       fatigue: "Nenhuma",
       conditions: [],
     },
+    session: {
+      active: false,
+      startedAt: null,
+      damage: 0,
+      heroPointsCurrent: 1,
+      luckCurrent: 0,
+      conditions: [],
+      penalties: [],
+      temporaryResources: [],
+      activeEffects: [],
+      sustainedPowerIds: [],
+      notes: "",
+    },
     otherPointAdjustment: { value: 0, reason: "" },
     auditDecisions: {},
     notes: "",
     shareEnabled: false,
     shareToken: null,
+    shareMode: "duplicable",
   };
 }
 
@@ -629,6 +764,8 @@ export function normalizeSheet(value: unknown): CharacterSheet {
       ? "custom"
       : "recommended";
 
+  const resources = normalizeResources(raw.resources, base.resources);
+
   const skills = Array.isArray(raw.skills)
     ? raw.skills.map((entry) =>
         normalizeSkill(entry, inferCatalogLinks),
@@ -658,6 +795,13 @@ export function normalizeSheet(value: unknown): CharacterSheet {
     sizeRank: numberValue(raw.sizeRank, 0),
     absentTraits: getStoredAbsentTraits(raw),
     buildType: raw.buildType === "npc" ? "npc" : "hero",
+    creationMode: normalizeCreationMode(raw.creationMode),
+    guidedStep: clampInteger(raw.guidedStep, 1, 10, 1),
+    npcRole: normalizeNpcRole(raw.npcRole),
+    favorite: Boolean(raw.favorite),
+    archived: Boolean(raw.archived),
+    tags: normalizeStringList(raw.tags, 40),
+    campaignIds: normalizeStringList(raw.campaignIds, 100),
     powerLevel,
     budgetMode,
     customPointBudget: numberValue(
@@ -694,11 +838,25 @@ export function normalizeSheet(value: unknown): CharacterSheet {
           normalizeComplication(entry, inferCatalogLinks),
         )
       : base.complications,
-    resources: normalizeResources(raw.resources, base.resources),
+    movement: Array.isArray(raw.movement)
+      ? raw.movement.map(normalizeMovement)
+      : [],
+    senses: Array.isArray(raw.senses)
+      ? raw.senses.map(normalizeSense)
+      : [],
+    organizations: Array.isArray(raw.organizations)
+      ? raw.organizations.map(normalizeOrganizationLink)
+      : [],
+    relationships: Array.isArray(raw.relationships)
+      ? raw.relationships.map(normalizeRelationship)
+      : [],
+    resources,
+    session: normalizeSession(raw.session, resources),
     otherPointAdjustment: normalizeOtherAdjustment(raw.otherPointAdjustment),
     auditDecisions: normalizeAuditDecisions(raw.auditDecisions),
     notes: stringValue(raw.notes),
     shareEnabled: Boolean(raw.shareEnabled),
+    shareMode: raw.shareMode === "read-only" ? "read-only" : "duplicable",
     shareToken:
       typeof raw.shareToken === "string" ? raw.shareToken : null,
     createdAt:
@@ -1067,6 +1225,174 @@ function normalizeConditionName(value: string) {
       .includes(wanted);
   });
   return canonical ?? value;
+}
+
+function normalizeMovement(value: unknown): MovementEntry {
+  const raw = asRecord(value);
+  return {
+    id: stringValue(raw.id, newId("movement")),
+    typeId: stringValue(raw.typeId, "movement.other"),
+    name: stringValue(raw.name, "Movimento"),
+    rank: numberValue(raw.rank, 0),
+    sourceEffectId: stringValue(raw.sourceEffectId),
+    notes: stringValue(raw.notes),
+  };
+}
+
+function normalizeSense(value: unknown): SenseEntry {
+  const raw = asRecord(value);
+  return {
+    id: stringValue(raw.id, newId("sense")),
+    senseId: stringValue(raw.senseId, "sense.other"),
+    name: stringValue(raw.name, "Sentido"),
+    rank: numberValue(raw.rank, 0),
+    sourceEffectId: stringValue(raw.sourceEffectId),
+    details: stringValue(raw.details),
+  };
+}
+
+function normalizeOrganizationLink(value: unknown): OrganizationLink {
+  const raw = asRecord(value);
+  return {
+    id: stringValue(raw.id, newId("organization")),
+    organizationId: stringValue(raw.organizationId),
+    name: stringValue(raw.name, "Organização"),
+    role: stringValue(raw.role),
+    notes: stringValue(raw.notes),
+  };
+}
+
+function normalizeRelationship(value: unknown): SheetRelationship {
+  const raw = asRecord(value);
+  return {
+    id: stringValue(raw.id, newId("relationship")),
+    targetSheetId: stringValue(raw.targetSheetId),
+    targetName: stringValue(raw.targetName),
+    kind: isRelationshipKind(raw.kind) ? raw.kind : "other",
+    notes: stringValue(raw.notes),
+  };
+}
+
+function normalizeSession(
+  value: unknown,
+  resources: CharacterSheet["resources"],
+): SessionState {
+  const raw = asRecord(value);
+  return {
+    active: Boolean(raw.active),
+    startedAt:
+      typeof raw.startedAt === "string" && raw.startedAt
+        ? raw.startedAt
+        : null,
+    damage: Math.max(0, numberValue(raw.damage, 0)),
+    heroPointsCurrent: Math.max(
+      0,
+      numberValue(raw.heroPointsCurrent, resources.heroPoints),
+    ),
+    luckCurrent: Math.max(
+      0,
+      numberValue(raw.luckCurrent, resources.luckCurrent),
+    ),
+    conditions: Array.isArray(raw.conditions)
+      ? normalizeStringList(raw.conditions, 100).map(normalizeConditionName)
+      : [],
+    penalties: Array.isArray(raw.penalties)
+      ? raw.penalties.map((entry) => {
+          const penalty = asRecord(entry);
+          return {
+            id: stringValue(penalty.id, newId("penalty")),
+            label: stringValue(penalty.label, "Penalidade"),
+            target: stringValue(penalty.target, "other"),
+            value: numberValue(penalty.value, 0),
+          };
+        })
+      : [],
+    temporaryResources: Array.isArray(raw.temporaryResources)
+      ? raw.temporaryResources.map((entry) => {
+          const resource = asRecord(entry);
+          return {
+            id: stringValue(resource.id, newId("resource")),
+            name: stringValue(resource.name, "Recurso"),
+            current: numberValue(resource.current, 0),
+            maximum:
+              resource.maximum === null || resource.maximum === undefined
+                ? null
+                : numberValue(resource.maximum, 0),
+          };
+        })
+      : [],
+    activeEffects: normalizeStringList(raw.activeEffects, 200),
+    sustainedPowerIds: normalizeStringList(raw.sustainedPowerIds, 200),
+    notes: stringValue(raw.notes),
+  };
+}
+
+function normalizeCreationMode(value: unknown): CreationMode {
+  if (value === "quick" || value === "free") return value;
+  return "guided";
+}
+
+function normalizeNpcRole(value: unknown): NpcRole | null {
+  const roles: readonly NpcRole[] = [
+    "minion",
+    "ally",
+    "rival",
+    "villain",
+    "boss",
+    "recurring",
+    "creature",
+    "troop",
+    "entity",
+    "custom",
+  ];
+  return roles.includes(value as NpcRole) ? (value as NpcRole) : null;
+}
+
+function isRelationshipKind(value: unknown): value is RelationshipKind {
+  const kinds: readonly RelationshipKind[] = [
+    "ally",
+    "enemy",
+    "rival",
+    "mentor",
+    "partner",
+    "team-member",
+    "subordinate",
+    "summoner",
+    "summon",
+    "alternate-identity",
+    "transformation",
+    "alternate-form",
+    "vehicle",
+    "base",
+    "construct",
+    "other",
+  ];
+  return kinds.includes(value as RelationshipKind);
+}
+
+function normalizeStringList(value: unknown, maximum: number) {
+  if (!Array.isArray(value)) return [];
+  return [
+    ...new Set(
+      value
+        .filter((entry): entry is string => typeof entry === "string")
+        .map((entry) => entry.trim())
+        .filter(Boolean)
+        .slice(0, maximum),
+    ),
+  ];
+}
+
+function clampInteger(
+  value: unknown,
+  minimum: number,
+  maximum: number,
+  fallback: number,
+) {
+  return Math.min(
+    maximum,
+    Math.max(minimum, Math.round(numberValue(value, fallback))),
+  );
 }
 
 function normalizeOtherAdjustment(
