@@ -4831,6 +4831,24 @@ body {
   color: var(--cyan);
 }
 
+.guided-progress button small {
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
+  font-size: 8px;
+}
+
+.guided-progress button {
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 4px;
+  padding-inline: 5px;
+}
+
+.guided-progress button span:first-child {
+  width: 20px;
+  height: 20px;
+}
+
 .effect-parameter-summary {
   display: flex;
   flex-wrap: wrap;
