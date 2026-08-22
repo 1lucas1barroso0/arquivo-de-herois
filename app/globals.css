@@ -1278,6 +1278,16 @@ input:disabled {
   text-align: left;
 }
 
+.editor-nav button span {
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.editor-nav button svg {
+  flex: 0 0 auto;
+}
+
 .editor-nav button:hover {
   background: var(--surface-2);
   color: var(--ink);
