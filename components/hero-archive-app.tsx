@@ -1174,7 +1174,9 @@ export function HeroArchiveApp() {
     <Trash2 size={16} /> {t("Excluir ficha")}
   </button>
 </div>
-      )}
+</section>
+</div>
+)}
 
       {toast && (
         <div className={`toast tone-${toast.tone}`} role={toast.tone === "error" ? "alert" : "status"}>
