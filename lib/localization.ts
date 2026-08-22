@@ -395,6 +395,8 @@ const englishUi: Record<string, string> = {
   "Liberdades do Narrador": "Narrator freedoms",
   "O azul identifica regras mais liberais disponíveis ao Narrador e aos seus NPCs.":
     "Blue identifies more permissive rules available to the Narrator and NPCs.",
+  "Esta ação remove permanentemente a ficha do seu arquivo.": "This action permanently removes the sheet from your archive.",
+"A ficha editável será removida do seu arquivo. O link permanente já publicado continuará disponível.": "The editable sheet will be removed from your archive. The permanent link already published will remain available.",
 };
 
 export function translateUi(value: string, language: AppLanguage): string {
