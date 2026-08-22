@@ -1148,19 +1148,32 @@ export function HeroArchiveApp() {
             tabIndex={-1}
           >
             <div className="modal-icon"><CircleAlert /></div>
-            <p className="eyebrow">Excluir ficha</p>
-            <h2 id="delete-title">{deleteTarget.heroName}</h2>
-            <p>
-              {deleteTarget.shareToken
-                ? "A ficha editável será removida do seu arquivo. O link permanente já publicado continuará disponível."
-                : "Esta ação remove permanentemente a ficha do seu arquivo."}
-            </p>
-            <div className="modal-actions">
-              <button className="button button-secondary" data-initial-focus="true" type="button" onClick={closeDeleteDialog}>{t("Cancelar")}</button>
-              <button className="button button-danger" type="button" onClick={() => void removeCharacter()}><Trash2 size={16} /> Excluir ficha</button>
-            </div>
-          </section>
-        </div>
+<p className="eyebrow">{t("Excluir ficha")}</p>
+<h2 id="delete-title">{deleteTarget.heroName}</h2>
+<p>
+  {deleteTarget.shareToken
+    ? t("A ficha editável será removida do seu arquivo. O link permanente já publicado continuará disponível.")
+    : t("Esta ação remove permanentemente a ficha do seu arquivo.")}
+</p>
+
+<div className="modal-actions">
+  <button
+    className="button button-secondary"
+    data-initial-focus="true"
+    type="button"
+    onClick={closeDeleteDialog}
+  >
+    {t("Cancelar")}
+  </button>
+
+  <button
+    className="button button-danger"
+    type="button"
+    onClick={() => void removeCharacter()}
+  >
+    <Trash2 size={16} /> {t("Excluir ficha")}
+  </button>
+</div>
       )}
 
       {toast && (
