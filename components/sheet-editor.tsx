@@ -432,10 +432,10 @@ function CreationAssistant({
       <div>
         <strong>
           {editingMode === "guided"
-            ? "Orientação passo a passo"
+            ? t("Orientação passo a passo")
             : editingMode === "quick"
-              ? "Próxima pendência"
-              : "Orientação disponível no modo livre"}
+              ? t("Próxima pendência")
+              : t("Orientação disponível no modo livre")}
         </strong>
         <p>{t(next.detail)}</p>
       </div>

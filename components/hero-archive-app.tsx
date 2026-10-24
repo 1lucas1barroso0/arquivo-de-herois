@@ -984,7 +984,7 @@ export function HeroArchiveApp() {
         className="sr-only"
         ref={importRef}
         type="file"
-        aria-label="Selecionar arquivo de ficha"
+        aria-label={t("Selecionar arquivo de ficha")}
         accept="application/json,text/plain,.json,.txt"
         onChange={(event) => {
           const file = event.target.files?.[0];

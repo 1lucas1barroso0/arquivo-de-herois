@@ -21,7 +21,8 @@ test("English references remain consistently translated", async ({ page }) => {
 test("a new sheet exposes its ruleset revision", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "New sheet", exact: true }).first().click();
-  await expect(page.getByText("Editing mode", { exact: true }).first()).toBeVisible();
-  await page.getByRole("button", { name: "Analysis", exact: true }).click();
+  const analysis = page.getByRole("button", { name: "Analysis", exact: true });
+  await expect(analysis).toBeVisible();
+  await analysis.click();
   await expect(page.getByText(/M&M4e Origin playtest · previews 1–9/)).toBeVisible();
 });
