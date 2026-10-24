@@ -27,7 +27,8 @@ import {
   type CharacterRevision,
 } from "../lib/history";
 import { beginSession, resetSession } from "../lib/session";
-import { relationshipKindLabel } from "../lib/localization";
+import { localizeConditionLabel, relationshipKindLabel } from "../lib/localization";
+import { rulesetLabel } from "../lib/ruleset";
 import { useLocale } from "./locale-provider";
 
 export type SheetTool = "analysis" | "session" | "relations" | "history" | "compare";
@@ -56,18 +57,18 @@ export function SheetToolsPanel({
 }
 
 function AnalysisPanel({ sheet }: { sheet: CharacterSheet }) {
-  const { language, m } = useLocale();
+  const { language, m, t } = useLocale();
   const analysis = useMemo(() => getCharacterAnalysis(sheet), [sheet]);
   const maximum = Math.max(1, ...analysis.points.distribution.map((entry) => Math.max(0, entry.value)));
   const labels: Record<string, [string, string]> = {
     abilities: ["Atributos", "Abilities"], combat: ["Combate", "Combat"], resistances: ["Resistências", "Resistances"], skills: ["Perícias", "Skills"], advantages: ["Vantagens", "Advantages"], powers: ["Poderes", "Powers"], adjustments: ["Ajustes", "Adjustments"],
   };
   return <section className="sheet-tool-page analysis-page" aria-labelledby="analysis-title">
-    <header><div><p className="eyebrow">{m("common.powerLevelShort")} {analysis.powerLevel}</p><h1 id="analysis-title">{m("analysis.title")}</h1></div><div className="analysis-balance"><strong>{analysis.points.spent}</strong><span>/ {analysis.points.budget} PP</span><small>{m("common.balance")}: {analysis.points.remaining}</small></div></header>
+    <header><div><p className="eyebrow">{m("common.powerLevelShort")} {analysis.powerLevel}</p><h1 id="analysis-title">{m("analysis.title")}</h1><p>{rulesetLabel(sheet.ruleset, language)}</p></div><div className="analysis-balance"><strong>{analysis.points.spent}</strong><span>/ {analysis.points.budget} PP</span><small>{m("common.balance")}: {analysis.points.remaining}</small></div></header>
     <section className="analysis-distribution"><h2>{m("analysis.distribution")}</h2><div>{analysis.points.distribution.map((entry) => <p key={entry.id}><span>{labels[entry.id]?.[language === "en" ? 1 : 0] ?? entry.id}</span><i><b style={{ width: `${Math.max(2, Math.max(0, entry.value) / maximum * 100)}%` }} /></i><strong>{entry.value}</strong></p>)}</div></section>
     <div className="analysis-metrics">
       <AnalysisMetric title={m("analysis.offense")} values={[[m("analysis.attacks"), analysis.offense.attacks], [m("analysis.highestBonus"), analysis.offense.highestAttackBonus ?? "—"], [m("analysis.highestEffect"), analysis.offense.highestEffectRank ?? "—"]]} />
-      <AnalysisMetric title={m("analysis.defense")} values={[["Dodge", analysis.defense.dodge], [language === "en" ? "Parry" : "Aparar", analysis.defense.parry], ["Toughness", analysis.defense.toughness], ["Fortitude", analysis.defense.fortitude], ["Will", analysis.defense.will]]} />
+      <AnalysisMetric title={m("analysis.defense")} values={[[t("Esquiva"), analysis.defense.dodge], [t("Defesa corpo a corpo"), analysis.defense.closeDefense], [t("Robustez"), analysis.defense.toughness], [t("Fortitude"), analysis.defense.fortitude], [t("Vontade"), analysis.defense.will]]} />
       <AnalysisMetric title={m("analysis.mobility")} values={[[m("analysis.modes"), analysis.mobility.entries], [m("analysis.highestRank"), analysis.mobility.highestRank ?? "—"]]} />
       <AnalysisMetric title={m("analysis.utility")} values={[[m("analysis.trainedSkills"), analysis.skills.trained], [m("analysis.advantages"), analysis.utility.advantages], [m("analysis.powers"), analysis.utility.powers], [m("analysis.senses"), analysis.utility.senses], [m("analysis.equipment"), analysis.utility.equipment]]} />
     </div>
@@ -78,7 +79,7 @@ function AnalysisPanel({ sheet }: { sheet: CharacterSheet }) {
 function AnalysisMetric({ title, values }: { title: string; values: Array<[string, string | number]> }) { return <section><h2>{title}</h2>{values.map(([label, value]) => <p key={label}><span>{label}</span><strong>{value}</strong></p>)}</section>; }
 
 function SessionPanel({ sheet, onChange }: { sheet: CharacterSheet; onChange: (sheet: CharacterSheet) => void }) {
-  const { m } = useLocale();
+  const { language, m } = useLocale();
   const session = sheet.session;
   function patch(values: Partial<CharacterSheet["session"]>) { onChange({ ...sheet, session: { ...session, ...values } }); }
   function restore() { if (!window.confirm(m("session.resetConfirm"))) return; onChange(resetSession(sheet)); }
@@ -103,7 +104,7 @@ function SessionPanel({ sheet, onChange }: { sheet: CharacterSheet; onChange: (s
       </div>
       <section className="session-conditions">
         <h2>{m("session.conditions")}</h2>
-        <div>{conditions.map((condition) => <label key={condition}><input type="checkbox" checked={session.conditions.includes(condition)} onChange={(event) => patch({ conditions: event.target.checked ? [...session.conditions, condition] : session.conditions.filter((entry) => entry !== condition) })} /><span>{condition}</span></label>)}</div>
+        <div>{conditions.map((condition) => <label key={condition}><input type="checkbox" checked={session.conditions.includes(condition)} onChange={(event) => patch({ conditions: event.target.checked ? [...session.conditions, condition] : session.conditions.filter((entry) => entry !== condition) })} /><span>{localizeConditionLabel(condition, language)}</span></label>)}</div>
       </section>
       <section className="session-active-powers">
         <h2>{m("session.sustained")}</h2>

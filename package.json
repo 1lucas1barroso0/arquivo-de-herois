@@ -1,6 +1,6 @@
 {
   "name": "arquivo-de-herois",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "private": true,
   "engines": {
     "node": ">=22.13.0"
@@ -10,7 +10,8 @@
     "build": "next build",
     "start": "next start",
     "test": "npm run test:rules",
-    "test:rules": "node --import tsx --test tests/rules.test.ts tests/catalog.test.ts tests/examples.test.ts tests/portable.test.ts tests/scales.test.ts tests/calculators.test.ts tests/reference.test.ts tests/identity.test.ts tests/storage-compat.test.ts tests/platform-v7.test.ts tests/platform-ui-v7.test.tsx tests/view-mode.test.tsx",
+    "test:rules": "node --import tsx --test tests/*.test.ts tests/*.test.tsx",
+    "test:e2e": "playwright test",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "db:generate": "drizzle-kit generate"
@@ -23,6 +24,7 @@
     "react-dom": "19.2.6"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "@tailwindcss/postcss": "4.2.1",
     "@types/node": "22.19.19",
     "@types/react": "19.2.14",

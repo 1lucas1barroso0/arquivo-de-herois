@@ -165,11 +165,11 @@ export function ScaleGuide({
   }, [onClose, open]);
 
   const normalizedQuery = normalize(query);
-  const ability = getAbilityBenchmark(abilityRank);
-  const skill = getSkillBenchmark(skillModifier);
+  const ability = getAbilityBenchmark(abilityRank, displayLanguage);
+  const skill = getSkillBenchmark(skillModifier, displayLanguage);
   const pl = getPowerLevelMetrics(powerLevel);
-  const effect = getEffectRankBenchmark(effectRank);
-  const measure = getMeasurementRow(measureRank);
+  const effect = getEffectRankBenchmark(effectRank, displayLanguage);
+  const measure = getMeasurementRow(measureRank, displayLanguage);
   const check = getCheckResult({
     die: checkDie,
     modifier: skillModifier,
@@ -186,9 +186,9 @@ export function ScaleGuide({
     specialRank: damageSpecialRank,
     bonusDie: damageBonusDie,
   });
-  const travelDistance = getTravelDistance(movementSpeedRank, travelTimeRank);
-  const travelTime = getTravelTime(travelDistanceRank, movementSpeedRank);
-  const throwingDistance = getThrowingDistance(throwStrengthRank, throwMassRank);
+  const travelDistance = getTravelDistance(movementSpeedRank, travelTimeRank, displayLanguage);
+  const travelTime = getTravelTime(travelDistanceRank, movementSpeedRank, displayLanguage);
+  const throwingDistance = getThrowingDistance(throwStrengthRank, throwMassRank, displayLanguage);
   const damageUnaffected = !damage.checkRequired ||
     (damage.success && damage.degrees >= 2);
   const damageResultClass = damageUnaffected
@@ -288,7 +288,7 @@ export function ScaleGuide({
               <ScaleHeading
                 id="rules-reference-title"
                 title="Regras da ficha"
-                text={`${ruleReferenceEntries.length} tópicos consultáveis. Cada um informa o nível de automação e sua fonte no material fornecido.`}
+                text={displayLanguage === "en" ? `${ruleReferenceEntries.length} searchable topics. Each identifies its automation level and source in the provided material.` : `${ruleReferenceEntries.length} tópicos consultáveis. Cada um informa o nível de automação e sua fonte no material fornecido.`}
               />
               <div className="reference-catalog-toolbar">
                 <label>
@@ -410,8 +410,8 @@ export function ScaleGuide({
                 <strong>{ability.label}</strong><p>{ability.detail}</p>
               </ScaleCalculator>
               <div className="scale-anchor-grid">
-                {abilityBenchmarkAnchors.filter((entry) => matches(`${entry.rank} ${entry.label}`)).map((entry) => (
-                  <button className={abilityRank === entry.rank ? "is-current" : ""} key={entry.rank} onClick={() => setAbilityRank(entry.rank)} type="button"><b>{signed(entry.rank)}</b><span>{entry.label}</span></button>
+                {abilityBenchmarkAnchors.filter((entry) => matches(`${entry.rank} ${entry.label} ${entry.labelEn}`)).map((entry) => (
+                  <button className={abilityRank === entry.rank ? "is-current" : ""} key={entry.rank} onClick={() => setAbilityRank(entry.rank)} type="button"><b>{signed(entry.rank)}</b><span>{displayLanguage === "en" ? entry.labelEn : entry.label}</span></button>
                 ))}
               </div>
               <p className="scale-footnote">Valores entre os marcos recebem uma descrição de intervalo; 20+ continua sendo cósmico ou divino.</p>
@@ -422,7 +422,7 @@ export function ScaleGuide({
             <section aria-labelledby="skill-scale-title">
               <ScaleHeading id="skill-scale-title" title="Perícias e testes" text="O modificador reúne atributo, graduações, especialização e outros ajustes. Em um teste de rotina, o dado vale 10." />
               <ScaleCalculator label="Modificador total" value={skillModifier} onChange={setSkillModifier}>
-                <strong>{skill.label} · rotina {skill.routineResult}</strong><p>{skill.detail}</p>
+                <strong>{skill.label} · {displayLanguage === "en" ? "routine" : "rotina"} {skill.routineResult}</strong><p>{skill.detail}</p>
               </ScaleCalculator>
               <ReferenceCalculator
                 title="Resolver um teste graduado"
@@ -430,7 +430,7 @@ export function ScaleGuide({
                 resultClass={check.success ? "is-success" : "is-failure"}
                 result={
                   <>
-                    <strong>Total {check.total} · {check.label}</strong>
+                    <strong>{t("Total")} {check.total} · {localizeCheckLabel(check.degrees, check.success, displayLanguage)}</strong>
                     <span>
                       Rotina {routine.total}
                       {check.addedAdjustment !== 0 && ` · ajuste de ${signed(check.addedAdjustment)} pelo resultado do dado`}
@@ -444,13 +444,13 @@ export function ScaleGuide({
                 <CompactNumberField label="CD" value={checkDifficulty} onChange={setCheckDifficulty} />
               </ReferenceCalculator>
               <div className="skill-benchmark-strip">
-                {skillBenchmarkAnchors.filter((entry) => matches(`${entry.modifier} ${entry.label} ${entry.routineDc}`)).map((entry) => (
-                  <button key={entry.modifier} onClick={() => setSkillModifier(entry.modifier)} type="button"><b>+{entry.modifier}</b><span>{entry.label}</span><small>Rotina CD {entry.routineDc}</small></button>
+                {skillBenchmarkAnchors.filter((entry) => matches(`${entry.modifier} ${entry.label} ${entry.labelEn} ${entry.routineDc}`)).map((entry) => (
+                  <button key={entry.modifier} onClick={() => setSkillModifier(entry.modifier)} type="button"><b>+{entry.modifier}</b><span>{displayLanguage === "en" ? entry.labelEn : entry.label}</span><small>{displayLanguage === "en" ? "Routine DC" : "Rotina CD"} {entry.routineDc}</small></button>
                 ))}
               </div>
-              <div className="difficulty-grid" aria-label="Classes de Dificuldade">
-                {difficultyBenchmarks.filter((entry) => matches(`${entry.dc} ${entry.label} ${entry.example}`)).map((entry) => (
-                  <article key={entry.dc}><b>CD {entry.dc}</b><strong>{entry.label}</strong><span>{entry.example}</span></article>
+              <div className="difficulty-grid" aria-label={t("Classes de Dificuldade")}>
+                {difficultyBenchmarks.filter((entry) => matches(`${entry.dc} ${entry.label} ${entry.labelEn} ${entry.example} ${entry.exampleEn}`)).map((entry) => (
+                  <article key={entry.dc}><b>{displayLanguage === "en" ? "DC" : "CD"} {entry.dc}</b><strong>{displayLanguage === "en" ? entry.labelEn : entry.label}</strong><span>{displayLanguage === "en" ? entry.exampleEn : entry.example}</span></article>
                 ))}
               </div>
             </section>
@@ -487,8 +487,8 @@ export function ScaleGuide({
                 <strong>{effect.label}</strong><p>{effect.detail}</p>
               </ScaleCalculator>
               <div className="pl-metric-grid">
-                <ScaleMetric label="Carga por Força igual" value={getLiftingBenchmark(effectRank).mass} />
-                <ScaleMetric label="Movimento por rodada" value={getSpeedBenchmark(effectRank).distancePerRound} />
+                <ScaleMetric label="Carga por Força igual" value={getLiftingBenchmark(effectRank, displayLanguage).mass} />
+                <ScaleMetric label="Movimento por rodada" value={getSpeedBenchmark(effectRank, displayLanguage).distancePerRound} />
                 <ScaleMetric label="CD básica do efeito" value={10 + effectRank} />
               </div>
               <ReferenceCalculator
@@ -497,8 +497,8 @@ export function ScaleGuide({
                 resultClass={damageResultClass}
                 result={
                   <>
-                    <strong>{damage.checkRequired ? `Total ${damage.total} contra CD ${damage.difficultyClass}` : "Efeito resistido sem teste"}</strong>
-                    <span>{damage.label} · {damage.summary}{damage.specialRule && ` · ${damage.specialRule}`}</span>
+                    <strong>{damage.checkRequired ? (displayLanguage === "en" ? `Total ${damage.total} vs. DC ${damage.difficultyClass}` : `Total ${damage.total} contra CD ${damage.difficultyClass}`) : (displayLanguage === "en" ? "Effect resisted without a check" : "Efeito resistido sem teste")}</strong>
+                    <span>{localizeDamageText(damage.label, displayLanguage)} · {localizeDamageText(damage.summary, displayLanguage)}{damage.specialRule && ` · ${localizeDamageText(damage.specialRule, displayLanguage)}`}</span>
                   </>
                 }
               >
@@ -513,7 +513,7 @@ export function ScaleGuide({
                 <CompactNumberField label="Graduação do dano" value={effectRank} min={0} onChange={setEffectRank} />
                 <CompactNumberField label="Feridos acumulados" value={damageHits} min={0} onChange={setDamageHits} />
                 {(damageResistanceDegree === "impervious" || damageResistanceDegree === "improved") && (
-                  <CompactNumberField label={`Graduação ${damageResistanceDegree === "impervious" ? "Impenetrável" : "Aprimorada"}`} value={damageSpecialRank} min={0} onChange={setDamageSpecialRank} />
+                  <CompactNumberField label={displayLanguage === "en" ? `${damageResistanceDegree === "impervious" ? "Impervious" : "Improved"} rank` : `Graduação ${damageResistanceDegree === "impervious" ? "Impenetrável" : "Aprimorada"}`} value={damageSpecialRank} min={0} onChange={setDamageSpecialRank} />
                 )}
                 {damageResistanceDegree === "improved" && effectRank <= damageSpecialRank && (
                   <CompactNumberField label="Dado bônus" value={damageBonusDie} min={1} max={20} onChange={setDamageBonusDie} />
@@ -527,7 +527,7 @@ export function ScaleGuide({
             <section aria-labelledby="measure-scale-title">
               <ScaleHeading id="measure-scale-title" title="Graduações e medidas" text="Massa, tempo, distância e volume são aproximações. Cada +1 dobra o valor e cada −1 o reduz pela metade." />
               <ScaleCalculator label="Graduação de medida" value={measureRank} onChange={setMeasureRank}>
-                <strong>Graduação {signed(measure.rank)}</strong><p>Massa {measure.mass} · tempo {measure.time} · distância {measure.distance} · volume {measure.volume}. {measure.note}</p>
+                <strong>{t("Graduação")} {signed(measure.rank)}</strong><p>{t("Massa")} {measure.mass} · {t("Tempo").toLocaleLowerCase()} {measure.time} · {t("Distância").toLocaleLowerCase()} {measure.distance} · {t("Volume").toLocaleLowerCase()} {measure.volume}. {measure.note}</p>
               </ScaleCalculator>
               <div className="measurement-relations" aria-label="Cálculos entre medidas">
                 <header>
@@ -560,9 +560,9 @@ export function ScaleGuide({
                 </article>
               </div>
               <div className="measurement-table" aria-label="Tabela métrica de medidas">
-                <div className="measurement-head" aria-hidden="true"><b>Grad.</b><b>Massa</b><b>Tempo</b><b>Distância</b><b>Volume</b></div>
+                <div className="measurement-head" aria-hidden="true"><b>{displayLanguage === "en" ? "Rank" : "Grad."}</b><b>{t("Massa")}</b><b>{t("Tempo")}</b><b>{t("Distância")}</b><b>{t("Volume")}</b></div>
                 {measurementScale.filter((entry) => matches(`${entry.rank} ${entry.mass} ${entry.time} ${entry.distance} ${entry.volume}`)).map((entry) => (
-                  <button className={measureRank === entry.rank ? "is-current" : ""} key={entry.rank} onClick={() => setMeasureRank(entry.rank)} type="button"><strong>{signed(entry.rank)}</strong><span data-label="Massa">{entry.mass}</span><span data-label="Tempo">{entry.time}</span><span data-label="Distância">{entry.distance}</span><span data-label="Volume">{entry.volume}</span></button>
+                  <button className={measureRank === entry.rank ? "is-current" : ""} key={entry.rank} onClick={() => setMeasureRank(entry.rank)} type="button"><strong>{signed(entry.rank)}</strong><span data-label={t("Massa")}>{entry.mass}</span><span data-label={t("Tempo")}>{getMeasurementRow(entry.rank, displayLanguage).time}</span><span data-label={t("Distância")}>{entry.distance}</span><span data-label={t("Volume")}>{entry.volume}</span></button>
                 ))}
               </div>
               <section className="size-reference" aria-labelledby="size-reference-title">
@@ -751,4 +751,34 @@ function normalize(value: string) {
 
 function signed(value: number) {
   return value > 0 ? `+${value}` : String(value);
+}
+
+function localizeCheckLabel(degrees: number, success: boolean, language: "pt" | "en") {
+  if (language === "pt") return `${degrees} ${degrees === 1 ? "grau" : "graus"} de ${success ? "sucesso" : "falha"}`;
+  return `${degrees} ${degrees === 1 ? "degree" : "degrees"} of ${success ? "success" : "failure"}`;
+}
+
+function localizeDamageText(value: string, language: "pt" | "en") {
+  if (language === "pt") return value;
+  const exact: Record<string, string> = {
+    "Sem teste": "No check",
+    "Nenhuma nova condição de dano": "No new damage condition",
+    Ferido: "Bruised",
+    "Atordoado ou Caído": "Dazed or prone",
+    Cambaleante: "Staggered",
+    Incapacitado: "Incapacitated",
+    "Imunidade: o efeito não exige teste.": "Immunity: the effect requires no check.",
+  };
+  if (exact[value]) return exact[value];
+  return value
+    .replace(/grau de falha por Fraqueza/g, "degree of failure due to Weakness")
+    .replace(/graus de sucesso/g, "degrees of success")
+    .replace(/grau de sucesso/g, "degree of success")
+    .replace(/graus de falha/g, "degrees of failure")
+    .replace(/grau de falha/g, "degree of failure")
+    .replace(/Ferido/g, "Bruised")
+    .replace(/Atordoado ou Caído/g, "Dazed or prone")
+    .replace(/Cambaleante/g, "Staggered")
+    .replace(/Incapacitado/g, "Incapacitated")
+    .replace(/Impenetrável (\d+): a graduação (\d+) não supera a resistência\./g, "Impervious $1: rank $2 does not overcome the resistance.");
 }

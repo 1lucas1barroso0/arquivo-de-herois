@@ -151,7 +151,7 @@ test("PWA updates are user-controlled, data-safe, and never cache API data", () 
     "utf8",
   );
 
-  assert.match(serviceWorker, /arquivo-herois-v17/);
+  assert.match(serviceWorker, /arquivo-herois-v18/);
   assert.match(serviceWorker, /if \(url\.pathname\.startsWith\("\/api\/"\)\) return/);
   assert.match(serviceWorker, /SKIP_WAITING/);
   assert.match(manager, /hasUnsavedChanges/);

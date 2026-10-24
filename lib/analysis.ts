@@ -23,7 +23,7 @@ export type CharacterAnalysis = {
   defense: {
     defense: number;
     dodge: number;
-    parry: number;
+    closeDefense: number;
     toughness: number;
     fortitude: number;
     will: number;
@@ -77,7 +77,7 @@ export function getCharacterAnalysis(sheet: CharacterSheet): CharacterAnalysis {
     defense: {
       defense: derived.defense,
       dodge: derived.resistances.dodge,
-      parry: derived.closeDefense,
+      closeDefense: derived.closeDefense,
       toughness: derived.resistances.toughness,
       fortitude: derived.resistances.fortitude,
       will: derived.resistances.will,

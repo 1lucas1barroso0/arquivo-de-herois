@@ -6,11 +6,14 @@ test("published scale anchors and open-ended formulas remain exact", () => {
   assert.equal(getAbilityBenchmark(0).label, "Média humana");
   assert.equal(getAbilityBenchmark(9).exact, false);
   assert.equal(getAbilityBenchmark(35).label, "Cósmico ou divino");
+  assert.equal(getAbilityBenchmark(0, "en").label, "Human average");
   assert.equal(getSkillBenchmark(10).routineResult, 20);
   assert.equal(getSkillBenchmark(10).difficulty, "Desafiador");
+  assert.equal(getSkillBenchmark(10, "en").difficulty, "Challenging");
   assert.deepEqual(getPowerLevelMetrics(12), { powerLevel: 12, recommendedPoints: 180, pairedLimit: 24, skillLimit: 22, initiativeLimit: 24, heroicUses: 6 });
   assert.equal(getPowerLevelMetrics(40).recommendedPoints, 600);
   assert.equal(getMeasurementRow(23).volume, "500.000 m³");
+  assert.equal(getMeasurementRow(23, "en").time, "2 years");
   assert.equal(getMeasurementRow(31).exact, false);
   assert.equal(getMeasurementRow(31).distance, "≈ 4.000.000 km");
   assert.equal(getMeasurementRow(-6).mass, "≈ 375 g");

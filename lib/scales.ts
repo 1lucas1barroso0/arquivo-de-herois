@@ -1,4 +1,6 @@
-export type AbilityBenchmark = { rank: number; label: string };
+import type { AppLanguage } from "./localization";
+
+export type AbilityBenchmark = { rank: number; label: string; labelEn: string };
 
 export type SizeProfile = {
   rank: number;
@@ -42,67 +44,72 @@ export function getSizeProfile(rank: number): SizeProfile {
 }
 
 export const abilityBenchmarkAnchors: AbilityBenchmark[] = [
-  { rank: -5, label: "Incapacitado nesse atributo" },
-  { rank: -4, label: "Praticamente incapaz" },
-  { rank: -3, label: "Muito fraco" },
-  { rank: -2, label: "Prejudicado" },
-  { rank: -1, label: "Abaixo da média" },
-  { rank: 0, label: "Média humana" },
-  { rank: 1, label: "Acima da média" },
-  { rank: 2, label: "Bem acima da média" },
-  { rank: 3, label: "Talentoso" },
-  { rank: 4, label: "Altamente talentoso" },
-  { rank: 5, label: "Entre os melhores de um país" },
-  { rank: 6, label: "Entre os melhores do mundo" },
-  { rank: 7, label: "Ápice da realização humana" },
-  { rank: 8, label: "Super-humano baixo" },
-  { rank: 10, label: "Super-humano moderado" },
-  { rank: 13, label: "Super-humano alto" },
-  { rank: 15, label: "Super-humano muito alto" },
-  { rank: 20, label: "Cósmico ou divino (20+)" },
+  { rank: -5, label: "Incapacitado nesse atributo", labelEn: "Incapacitated in this ability" },
+  { rank: -4, label: "Praticamente incapaz", labelEn: "Almost incapable" },
+  { rank: -3, label: "Muito fraco", labelEn: "Very weak" },
+  { rank: -2, label: "Prejudicado", labelEn: "Impaired" },
+  { rank: -1, label: "Abaixo da média", labelEn: "Below average" },
+  { rank: 0, label: "Média humana", labelEn: "Human average" },
+  { rank: 1, label: "Acima da média", labelEn: "Above average" },
+  { rank: 2, label: "Bem acima da média", labelEn: "Well above average" },
+  { rank: 3, label: "Talentoso", labelEn: "Gifted" },
+  { rank: 4, label: "Altamente talentoso", labelEn: "Highly gifted" },
+  { rank: 5, label: "Entre os melhores de um país", labelEn: "Among a country's best" },
+  { rank: 6, label: "Entre os melhores do mundo", labelEn: "Among the world's best" },
+  { rank: 7, label: "Ápice da realização humana", labelEn: "Peak human achievement" },
+  { rank: 8, label: "Super-humano baixo", labelEn: "Low superhuman" },
+  { rank: 10, label: "Super-humano moderado", labelEn: "Moderate superhuman" },
+  { rank: 13, label: "Super-humano alto", labelEn: "High superhuman" },
+  { rank: 15, label: "Super-humano muito alto", labelEn: "Very high superhuman" },
+  { rank: 20, label: "Cósmico ou divino (20+)", labelEn: "Cosmic or divine (20+)" },
 ];
 
-export function getAbilityBenchmark(rank: number) {
+export function getAbilityBenchmark(rank: number, language: AppLanguage = "pt") {
   const value = safeInteger(rank);
   const exact = abilityBenchmarkAnchors.find((entry) => entry.rank === value);
-  if (exact) return { value, label: exact.label, detail: `Graduação ${value}: ${exact.label.toLocaleLowerCase("pt-BR")}.`, exact: true };
+  if (exact) {
+    const label = language === "en" ? exact.labelEn : exact.label;
+    return { value, label, detail: language === "en" ? `Rank ${value}: ${label.toLocaleLowerCase("en")}.` : `Graduação ${value}: ${label.toLocaleLowerCase("pt-BR")}.`, exact: true };
+  }
   if (value > 20) return {
     value,
-    label: "Cósmico ou divino",
-    detail: `A tabela agrupa a graduação ${value} no marco 20+: cósmico ou divino. Não há teto de atributo, mas os limites de NP aplicáveis continuam valendo.`,
+    label: language === "en" ? "Cosmic or divine" : "Cósmico ou divino",
+    detail: language === "en" ? `The table groups rank ${value} under the 20+ benchmark: cosmic or divine. Applicable PL limits still apply.` : `A tabela agrupa a graduação ${value} no marco 20+: cósmico ou divino. Não há teto de atributo, mas os limites de NP aplicáveis continuam valendo.`,
     exact: false,
   };
   const lower = [...abilityBenchmarkAnchors].reverse().find((entry) => entry.rank < value);
   const upper = abilityBenchmarkAnchors.find((entry) => entry.rank > value);
-  if (!lower || !upper) return { value, label: "Fora dos marcos usuais", detail: "Consulte o Narrador para representar este valor excepcional.", exact: false };
+  if (!lower || !upper) return { value, label: language === "en" ? "Outside common benchmarks" : "Fora dos marcos usuais", detail: language === "en" ? "Ask the Game Master how to represent this exceptional value." : "Consulte o Narrador para representar este valor excepcional.", exact: false };
+  const lowerLabel = language === "en" ? lower.labelEn : lower.label;
+  const upperLabel = language === "en" ? upper.labelEn : upper.label;
   return {
     value,
-    label: `Entre “${lower.label}” e “${upper.label}”`,
-    detail: `A graduação ${value} fica entre os marcos ${lower.rank} e ${upper.rank}; a tabela usa referências, não um rótulo oficial para cada valor intermediário.`,
+    label: language === "en" ? `Between “${lowerLabel}” and “${upperLabel}”` : `Entre “${lowerLabel}” e “${upperLabel}”`,
+    detail: language === "en" ? `Rank ${value} falls between benchmarks ${lower.rank} and ${upper.rank}.` : `A graduação ${value} fica entre os marcos ${lower.rank} e ${upper.rank}; a tabela usa referências, não um rótulo oficial para cada valor intermediário.`,
     exact: false,
   };
 }
 
 export const difficultyBenchmarks = [
-  { dc: 0, label: "Muito fácil", example: "Notar algo à vista" },
-  { dc: 5, label: "Fácil", example: "Subir por uma corda com nós" },
-  { dc: 10, label: "Médio", example: "Ouvir um guarda se aproximando" },
-  { dc: 15, label: "Difícil", example: "Desarmar um detonador" },
-  { dc: 20, label: "Desafiador", example: "Nadar contra uma corrente forte" },
-  { dc: 25, label: "Formidável", example: "Escalar rocha molhada" },
-  { dc: 30, label: "Heroico", example: "Superar segurança sofisticada" },
-  { dc: 35, label: "Super-heroico", example: "Convencer sob circunstâncias extremas" },
-  { dc: 40, label: "Quase impossível", example: "Resolver no ato um problema inédito" },
+  { dc: 0, label: "Muito fácil", labelEn: "Very easy", example: "Notar algo à vista", exampleEn: "Notice something in plain sight" },
+  { dc: 5, label: "Fácil", labelEn: "Easy", example: "Subir por uma corda com nós", exampleEn: "Climb a knotted rope" },
+  { dc: 10, label: "Médio", labelEn: "Average", example: "Ouvir um guarda se aproximando", exampleEn: "Hear an approaching guard" },
+  { dc: 15, label: "Difícil", labelEn: "Tough", example: "Desarmar um detonador", exampleEn: "Disarm a detonator" },
+  { dc: 20, label: "Desafiador", labelEn: "Challenging", example: "Nadar contra uma corrente forte", exampleEn: "Swim against a strong current" },
+  { dc: 25, label: "Formidável", labelEn: "Formidable", example: "Escalar rocha molhada", exampleEn: "Climb wet rock" },
+  { dc: 30, label: "Heroico", labelEn: "Heroic", example: "Superar segurança sofisticada", exampleEn: "Bypass sophisticated security" },
+  { dc: 35, label: "Super-heroico", labelEn: "Super-heroic", example: "Convencer sob circunstâncias extremas", exampleEn: "Persuade under extreme circumstances" },
+  { dc: 40, label: "Quase impossível", labelEn: "Nearly impossible", example: "Resolver no ato um problema inédito", exampleEn: "Solve a novel problem on the spot" },
 ] as const;
 
 export const skillBenchmarkAnchors = [
-  { modifier: 5, label: "Profissional", routineDc: 15 },
-  { modifier: 10, label: "Especialista", routineDc: 20 },
-  { modifier: 15, label: "Especialista formidável", routineDc: 25 },
-  { modifier: 30, label: "Extremo", routineDc: 40 },
+  { modifier: 5, label: "Profissional", labelEn: "Professional", routineDc: 15 },
+  { modifier: 10, label: "Especialista", labelEn: "Expert", routineDc: 20 },
+  { modifier: 15, label: "Especialista formidável", labelEn: "Formidable expert", routineDc: 25 },
+  { modifier: 30, label: "Extremo", labelEn: "Extreme", routineDc: 40 },
 ] as const;
 
-export function getSkillBenchmark(modifier: number) {
+export function getSkillBenchmark(modifier: number, language: AppLanguage = "pt") {
   const value = safeInteger(modifier);
   const routineResult = value + 10;
   const achieved = [...difficultyBenchmarks].reverse().find((entry) => entry.dc <= routineResult);
@@ -111,13 +118,13 @@ export function getSkillBenchmark(modifier: number) {
   return {
     modifier: value,
     routineResult,
-    label: anchor?.label ?? "Em desenvolvimento",
-    difficulty: achieved?.label ?? "Abaixo de muito fácil",
+    label: anchor ? (language === "en" ? anchor.labelEn : anchor.label) : language === "en" ? "Developing" : "Em desenvolvimento",
+    difficulty: achieved ? (language === "en" ? achieved.labelEn : achieved.label) : language === "en" ? "Below very easy" : "Abaixo de muito fácil",
     achievedDc: achieved?.dc,
     nextDc: next?.dc,
-    detail: achieved
-      ? `Em rotina, ${signed(value)} produz ${routineResult} e alcança a CD ${achieved.dc} (${achieved.label.toLocaleLowerCase("pt-BR")}) sem rolar.`
-      : `Em rotina, ${signed(value)} produz ${routineResult}; até tarefas muito fáceis podem exigir rolagem.`,
+    detail: language === "en"
+      ? achieved ? `As a routine check, ${signed(value)} produces ${routineResult} and reaches DC ${achieved.dc} (${achieved.labelEn.toLocaleLowerCase("en")}) without rolling.` : `As a routine check, ${signed(value)} produces ${routineResult}; even very easy tasks may require a roll.`
+      : achieved ? `Em rotina, ${signed(value)} produz ${routineResult} e alcança a CD ${achieved.dc} (${achieved.label.toLocaleLowerCase("pt-BR")}) sem rolar.` : `Em rotina, ${signed(value)} produz ${routineResult}; até tarefas muito fáceis podem exigir rolagem.`,
   };
 }
 
@@ -174,10 +181,10 @@ export const measurementScale: MeasurementRow[] = [
   { rank: 30, mass: "25 milhões t", time: "500 anos", distance: "2 milhões km", volume: "64 milhões m³" },
 ];
 
-export function getMeasurementRow(rank: number) {
+export function getMeasurementRow(rank: number, language: AppLanguage = "pt") {
   const value = safeInteger(rank);
   const exact = measurementScale.find((entry) => entry.rank === value);
-  if (exact) return { ...exact, exact: true, note: "Valor aproximado da tabela métrica." };
+  if (exact) return { ...exact, time: localizeMeasureValue(exact.time, language), exact: true, note: language === "en" ? "Approximate value from the measurement table." : "Valor aproximado da tabela métrica." };
   const edge = value > 30 ? measurementScale[measurementScale.length - 1] : measurementScale[0];
   const delta = Math.abs(value - edge.rank);
   const extrapolated = value > 30
@@ -196,16 +203,17 @@ export function getMeasurementRow(rank: number) {
   return {
     rank: value,
     ...extrapolated,
+    time: localizeMeasureValue(extrapolated.time, language),
     exact: false,
-    note: `${value > 30 ? "Acima" : "Abaixo"} da tabela publicada: ${delta} ${delta === 1 ? "passo calculado" : "passos calculados"} pelo mesmo padrão de duplicação.`,
+    note: language === "en" ? `${value > 30 ? "Above" : "Below"} the published table: ${delta} calculated ${delta === 1 ? "step" : "steps"}.` : `${value > 30 ? "Acima" : "Abaixo"} da tabela publicada: ${delta} ${delta === 1 ? "passo calculado" : "passos calculados"} pelo mesmo padrão de duplicação.`,
   };
 }
 
-export function getTravelDistance(speedRank: number, timeRank: number) {
+export function getTravelDistance(speedRank: number, timeRank: number, language: AppLanguage = "pt") {
   const speed = safeInteger(speedRank);
   const time = safeInteger(timeRank);
   const rank = safeInteger(speed + time);
-  const measure = getMeasurementRow(rank);
+  const measure = getMeasurementRow(rank, language);
   return {
     speedRank: speed,
     timeRank: time,
@@ -215,11 +223,11 @@ export function getTravelDistance(speedRank: number, timeRank: number) {
   };
 }
 
-export function getTravelTime(distanceRank: number, speedRank: number) {
+export function getTravelTime(distanceRank: number, speedRank: number, language: AppLanguage = "pt") {
   const distance = safeInteger(distanceRank);
   const speed = safeInteger(speedRank);
   const rank = safeInteger(distance - speed);
-  const measure = getMeasurementRow(rank);
+  const measure = getMeasurementRow(rank, language);
   return {
     distanceRank: distance,
     speedRank: speed,
@@ -229,11 +237,11 @@ export function getTravelTime(distanceRank: number, speedRank: number) {
   };
 }
 
-export function getThrowingDistance(strengthRank: number, massRank: number) {
+export function getThrowingDistance(strengthRank: number, massRank: number, language: AppLanguage = "pt") {
   const strength = safeInteger(strengthRank);
   const mass = safeInteger(massRank);
   const rank = safeInteger(strength - mass);
-  const measure = getMeasurementRow(rank);
+  const measure = getMeasurementRow(rank, language);
   return {
     strengthRank: strength,
     massRank: mass,
@@ -243,31 +251,44 @@ export function getThrowingDistance(strengthRank: number, massRank: number) {
   };
 }
 
-export function getEffectRankBenchmark(rank: number) {
+export function getEffectRankBenchmark(rank: number, language: AppLanguage = "pt") {
   const value = Math.max(0, safeInteger(rank));
-  const measure = getMeasurementRow(value);
+  const measure = getMeasurementRow(value, language);
   return {
     rank: value,
-    label: value >= 20 ? "Escala cósmica de efeito" : value >= 13 ? "Escala super-humana alta" : value >= 8 ? "Escala super-humana" : "Escala humana ou heroica",
-    detail: `A graduação mede potência mecânica; seu significado exato depende do efeito e dos descritores. Como referência de medida: massa ${measure.mass}, distância ${measure.distance}.`,
+    label: language === "en" ? value >= 20 ? "Cosmic effect scale" : value >= 13 ? "High superhuman scale" : value >= 8 ? "Superhuman scale" : "Human or heroic scale" : value >= 20 ? "Escala cósmica de efeito" : value >= 13 ? "Escala super-humana alta" : value >= 8 ? "Escala super-humana" : "Escala humana ou heroica",
+    detail: language === "en" ? `Rank measures mechanical potency; its exact meaning depends on the effect and descriptors. Measurement reference: mass ${measure.mass}, distance ${measure.distance}.` : `A graduação mede potência mecânica; seu significado exato depende do efeito e dos descritores. Como referência de medida: massa ${measure.mass}, distância ${measure.distance}.`,
   };
 }
 
-export function getLiftingBenchmark(strengthRank: number) {
+export function getLiftingBenchmark(strengthRank: number, language: AppLanguage = "pt") {
   const value = safeInteger(strengthRank);
-  const measure = getMeasurementRow(value);
+  const measure = getMeasurementRow(value, language);
   return { rank: value, mass: measure.mass, note: `Capacidade de carga aproximada na graduação ${value}; vantagens e efeitos podem alterá-la.` };
 }
 
-export function getSpeedBenchmark(speedRank: number) {
+export function getSpeedBenchmark(speedRank: number, language: AppLanguage = "pt") {
   const value = safeInteger(speedRank);
-  const measure = getMeasurementRow(value);
+  const measure = getMeasurementRow(value, language);
   return { rank: value, distancePerRound: measure.distance, note: `Distância aproximada por ação de movimento de 6 segundos na graduação ${value}.` };
 }
 
 function safeInteger(value: number) {
   if (!Number.isFinite(value)) return 0;
   return Math.max(-Number.MAX_SAFE_INTEGER, Math.min(Number.MAX_SAFE_INTEGER, Math.trunc(value)));
+}
+
+function localizeMeasureValue(value: string, language: AppLanguage) {
+  if (language === "pt") return value;
+  return value
+    .replace(/\b1 dia\b/g, "1 day")
+    .replace(/\b(\d+) dias\b/g, "$1 days")
+    .replace(/\b1 semana\b/g, "1 week")
+    .replace(/\b(\d+) semanas\b/g, "$1 weeks")
+    .replace(/\b1 mês\b/g, "1 month")
+    .replace(/\b(\d+) meses\b/g, "$1 months")
+    .replace(/\b1 ano\b/g, "1 year")
+    .replace(/\b(\d+) anos\b/g, "$1 years");
 }
 
 function signed(value: number) { return value > 0 ? `+${value}` : String(value); }

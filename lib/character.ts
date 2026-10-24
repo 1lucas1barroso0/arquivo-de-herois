@@ -9,7 +9,9 @@ import {
   skillCatalog,
 } from "./catalog";
 
-export const CURRENT_SCHEMA_VERSION = 7 as const;
+import { createCurrentRulesetReference, normalizeRulesetReference, type RulesetReference } from "./ruleset";
+
+export const CURRENT_SCHEMA_VERSION = 8 as const;
 
 export const coreAbilityKeys = [
   "strength",
@@ -168,6 +170,7 @@ export type SessionState = {
 
 export type CharacterSheet = {
   schemaVersion: typeof CURRENT_SCHEMA_VERSION;
+  ruleset: RulesetReference;
   id: string;
   heroName: string;
   civilName: string;
@@ -585,6 +588,7 @@ export function createPower(): PowerEntry {
 export function createEmptySheet(): CharacterSheet {
   return {
     schemaVersion: CURRENT_SCHEMA_VERSION,
+    ruleset: createCurrentRulesetReference(),
     id: "",
     heroName: "Novo Herói",
     civilName: "",
@@ -780,6 +784,7 @@ export function normalizeSheet(value: unknown): CharacterSheet {
   const sheet: CharacterSheet = {
     ...base,
     schemaVersion: CURRENT_SCHEMA_VERSION,
+    ruleset: normalizeRulesetReference(raw.ruleset),
     id: stringValue(raw.id),
     heroName: stringValue(raw.heroName, base.heroName),
     civilName: stringValue(raw.civilName),

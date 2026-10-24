@@ -2,7 +2,7 @@
 
 Aplicativo full-stack, instalável e responsivo para criar, conferir, salvar e compartilhar fichas de **Mutantes & Malfeitores: Quarta Edição**.
 
-A versão 1.0.1 cobre de forma estruturada a compilação fornecida **M&M4e Previews 1–9 editadas** (431 páginas), sempre mantendo o produto como um gerenciador de fichas. O aplicativo identifica esse material como prévia: não afirma incorporar uma edição final posterior que não esteja nas fontes do projeto.
+A versão 1.1.0 cobre de forma estruturada a compilação fornecida **M&M4e Previews 1–9 editadas** (431 páginas). Cada ficha registra a revisão exata desse conjunto, identificado como prévia; o aplicativo não afirma incorporar uma edição final posterior.
 
 ## O que está pronto
 
@@ -53,7 +53,7 @@ npm run test:rules
 npm run build
 ```
 
-Os testes cobrem integridade e completude dos catálogos e das Referências, procedência por página, termos bilíngues, tamanho natural, traços ausentes, escalas abertas, testes graduados, dano, relações entre medidas, configurações prontas, propagação de atributos, vantagens e equipamentos, ataques vinculados, custos, valores muito altos, frações e modificadores de poderes, Removível, matrizes, limites de NP, decisões persistentes sobre avisos, recursos heroicos, três modos de criação, exemplos NP 8/10/12, NPCs, campanhas, relações, encontros, sessão, histórico, backups, busca universal, migrações v1–v7, PWA, responsividade e ida e volta dos formatos JSON/TXT.
+Os testes cobrem integridade e completude dos catálogos e das Referências, procedência por página, termos bilíngues, tamanho natural, traços ausentes, escalas abertas, testes graduados, dano, relações entre medidas, configurações prontas, propagação de atributos, vantagens e equipamentos, ataques vinculados, custos, valores muito altos, frações e modificadores de poderes, Removível, matrizes, limites de NP, decisões persistentes sobre avisos, recursos heroicos, três modos de criação, exemplos NP 8/10/12, NPCs, campanhas, relações, encontros, sessão, histórico, backups, busca universal, migrações v1–v8, conjunto de regras, PWA, responsividade e ida e volta dos formatos JSON/TXT.
 
 ## Estrutura
 

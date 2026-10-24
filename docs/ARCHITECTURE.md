@@ -56,6 +56,8 @@ Vínculos de efeitos distinguem bônus por graduação, bônus fixos e referênc
 
 A matriz auditável da compilação fornecida fica em `docs/4E-COVERAGE.md`. Ela separa cobertura do material recebido de qualquer afirmação sobre publicações posteriores.
 
+`lib/ruleset.ts` identifica a revisão usada por cada ficha. A versão 1.1.0 fixa `mm4e.playtest.origin.previews-1-9`, revisão `2026-08-21`, como playtest; mudanças futuras exigem nova revisão, migração explícita e testes.
+
 ## Portabilidade
 
 `lib/portable.ts` define o formato versionado `arquivo-de-herois`. JSON e TXT carregam a mesma ficha normalizada; o TXT mantém uma seção legível e uma linha final completa para reimportação sem perda. `lib/portable-share.ts` compacta esse mesmo pacote em links autocontidos.

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { conditions, newId, type CharacterSheet, type SheetSummary } from "../lib/character";
 import type { EncounterDefinition } from "../lib/encounter";
 import { createNpcFromTemplate, npcTemplates } from "../lib/npc-templates";
+import { localizeConditionLabel } from "../lib/localization";
 import { EncounterEditor } from "./campaigns-workspace";
 import { useLocale } from "./locale-provider";
 
@@ -52,7 +53,7 @@ export function GmTools({
 
       <section className="gm-section gm-condition-reference">
         <header><div><BookOpen /><div><p className="eyebrow">{m("nav.references")}</p><h2>{m("gm.conditions")}</h2></div></div><button type="button" onClick={() => onOpenReferences(language === "en" ? "conditions" : "condições")}>{m("gm.openReferences")}</button></header>
-        <div>{conditions.slice(0, 16).map((condition) => <button type="button" key={condition} onClick={() => onOpenReferences(condition)}>{condition}</button>)}</div>
+        <div>{conditions.slice(0, 16).map((condition) => <button type="button" key={condition} onClick={() => onOpenReferences(localizeConditionLabel(condition, language))}>{localizeConditionLabel(condition, language)}</button>)}</div>
       </section>
     </div>
   );

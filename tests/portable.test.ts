@@ -38,6 +38,7 @@ test("portable JSON round-trips all sheet data without private identifiers", () 
   assert.equal(imported.id, "");
   assert.equal(imported.shareEnabled, false);
   assert.equal(imported.shareToken, null);
+  assert.deepEqual(imported.ruleset, exampleSheet().ruleset);
 });
 
 test("self-contained share links open without a server-side record", async () => {

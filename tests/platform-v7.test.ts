@@ -34,8 +34,9 @@ import { getRuleAudit } from "../lib/rules";
 import { searchEverything } from "../lib/search";
 import { beginSession, resetSession } from "../lib/session";
 import { createEmptyCampaign } from "../lib/workspace";
+import { CURRENT_RULESET } from "../lib/ruleset";
 
-test("schema 7 migrates older sheets without mutating or dropping content", () => {
+test("schema 8 migrates older sheets without mutating or dropping content", () => {
   const legacy = structuredClone(createEmptySheet()) as unknown as Record<string, unknown>;
   legacy.schemaVersion = 6;
   legacy.heroName = "Legado preservado";
@@ -56,9 +57,10 @@ test("schema 7 migrates older sheets without mutating or dropping content", () =
   assert.deepEqual(migrated.relationships, []);
   assert.deepEqual(migrated.movement, []);
   assert.deepEqual(migrated.senses, []);
+  assert.deepEqual(migrated.ruleset, CURRENT_RULESET);
 });
 
-test("portable v7 exports preserve new sheet data and strip private identity", () => {
+test("portable v8 exports preserve new sheet data and strip private identity", () => {
   const sheet = createEmptySheet();
   sheet.id = "private-sheet";
   sheet.creationMode = "free";
@@ -96,6 +98,7 @@ test("portable v7 exports preserve new sheet data and strip private identity", (
   assert.equal(imported.relationships[0].kind, "ally");
   assert.equal(imported.session.damage, 2);
   assert.deepEqual(imported.session.activeEffects, ["Camuflagem"]);
+  assert.deepEqual(imported.ruleset, sheet.ruleset);
 });
 
 function participant(

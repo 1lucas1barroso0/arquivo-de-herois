@@ -6,6 +6,65 @@ export const APP_LANGUAGE_KEY = "arquivo-de-herois:idioma:v1";
 export const LEGACY_LANGUAGE_KEY = "mm4e-terminology-language:v1";
 
 const englishUi: Record<string, string> = {
+  "Modo de edição": "Editing mode",
+  "Total": "Total",
+  "Cole um link ou os dados de uma ficha para continuar.": "Paste a link or sheet data to continue.",
+  "Algo interrompeu o carregamento": "Something interrupted loading",
+  "Seu arquivo continua protegido": "Your archive remains protected",
+  "Os dados persistidos não foram apagados. Tente carregar a interface novamente; se houver uma alteração offline, ela continuará aguardando sincronização neste dispositivo.": "Your saved data was not deleted. Try loading the interface again; any offline change will remain on this device awaiting synchronization.",
+  "Tentar novamente": "Try again",
+  "Sem conexão": "No connection",
+  "O Arquivo de Heróis está offline": "Arquivo de Heróis is offline",
+  "Se você já abriu a biblioteca neste dispositivo, volte e continue trabalhando. As alterações pendentes serão sincronizadas assim que a conexão retornar.": "If you have already opened the archive on this device, go back and keep working. Pending changes will synchronize when the connection returns.",
+  "Condições ativas": "Active conditions",
+  "Nenhuma condição ativa.": "No active conditions.",
+  "Pesquisar condições…": "Search conditions…",
+  "Pontos Heroicos por aventura": "Hero Points per adventure",
+  "Sorte calculada a partir das vantagens": "Luck calculated from advantages",
+  "A graduação 0 representa a média humana e −5 é o mínimo normal. Os marcos ajudam a interpretar cada valor, sem impor um teto.": "Rank 0 represents the human average and −5 is the normal minimum. Benchmarks help interpret each value without imposing a cap.",
+  "O modificador reúne atributo, graduações, especialização e outros ajustes. Em um teste de rotina, o dado vale 10.": "The modifier combines ability, ranks, specialization, and other adjustments. In a routine check, the die counts as 10.",
+  "Resolver um teste graduado": "Resolve a graded check",
+  "Informe o resultado escolhido do d20, os ajustes da situação e a CD. Com dados extras, use o maior resultado para bônus ou o menor para penalidade. Um 20 acrescenta +5; um 1 aplica −5.": "Enter the chosen d20 result, situational adjustments, and DC. With extra dice, use the highest result for a bonus or the lowest for a penalty. A 20 adds +5; a 1 applies −5.",
+  "d20": "d20",
+  "Modificador": "Modifier",
+  "Circunstância": "Circumstance",
+  "CD": "DC",
+  "Classes de Dificuldade": "Difficulty Classes",
+  "Os marcos mais comuns vão do NP 5 ao NP 20 ou mais. As fórmulas funcionam em qualquer NP não negativo.": "The most common benchmarks run from PL 5 to PL 20 or higher. The formulas work at any non-negative PL.",
+  "PP sugeridos": "Suggested PP",
+  "Ataque + efeito": "Attack + effect",
+  "Defesa + Robustez": "Defense + Toughness",
+  "Fortitude + Vontade": "Fortitude + Will",
+  "Máximo de perícia": "Maximum skill",
+  "Máximo de iniciativa": "Maximum initiative",
+  "Usos heroicos por aventura": "Heroic uses per adventure",
+  "Efeitos e resistência": "Effects and resistance",
+  "A graduação define a potência mecânica. O efeito, os descritores e a resistência determinam o resultado na cena.": "Rank defines mechanical potency. The effect, descriptors, and resistance determine the outcome in the scene.",
+  "Graduação do efeito": "Effect rank",
+  "Carga por Força igual": "Lifting capacity at equal Strength",
+  "Movimento por rodada": "Movement per round",
+  "CD básica do efeito": "Base effect DC",
+  "Resolver resistência a dano": "Resolve damage resistance",
+  "Cada condição Ferido reduz a próxima resistência em 1. O resultado já inclui os graus e as condições cumulativas.": "Each Bruised condition reduces the next resistance check by 1. The result already includes degrees and cumulative conditions.",
+  "Grau de resistência": "Resistance degree",
+  "Normal": "Normal",
+  "Imunidade": "Immunity",
+  "Impenetrável": "Impervious",
+  "Redução": "Reduction",
+  "Aprimorada": "Improved",
+  "Suscetível": "Susceptible",
+  "Fraqueza": "Weakness",
+  "Graduação do dano": "Damage rank",
+  "Feridos acumulados": "Accumulated Bruised conditions",
+  "Dado bônus": "Bonus die",
+  "Massa, tempo, distância e volume são aproximações. Cada +1 dobra o valor e cada −1 o reduz pela metade.": "Mass, time, distance, and volume are approximate. Each +1 doubles the value and each −1 halves it.",
+  "Graduação de medida": "Measurement rank",
+  "Cálculos entre medidas": "Measurement calculations",
+  "Velocidade": "Speed",
+  "Distância": "Distance",
+  "Massa": "Mass",
+  "Tempo": "Time",
+  "Volume": "Volume",
   "Abrir menu": "Open menu",
   "Fechar menu": "Close menu",
   "Tema": "Theme",
@@ -410,6 +469,10 @@ export function translateUi(value: string, language: AppLanguage): string {
   return value;
 }
 
+export function hasUiTranslation(value: string): boolean {
+  return Object.hasOwn(englishUi, value);
+}
+
 const englishRuleTerms: Array<[string, string]> = [
   ["Ataque Desarmado", "Unarmed attack"],
   ["Desarmado", "Unarmed"],
@@ -499,4 +562,10 @@ export function relationshipKindLabel(
 
 export function languageName(language: AppLanguage): string {
   return language === "pt" ? "Português" : "English";
+}
+
+export function localizeConditionLabel(value: string, language: AppLanguage): string {
+  const match = value.match(/^(.+?)\s*\(([^()]*)\)$/);
+  if (!match) return translateUi(value, language);
+  return language === "en" ? match[2].trim() : match[1].trim();
 }

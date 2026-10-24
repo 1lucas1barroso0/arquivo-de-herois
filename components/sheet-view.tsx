@@ -50,6 +50,7 @@ import {
 import { useLocale } from "./locale-provider";
 import {
   buildTypeLabel,
+  localizeConditionLabel,
   relationshipKindLabel,
   translateRuleText,
   type AppLanguage,
@@ -674,7 +675,7 @@ export function SheetView({
           {sheet.session.conditions.length ? (
             <div className="condition-view-list">
               {sheet.session.conditions.map((condition) => (
-                <span key={condition}>{condition}</span>
+                <span key={condition}>{localizeConditionLabel(condition, language)}</span>
               ))}
             </div>
           ) : null}
@@ -721,7 +722,7 @@ export function SheetView({
           {sheet.resources.conditions.length > 0 && (
             <div className="condition-view-list">
               {sheet.resources.conditions.map((condition) => (
-                <span key={condition}>{condition}</span>
+                <span key={condition}>{localizeConditionLabel(condition, language)}</span>
               ))}
             </div>
           )}

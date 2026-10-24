@@ -11,7 +11,7 @@ modelo novo.
 | --- | --- | --- | --- |
 | Fichas privadas | API com D1 opcional e fallback explícito para IndexedDB | Manter as duas fontes, sem migração destrutiva e com novos dados normalizados | Melhorada |
 | Autosave | Rascunho local só é removido depois de confirmação | Manter a garantia e acrescentar histórico de revisões recuperável | Melhorada |
-| Formato portátil | JSON/TXT e link portátil, versão 6 | Ler todas as versões anteriores e exportar envelope v7 sem dados privados | Melhorada |
+| Formato portátil | JSON/TXT e link portátil, versão 6 | Ler todas as versões anteriores e exportar envelope v8 sem dados privados | Melhorada |
 | Compartilhamento | Instantâneo permanente somente leitura e cópia editável | Manter URLs e privacidade; explicitar os modos somente leitura e duplicável | Melhorada |
 | Identidade | Nome, identidade civil, codinome, jogador, campanha, conceito, origem e descrição | Preservar todos os campos e acrescentar metadados de organização sem alterar seus significados | Melhorada |
 | Regras e custos | Motor central em `lib/rules.ts` | Continuar como fonte única para ficha, auditoria, análise, impressão e encontro | Preservada |
@@ -49,7 +49,7 @@ modelo novo.
 
 ## Portões de publicação
 
-- Normalização v1–v7 e os dois exports reais v6 devem passar sem perda.
+- Normalização v1–v8 e os dois exports reais v6 devem passar sem perda.
 - Os três exemplos continuam com PP exatos e auditoria verde.
 - Importar não substitui registros existentes sem confirmação explícita.
 - Atualização do service worker não remove IndexedDB, rascunhos ou preferências.

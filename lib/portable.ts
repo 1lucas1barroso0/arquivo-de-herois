@@ -17,7 +17,7 @@ import {
 } from "./rules";
 
 export const PORTABLE_FORMAT = "arquivo-de-herois";
-export const PORTABLE_VERSION = 7;
+export const PORTABLE_VERSION = 8;
 export const APPLICATION_NAME = "Arquivo de Heróis";
 const TEXT_MARKER = "ARQUIVO-DE-HEROIS-DADOS:";
 const LEGACY_TEXT_MARKERS = ["MM4E-DADOS-PORTATEIS:"];

@@ -124,7 +124,7 @@ import {
   getSkillBenchmark,
 } from "../lib/scales";
 import { useLocale } from "./locale-provider";
-import { translateRuleText } from "../lib/localization";
+import { localizeConditionLabel, translateRuleText } from "../lib/localization";
 
 type SheetEditorProps = {
   sheet: CharacterSheet;
@@ -3599,6 +3599,7 @@ function ResourcesEditor({
   patch,
   editingMode,
 }: EditorChildProps & { editingMode: EditingMode }) {
+  const { language, t } = useLocale();
   const [conditionQuery, setConditionQuery] = useState("");
   const resources = sheet.resources;
   const heroicLimit = Math.floor(sheet.powerLevel / 2);
@@ -3613,11 +3614,11 @@ function ResourcesEditor({
       const leftActive = resources.conditions.includes(left) ? 1 : 0;
       const rightActive = resources.conditions.includes(right) ? 1 : 0;
       return (
-        rightActive - leftActive || left.localeCompare(right, "pt-BR")
+        rightActive - leftActive || localizeConditionLabel(left, language).localeCompare(localizeConditionLabel(right, language), language === "en" ? "en" : "pt-BR")
       );
     })
     .filter((condition) =>
-      normalizeCatalogText(condition).includes(normalizedConditionQuery),
+      normalizeCatalogText(localizeConditionLabel(condition, language)).includes(normalizedConditionQuery),
     );
   return (
     <>
@@ -3654,7 +3655,9 @@ function ResourcesEditor({
               }
             />
             <span>
-              / {heroicLimit} por aventura · {heroicCapacity} {heroicCapacity === 1 ? "graduação heroica comprada" : "graduações heroicas compradas"}
+              {language === "en"
+                ? `/ ${heroicLimit} per adventure · ${heroicCapacity} purchased heroic ${heroicCapacity === 1 ? "rank" : "ranks"}`
+                : `/ ${heroicLimit} por aventura · ${heroicCapacity} ${heroicCapacity === 1 ? "graduação heroica comprada" : "graduações heroicas compradas"}`}
             </span>
           </div>
         </Field>
@@ -3677,7 +3680,7 @@ function ResourcesEditor({
               }
             />
             <span>
-              / {luckCapacity} calculado pela vantagem Sorte
+              {language === "en" ? `/ ${luckCapacity} calculated from the Luck advantage` : `/ ${luckCapacity} calculado pela vantagem Sorte`}
             </span>
           </div>
         </Field>
@@ -3703,18 +3706,20 @@ function ResourcesEditor({
       </div>
       <div className="condition-heading">
         <div>
-          <h3 className="form-subheading">Condições atuais</h3>
+          <h3 className="form-subheading">{t("Condições ativas")}</h3>
           <small>
             {resources.conditions.length
-              ? `${resources.conditions.length} ${resources.conditions.length === 1 ? "condição ativa" : "condições ativas"}`
-              : "Nenhuma condição ativa"}
+              ? language === "en"
+                ? `${resources.conditions.length} active ${resources.conditions.length === 1 ? "condition" : "conditions"}`
+                : `${resources.conditions.length} ${resources.conditions.length === 1 ? "condição ativa" : "condições ativas"}`
+              : t("Nenhuma condição ativa.")}
           </small>
         </div>
         <label className="condition-search">
           <Search aria-hidden="true" />
-          <span className="sr-only">Pesquisar condição</span>
+          <span className="sr-only">{t("Pesquisar condições…")}</span>
           <input
-            placeholder="Pesquisar condição…"
+            placeholder={t("Pesquisar condições…")}
             value={conditionQuery}
             onChange={(event) => setConditionQuery(event.target.value)}
           />
@@ -3741,7 +3746,7 @@ function ResourcesEditor({
                   })
                 }
               />
-              {condition}
+              {localizeConditionLabel(condition, language)}
             </label>
           );
         })}

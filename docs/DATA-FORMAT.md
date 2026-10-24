@@ -5,7 +5,7 @@ O formato atual é identificado por:
 ```json
 {
   "format": "arquivo-de-herois",
-  "version": 7,
+  "version": 8,
   "application": "Arquivo de Heróis",
   "exportedAt": "2026-07-31T00:00:00.000Z",
   "sheet": {}
@@ -27,6 +27,8 @@ Na versão 6 da ficha, `sizeRank` passou a registrar o tamanho natural e `absent
 
 A versão 7 é aditiva. Ela introduz `creationMode`, etapa guiada, papel de NPC, favorito, arquivo, etiquetas, campanhas, movimento, sentidos, organizações, relações e um objeto `session` isolado. Dados v1–v6 recebem padrões seguros em memória; seus campos anteriores não são removidos nem reescritos no IndexedDB apenas por serem lidos.
 
+A versão 8 acrescenta `ruleset`, com identificador, revisão e estado (`playtest` ou `final`) do conjunto de regras usado pela ficha. Dados v1–v7 recebem a revisão corrente como padrão, sem alteração destrutiva dos demais campos.
+
 O estado de sessão contém dano, condições, penalidades, recursos temporários, efeitos ativos e referências de poderes sustentados. Ele nunca é usado para substituir silenciosamente atributos, defesas, recursos ou custos-base da ficha.
 
 As decisões sobre avisos da auditoria fazem parte da ficha portátil. Cada aprovação ou reprovação é vinculada ao conteúdo exato que foi conferido; qualquer mudança relevante devolve o item ao estado amarelo até uma nova decisão. Por isso, copiar, compartilhar, exportar e reimportar preserva decisões válidas sem transformar uma aprovação antiga em autorização genérica.
@@ -41,7 +43,7 @@ Entradas do catálogo guardam chaves estáveis. Isso permite recalcular dependê
 - armas criam ataques vinculados; armaduras e escudos ativos alteram as defesas correspondentes;
 - motivações e complicações de mesmo nome continuam distinguíveis pelo tipo.
 - tamanho natural e traços ausentes permanecem idênticos em JSON, TXT e links portáteis.
-- movimento, sentidos, relações, organizações, modo de criação e estado de sessão permanecem idênticos no envelope v7.
+- movimento, sentidos, relações, organizações, modo de criação, estado de sessão e conjunto de regras permanecem idênticos no envelope v8.
 
 Ao converter uma entrada do catálogo em personalizada, a ficha registra explicitamente essa decisão. Assim, salvar, compartilhar, exportar e reimportar não transforma silenciosamente uma regra da campanha em uma opção de mesmo nome.
 
