@@ -9511,6 +9511,84 @@ body {
   }
 }
 
+/* Keep action labels readable instead of splitting words inside controls.
+   Layouts must provide room or wrap groups before compressing the words. */
+button,
+.button {
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
+}
+
+.button {
+  white-space: nowrap;
+}
+
+button > svg,
+.button svg {
+  flex-shrink: 0;
+}
+
+.workspace-actions {
+  min-width: max-content;
+}
+
+.workspace-actions > .button {
+  flex: 0 0 auto;
+}
+
+/* A two-row toolbar is safer than squeezing five actions beside the tabs. */
+@media (min-width: 681px) and (max-width: 1250px) {
+  .workspace-toolbar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px 14px;
+  }
+
+  .workspace-title {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .workspace-actions {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .workspace-tabs {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  .workspace-tabs button {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 680px) {
+  .workspace-actions {
+    min-width: 0;
+  }
+
+  /* Shared sheet actions flow to the next line on narrow devices. */
+  .shared-actions {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .shared-actions .button {
+    flex: 1 1 150px;
+    min-width: max-content;
+  }
+
+  .shared-actions .icon-button {
+    flex: 0 0 44px;
+  }
+}
+
 /* 1.0.1 — keep translated navigation labels intact. */
 .topbar-inner {
   width: min(1600px, 100%);
