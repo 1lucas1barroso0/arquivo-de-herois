@@ -28,6 +28,14 @@ function exampleSheet() {
   return sheet;
 }
 
+test("invalid and future imports are rejected instead of silently losing data", () => {
+  for (const value of [[], {}, { unrelated: true }, { sheet: [] }, { format: "another-app", sheet: exampleSheet() }, { format: "arquivo-de-herois", version: 999, sheet: exampleSheet() }]) {
+    assert.throws(() => parsePortableSheet(JSON.stringify(value)), /Formato /);
+  }
+  assert.equal(parsePortableSheet(JSON.stringify(exampleSheet())).heroName, "Aurora Ômega");
+  assert.throws(() => parsePortableSheet(JSON.stringify({ ...exampleSheet(), schemaVersion: 999 })), /Formato /);
+});
+
 test("portable JSON round-trips all sheet data without private identifiers", () => {
   const imported = parsePortableSheet(portableSheetToJson(exampleSheet()));
   assert.equal(imported.heroName, "Aurora Ômega");

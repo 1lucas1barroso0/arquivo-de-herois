@@ -15,7 +15,7 @@ test("English references remain consistently translated", async ({ page }) => {
   await dialog.getByRole("button", { name: "Abilities" }).click();
   await expect(dialog).toContainText("Human average");
   await dialog.getByRole("button", { name: "Skills" }).click();
-  await expect(dialog).toContainText("Difficulty Classes");
+  await expect(dialog.getByLabel("Difficulty Classes", { exact: true })).toBeVisible();
 });
 
 test("a new sheet exposes its ruleset revision", async ({ page }) => {

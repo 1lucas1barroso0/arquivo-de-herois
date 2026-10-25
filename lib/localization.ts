@@ -6,6 +6,9 @@ export const APP_LANGUAGE_KEY = "arquivo-de-herois:idioma:v1";
 export const LEGACY_LANGUAGE_KEY = "mm4e-terminology-language:v1";
 
 const englishUi: Record<string, string> = {
+  "Defina conceito, origem e arquétipo para orientar as escolhas.": "Define a concept, origin, and archetype to guide your choices.",
+  "A motivação já foi reconhecida; falta apenas explicar como ela orienta o personagem.": "The motivation is already recognized; explain how it guides the character.",
+  "Registre a motivação aqui ou no campo Personalidade e motivação.": "Enter the motivation here or in the Personality and motivation field.",
   "Modo de edição": "Editing mode",
   "Total": "Total",
   "Cole um link ou os dados de uma ficha para continuar.": "Paste a link or sheet data to continue.",

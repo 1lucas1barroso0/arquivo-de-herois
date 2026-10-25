@@ -1,5 +1,6 @@
 import {
   abilityLabels,
+  CURRENT_SCHEMA_VERSION,
   coreAbilityKeys,
   normalizeSheet,
   resistanceLabels,
@@ -215,11 +216,24 @@ export function parsePortableSheet(text: string): CharacterSheet {
 }
 
 export function unwrapPortableValue(value: unknown): CharacterSheet {
-  if (!value || typeof value !== "object") {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
     throw new Error("Formato de ficha inválido.");
   }
   const record = value as Record<string, unknown>;
+  if (record.format !== undefined && record.format !== PORTABLE_FORMAT && record.format !== "mm4e-hero-sheet") {
+    throw new Error("Formato de arquivo incompatível com o Arquivo de Heróis.");
+  }
+  if (record.format === PORTABLE_FORMAT && (typeof record.version !== "number" || !Number.isInteger(record.version) || record.version < 1 || record.version > PORTABLE_VERSION)) {
+    throw new Error("Formato de versão incompatível. Preserve o arquivo original e use uma versão compatível do Arquivo de Heróis.");
+  }
   const candidate = record.sheet && typeof record.sheet === "object" ? record.sheet : record;
+  if (Array.isArray(candidate) || typeof (candidate as Record<string, unknown>).heroName !== "string") {
+    throw new Error("Formato de ficha inválido: nome do personagem ausente.");
+  }
+  const schema = (candidate as Record<string, unknown>).schemaVersion;
+  if (schema !== undefined && (typeof schema !== "number" || !Number.isInteger(schema) || schema < 1 || schema > CURRENT_SCHEMA_VERSION)) {
+    throw new Error("Formato de ficha de versão incompatível. Preserve o arquivo original.");
+  }
   return sanitizePortableSheet(normalizeSheet(candidate as Partial<CharacterSheet>));
 }
 
