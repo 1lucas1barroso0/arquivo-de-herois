@@ -1,4 +1,4 @@
-const CACHE_VERSION = "arquivo-herois-v18";
+const CACHE_VERSION = "arquivo-herois-v19";
 const APP_SHELL = [
   "/",
   "/offline",

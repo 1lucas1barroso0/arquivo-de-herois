@@ -944,10 +944,9 @@ export function HeroArchiveApp() {
 
   if (loading) {
     return (
-      <main className="app-loading">
+      <main className="app-loading" aria-busy="true">
         <BrandMark />
-        <LoaderCircle className="spin" />
-        <p>Abrindo o Arquivo de Heróis…</p>
+        <span className="sr-only" role="status">{language === "en" ? "Loading Arquivo de Heróis…" : "Abrindo o Arquivo de Heróis…"}</span>
       </main>
     );
   }
