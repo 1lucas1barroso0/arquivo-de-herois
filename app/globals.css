@@ -6852,7 +6852,10 @@ body {
   }
 
   .workspace-actions .button {
-    display: grid;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
     width: 38px;
     min-width: 38px;
     min-height: 38px;
@@ -6863,6 +6866,7 @@ body {
 
   .workspace-actions .button svg {
     width: 17px;
+    height: 17px;
   }
 
   .shared-topbar > div .button:first-child {
@@ -9632,6 +9636,26 @@ button > svg,
   .guided-progress {
     scrollbar-width: none;
     padding-bottom: 6px;
+  }
+
+  .live-calculation-bar {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .live-status {
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .live-status strong {
+    display: block;
+    font-size: 12px;
+  }
+
+  .live-status > svg {
+    flex: 0 0 18px;
+    width: 18px;
+    height: 18px;
   }
 
   .editing-mode-options {
