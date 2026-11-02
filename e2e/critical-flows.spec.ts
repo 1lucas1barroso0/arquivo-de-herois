@@ -55,3 +55,15 @@ test("share action labels remain intact at responsive widths", async ({ page }) 
     expect(metrics.scrollWidth, `share label overflows at ${width}px`).toBeLessThanOrEqual(metrics.clientWidth + 1);
   }
 });
+
+test("switching language preserves the open character and its analysis", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /^Atlas Zero PL 12/ }).click();
+  await page.getByRole("button", { name: "Analysis", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Atlas Zero", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Site language", exact: true }).click();
+  await expect(page.locator("html")).toHaveAttribute("lang", "pt-BR");
+  await page.waitForLoadState("networkidle");
+  await expect(page.getByRole("heading", { name: "Atlas Zero", exact: true })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Análise da construção", exact: true })).toContainText("NP 12");
+});

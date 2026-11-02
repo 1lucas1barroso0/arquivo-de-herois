@@ -43,7 +43,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { lazy, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useDeferredValue, useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { createEmptySheet, normalizeSheet, type CharacterSheet, type SheetSummary } from "../lib/character";
 import {
   listBrowserStorageKeys,
@@ -311,6 +311,11 @@ export function HeroArchiveApp() {
     return payload.campaigns;
   }, [apiFetch]);
 
+  // Locale changes affect error wording, never the identity of the open sheet.
+  const reportBootError = useEffectEvent((error: unknown) => {
+    showToast(humanizeError(error, "Não foi possível abrir o arquivo.", language, "The archive could not be opened."), "error");
+  });
+
   useEffect(() => {
     // External synchronization: hydrate the UI from the durable API.
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -339,9 +344,9 @@ export function HeroArchiveApp() {
           }
         }
       })
-      .catch((error) => showToast(humanizeError(error, "Não foi possível abrir o arquivo.", language, "The archive could not be opened."), "error"))
+      .catch((error) => reportBootError(error))
       .finally(() => setLoading(false));
-  }, [apiFetch, language, refreshCampaigns, refreshList, showToast]);
+  }, [apiFetch, refreshCampaigns, refreshList]);
 
   useEffect(() => {
     if (loading || bootActionHandled.current) return;
