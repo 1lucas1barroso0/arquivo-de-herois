@@ -14,9 +14,9 @@ export const messages = {
   },
   "dashboard.recent": { pt: "Edições recentes", en: "Recent edits" },
   "dashboard.favorites": { pt: "Favoritos", en: "Favorites" },
-  "dashboard.alerts": { pt: "Fichas com alertas", en: "Sheets with alerts" },
+  "dashboard.alerts": { pt: "Fichas com alertas", en: "Sheets with alerts", one: { pt: "Ficha com alertas", en: "Sheet with alerts" } },
   "dashboard.incomplete": { pt: "Em construção", en: "In progress" },
-  "dashboard.npcs": { pt: "NPCs", en: "NPCs" },
+  "dashboard.npcs": { pt: "NPCs", en: "NPCs", one: { pt: "NPC", en: "NPC" } },
   "dashboard.noRecent": {
     pt: "Crie a primeira ficha ou importe um personagem para começar.",
     en: "Create your first sheet or import a character to get started.",
@@ -109,6 +109,9 @@ export const messages = {
     en: "Confirmed versions will appear here.",
   },
   "history.restore": { pt: "Restaurar esta versão", en: "Restore this version" },
+  "backup.imported": { pt: "Backup importado como {sheets} e {campaigns}.", en: "Backup imported as {sheets} and {campaigns}." },
+  "backup.newSheets": { pt: "novas fichas", en: "new sheets", one: { pt: "nova ficha", en: "new sheet" } },
+  "backup.newCampaigns": { pt: "novas campanhas", en: "new campaigns", one: { pt: "nova campanha", en: "new campaign" } },
   "backup.export": { pt: "Backup completo", en: "Full backup" },
   "backup.import": { pt: "Importar backup", en: "Import backup" },
   "backup.safe": {
@@ -142,7 +145,8 @@ export const messages = {
   "common.loading": { pt: "Carregando…", en: "Loading…" },
   "common.powerLevelShort": { pt: "NP", en: "PL" },
   "dashboard.summary": { pt: "Resumo do arquivo", en: "Archive summary" },
-  "dashboard.sheets": { pt: "Fichas", en: "Sheets" },
+  "dashboard.sheets": { pt: "Fichas", en: "Sheets", one: { pt: "Ficha", en: "Sheet" } },
+  "dashboard.campaigns": { pt: "Campanhas", en: "Campaigns", one: { pt: "Campanha", en: "Campaign" } },
   "dashboard.viewAll": { pt: "Ver todas", en: "View all" },
   "dashboard.favoriteOne": { pt: "ficha marcada", en: "marked sheet" },
   "dashboard.favoriteMany": { pt: "fichas marcadas", en: "marked sheets" },
@@ -199,15 +203,15 @@ export const messages = {
   "campaign.nothing": { pt: "Nada registrado ainda.", en: "Nothing recorded yet." },
   "encounter.outsideRange": { pt: "A diferença de NP está fora da faixa P−4 a P+7 documentada para esta estimativa não oficial.", en: "The PL difference is outside the documented P−4 to P+7 range for this unofficial estimate." },
   "analysis.noRating": { pt: "Este painel mostra números derivados e alertas de regra; ele não classifica o personagem como forte ou fraco.", en: "This panel reports derived numbers and rule alerts; it does not rate the character as strong or weak." },
-  "analysis.attacks": { pt: "Ataques", en: "Attacks" },
+  "analysis.attacks": { pt: "Ataques", en: "Attacks", one: { pt: "Ataque", en: "Attack" } },
   "analysis.highestBonus": { pt: "Maior bônus", en: "Highest bonus" },
   "analysis.highestEffect": { pt: "Maior efeito", en: "Highest effect" },
-  "analysis.modes": { pt: "Modos", en: "Modes" },
+  "analysis.modes": { pt: "Modos", en: "Modes", one: { pt: "Modo", en: "Mode" } },
   "analysis.highestRank": { pt: "Maior graduação", en: "Highest rank" },
-  "analysis.trainedSkills": { pt: "Perícias treinadas", en: "Trained skills" },
-  "analysis.advantages": { pt: "Vantagens", en: "Advantages" },
-  "analysis.powers": { pt: "Poderes", en: "Powers" },
-  "analysis.senses": { pt: "Sentidos", en: "Senses" },
+  "analysis.trainedSkills": { pt: "Perícias treinadas", en: "Trained skills", one: { pt: "Perícia treinada", en: "Trained skill" } },
+  "analysis.advantages": { pt: "Vantagens", en: "Advantages", one: { pt: "Vantagem", en: "Advantage" } },
+  "analysis.powers": { pt: "Poderes", en: "Powers", one: { pt: "Poder", en: "Power" } },
+  "analysis.senses": { pt: "Sentidos", en: "Senses", one: { pt: "Sentido", en: "Sense" } },
   "analysis.equipment": { pt: "Equipamento", en: "Equipment" },
   "session.description": { pt: "Valores temporários permanecem separados da construção-base do personagem.", en: "Temporary values remain separate from the character's base construction." },
   "session.heroPoints": { pt: "Pontos Heroicos", en: "Hero Points" },
@@ -271,7 +275,10 @@ export function translateMessage(
   language: AppLanguage,
   variables: MessageVariables = {},
 ) {
-  let value: string = messages[key][language];
+  const message = messages[key];
+  let value: string = variables.count === 1 && "one" in message
+    ? message.one[language]
+    : message[language];
   for (const [name, replacement] of Object.entries(variables)) {
     value = value.replaceAll(`{${name}}`, String(replacement));
   }

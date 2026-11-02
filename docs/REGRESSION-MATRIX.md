@@ -74,3 +74,11 @@ A matriz histórica acima registra a base anterior. O catálogo atual contém 62
 - ATENDE — Cache PWA v25, sem remoção de dados do IndexedDB.
 - NÃO SE APLICA — Nenhuma mudança de layout, imagens ou dependências.
 - PENDENTE — Suíte automatizada de navegador; a disponibilidade do Chromium não foi comprovada nesta revisão.
+
+## Instalação e concordância de quantidades — 02/11/2026
+
+- ATENDE — Removido o botão de instalação da navegação, junto com o diálogo próprio. Manifesto, ícones, service worker, atualização segura e instalação nativa pelo navegador permanecem disponíveis; o evento nativo de instalação não é mais interceptado.
+- ATENDE — Contadores de fichas, campanhas, NPCs e fichas com alertas usam singular para 1 e plural para 0 ou múltiplos registros, em PT/EN. A mesma seleção se aplica aos contadores da Análise e às duas quantidades independentes da confirmação de backup.
+- ATENDE — Regressão de renderização do dashboard para 0/1/2 registros e textos ingleses; backup com 1 ficha/2 campanhas, nos dois idiomas. `tests/dashboard-counts.test.tsx`.
+- NÃO SE APLICA — Sem mudanças em regras, fichas, migrações ou permissões. Cache PWA v26 mantém os dados locais.
+- PENDENTE — Instalação efetiva em dispositivo móvel e suíte automatizada de navegador não executadas nesta revisão.

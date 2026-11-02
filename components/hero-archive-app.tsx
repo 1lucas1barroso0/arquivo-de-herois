@@ -11,7 +11,6 @@ import {
   ChevronRight,
   CircleAlert,
   Cloud,
-  Download,
   Eye,
   FileJson,
   FileText,
@@ -137,7 +136,7 @@ const THEME_KEY = "arquivo-de-herois:tema:v2";
 const LEGACY_THEME_KEY = "mm4e-theme:v1";
 
 export function HeroArchiveApp() {
-  const { language, t } = useLocale();
+  const { language, t, m } = useLocale();
   const [characters, setCharacters] = useState<SheetSummary[]>([]);
   const [campaigns, setCampaigns] = useState<CampaignSummary[]>([]);
   const [activeSheet, setActiveSheet] = useState<CharacterSheet | null>(null);
@@ -936,9 +935,10 @@ export function HeroArchiveApp() {
     }
     await Promise.all([refreshList(), refreshCampaigns()]);
     showToast(
-      language === "en"
-        ? `Backup imported as ${backup.characters.length} new sheets and ${backup.campaigns.length} new campaigns.`
-        : `Backup importado como ${backup.characters.length} novas fichas e ${backup.campaigns.length} novas campanhas.`,
+      m("backup.imported", {
+        sheets: `${backup.characters.length} ${m("backup.newSheets", { count: backup.characters.length })}`,
+        campaigns: `${backup.campaigns.length} ${m("backup.newCampaigns", { count: backup.campaigns.length })}`,
+      }),
     );
   }
 
@@ -964,7 +964,6 @@ export function HeroArchiveApp() {
         onSearch={() => void openUniversalSearch()}
         onNew={() => void createSheet()}
         onImport={() => setImportOpen(true)}
-        onInstall={() => window.dispatchEvent(new CustomEvent("arquivo-de-herois:instalar"))}
         onScales={() => {
           setReferenceQuery("");
           setScaleOpen(true);
@@ -1198,7 +1197,6 @@ function Topbar({
   onSearch,
   onNew,
   onImport,
-  onInstall,
   onScales,
   themePreference,
   onThemePreference,
@@ -1213,7 +1211,6 @@ function Topbar({
   onSearch: () => void;
   onNew: () => void;
   onImport: () => void;
-  onInstall: () => void;
   onScales: () => void;
   themePreference: ThemePreference;
   onThemePreference: (value: ThemePreference) => void;
@@ -1266,7 +1263,6 @@ function Topbar({
           {!isWorkspaceScreen(screen) && (
             <>
               <button className="topbar-utility" type="button" onClick={() => run(onImport)}><Import size={16} /> {t("Importar")}</button>
-              <button className="topbar-utility" type="button" onClick={() => run(onInstall)}><Download size={16} /> {t("Instalar app")}</button>
               <button className="topbar-cta" type="button" onClick={() => run(onNew)}><Plus size={16} /> {t("Nova ficha")}</button>
             </>
           )}

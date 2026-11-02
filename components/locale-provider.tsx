@@ -35,7 +35,7 @@ const LocaleContext = createContext<LocaleContextValue>({
   language: "pt",
   setLanguage: () => undefined,
   t: (value) => value,
-  m: (key) => translateMessage(key, "pt"),
+  m: (key, variables) => translateMessage(key, "pt", variables),
 });
 
 export function LocaleProvider({ children }: { children: React.ReactNode }) {

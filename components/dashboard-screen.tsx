@@ -38,6 +38,7 @@ export function DashboardScreen({
   const incomplete = visible.filter((entry) => entry.completion < 100);
   const npcs = visible.filter((entry) => entry.buildType === "npc");
   const recent = visible.slice(0, 5);
+  const campaignCount = campaigns.filter((entry) => !entry.archived).length;
 
   return (
     <div className="dashboard-page">
@@ -54,16 +55,16 @@ export function DashboardScreen({
 
       <section className="dashboard-stats" aria-label={m("dashboard.summary")}>
         <button type="button" onClick={onCharacters}>
-          <strong>{visible.length}</strong><span>{m("dashboard.sheets")}</span>
+          <strong>{visible.length}</strong><span>{m("dashboard.sheets", { count: visible.length })}</span>
         </button>
         <button type="button" onClick={onCampaigns}>
-          <strong>{campaigns.filter((entry) => !entry.archived).length}</strong><span>{m("nav.campaigns")}</span>
+          <strong>{campaignCount}</strong><span>{m("dashboard.campaigns", { count: campaignCount })}</span>
         </button>
         <button type="button" onClick={onCharacters}>
-          <strong>{npcs.length}</strong><span>{m("dashboard.npcs")}</span>
+          <strong>{npcs.length}</strong><span>{m("dashboard.npcs", { count: npcs.length })}</span>
         </button>
         <button type="button" onClick={onCharacters}>
-          <strong>{alerts.length}</strong><span>{m("dashboard.alerts")}</span>
+          <strong>{alerts.length}</strong><span>{m("dashboard.alerts", { count: alerts.length })}</span>
         </button>
       </section>
 
