@@ -10,6 +10,7 @@ import {
   createExampleSheets,
   EXAMPLE_SHEET_NAMES,
 } from "../lib/example-sheets";
+import { isUntouchedLearningExampleV9 } from "../lib/example-refresh";
 import {
   createSummary,
   getPointBreakdown,
@@ -400,6 +401,7 @@ const previousAuditedExamples: Record<string, {
 };
 
 function isReplaceableLearningExample(sheet: CharacterSheet) {
+  if (isUntouchedLearningExampleV9(sheet)) return true;
   if (isUntouchedLegacyExample(sheet)) return true;
   const previous = previousAuditedExamples[sheet.heroName];
   if (!previous) return false;

@@ -8,6 +8,7 @@ import {
   writeBrowserStorage,
 } from "./browser-storage";
 import { createExampleSheets } from "./example-sheets";
+import { isUntouchedLearningExampleV9 } from "./example-refresh";
 import { createSummary } from "./rules";
 import { createPortableShareUrl } from "./portable-share";
 import {
@@ -237,6 +238,33 @@ async function listCharacters() {
     }
     await transactionDone(transaction);
     writeBrowserStorage(SEED_KEY, "yes");
+  }
+  // Only fully untouched demo copies are refreshed. Edited, active-session
+  // or shared characters remain unmodified, even when their schema is older.
+  if (characters.length) {
+    const templates = new Map(createExampleSheets().map((sheet) => [sheet.heroName, sheet]));
+    let refreshed = false;
+    for (const stored of characters) {
+      const current = normalizeSheet(stored);
+      if (!isUntouchedLearningExampleV9(current)) continue;
+      const template = templates.get(current.heroName);
+      if (!template) continue;
+      await recordLocalRevision(current);
+      await putCharacter(normalizeSheet({
+        ...template,
+        id: current.id,
+        createdAt: current.createdAt,
+        updatedAt: new Date().toISOString(),
+        shareEnabled: current.shareEnabled,
+        shareToken: current.shareToken,
+      }));
+      refreshed = true;
+    }
+    if (refreshed) {
+      characters = await request<unknown[]>(
+        database.transaction(STORE_NAME, "readonly").objectStore(STORE_NAME).getAll(),
+      );
+    }
   }
   return normalizeLocalCharacters(characters);
 }

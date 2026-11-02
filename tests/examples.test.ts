@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createEmptySheet, isResistanceAbsent } from "../lib/character";
+import { isUntouchedLearningExampleV9, previousLearningExampleV9 } from "../lib/example-refresh";
 import { CURRENT_RULESET } from "../lib/ruleset";
 import { createExampleSheets } from "../lib/example-sheets";
 import { applyGuidedAutomation } from "../lib/guided";
@@ -167,4 +168,26 @@ test("guided automation repairs deterministic mistakes without deleting custom c
   assert.equal(result.sheet.resources.luckMax, 0);
   assert.equal(result.sheet.equipment[0].details, "Texto livre preservado.");
   assert.ok(result.changes.length >= 3);
+});
+
+test("only untouched previous learning examples qualify for a safe update", () => {
+  for (const name of ["Sentinela Solar", "Atlas Zero"] as const) {
+    const previous = previousLearningExampleV9(name);
+    assert.equal(isUntouchedLearningExampleV9(previous), true, `${name}: original intacto não reconhecido`);
+    const fromStorage = structuredClone(previous);
+    fromStorage.id = "example-previous";
+    fromStorage.createdAt = "2026-10-20T00:00:00.000Z";
+    fromStorage.updatedAt = "2026-10-21T00:00:00.000Z";
+    assert.equal(isUntouchedLearningExampleV9(fromStorage), true);
+    fromStorage.personality += " (minha personalização)";
+    assert.equal(isUntouchedLearningExampleV9(fromStorage), false);
+    const changedPower = structuredClone(previous);
+    changedPower.powers[0].effects[0].rank += 1;
+    assert.equal(isUntouchedLearningExampleV9(changedPower), false);
+    const shared = structuredClone(previous);
+    shared.shareEnabled = true;
+    assert.equal(isUntouchedLearningExampleV9(shared), false);
+    const newTemplate = createExampleSheets().find((example) => example.heroName === name)!;
+    assert.equal(isUntouchedLearningExampleV9(newTemplate), false);
+  }
 });
