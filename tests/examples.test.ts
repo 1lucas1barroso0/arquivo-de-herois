@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createEmptySheet } from "../lib/character";
+import { createEmptySheet, isResistanceAbsent } from "../lib/character";
+import { CURRENT_RULESET } from "../lib/ruleset";
 import { createExampleSheets } from "../lib/example-sheets";
 import { applyGuidedAutomation } from "../lib/guided";
 import {
@@ -37,12 +38,12 @@ const expectedLedgers = {
     specializedSkillRanks: 0,
   },
   "Atlas Zero": {
-    abilities: 26,
+    abilities: 8,
     combat: 28,
     resistances: 17,
     skills: 16,
     advantages: 19,
-    powers: 74,
+    powers: 92,
     adjustments: 0,
     total: 180,
     regularSkillRanks: 28,
@@ -59,6 +60,8 @@ test("learning examples are exact, distinct NP 8, 10 and 12 heroes", () => {
     const audit = getRuleAudit(sheet);
     const level = expectedLevels[sheet.heroName as keyof typeof expectedLevels];
     assert.equal(sheet.powerLevel, level, `${sheet.heroName}: NP incorreto`);
+    assert.equal(sheet.schemaVersion, 9);
+    assert.deepEqual(sheet.ruleset, CURRENT_RULESET);
     assert.equal(points.total, level * 15, `${sheet.heroName}: PP incorretos`);
     assert.deepEqual(
       points,
@@ -89,6 +92,18 @@ test("learning examples are exact, distinct NP 8, 10 and 12 heroes", () => {
   });
 
   const atlas = examples.find((sheet) => sheet.heroName === "Atlas Zero")!;
+  assert.deepEqual(atlas.absentTraits, ["stamina"]);
+  assert.equal(isResistanceAbsent(atlas, "fortitude"), true);
+  assert.equal(atlas.abilities.stamina, 0);
+  assert.equal(atlas.powers.some((p) => p.effects.some((e) => e.traitLinks.some((link) => link.trait === "stamina"))), false);
+  const fortitudeImmunity = atlas.powers.find((p) => p.name === "Sistemas Inorgânicos");
+  assert.equal(fortitudeImmunity?.effects[0].catalogKey, "immunity");
+  assert.equal(fortitudeImmunity?.effects[0].rank, 30);
+  assert.equal(atlas.movement.length, 2);
+  assert.equal(atlas.senses.length, 2);
+  for (const item of [...atlas.movement, ...atlas.senses]) {
+    assert.ok(atlas.powers.some((p) => p.effects.some((effect) => effect.id === item.sourceEffectId)));
+  }
   assert.equal(getDerivedTraits(atlas).abilities.strength, 14);
   assert.equal(getDerivedTraits(atlas).resistances.toughness, 16);
   const atlasAttack = getAttackCalculation(atlas, atlas.attacks[0]);
@@ -96,6 +111,11 @@ test("learning examples are exact, distinct NP 8, 10 and 12 heroes", () => {
   assert.equal(atlasAttack.limit, 24);
 
   const sentinel = examples.find((sheet) => sheet.heroName === "Sentinela Solar")!;
+  assert.equal(sentinel.movement.length, 1);
+  assert.equal(sentinel.senses.length, 5);
+  for (const item of [...sentinel.movement, ...sentinel.senses]) {
+    assert.ok(sentinel.powers.some((p) => p.effects.some((effect) => effect.id === item.sourceEffectId)));
+  }
   const blast = getAttackCalculation(sentinel, sentinel.attacks[0]);
   assert.equal(blast.limitValue, 20);
   assert.equal(blast.limit, 20);

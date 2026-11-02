@@ -65,16 +65,32 @@ function createSolarSentinelNp10() {
   sheet.resources.luckCurrent = 2; sheet.resources.luckMax = 2;
   const arrayName = "Controle da Luz Solar";
   const blast = configuredEffect("blast", 12); const constructs = configuredEffect("force-constructs", 8); const stun = configuredEffect("stun", 12);
+  const solarFlight = catalogEffect("flight", 8);
+  const solarSenses = catalogEffect("enhanced-senses", 5);
   sheet.powers = [
     power("Rajada Solar", blast, { arrayName, arrayRole: "base", active: true, descriptors: "Cósmica, luz e calor" }),
     power("Construtos de Luz", constructs, { arrayName, arrayRole: "alternate", active: false, descriptors: "Cósmica e energia sólida" }),
     power("Toque Atordoante", stun, { arrayName, arrayRole: "alternate", active: false, descriptors: "Luz e choque nervoso" }),
     power("Campo de Força Solar", configuredEffect("force-field", 10), { descriptors: "Cósmica e luz", notes: "Robustez +10 enquanto o campo sustentado estiver ativo." }),
-    power("Voo Fotônico", catalogEffect("flight", 8), { descriptors: "Cósmica e luz" }),
+    power("Voo Fotônico", solarFlight, { descriptors: "Cósmica e luz" }),
     power("Fisiologia Estelar", catalogEffect("immunity", 5), { descriptors: "Cósmica", notes: "Imunidade 5: dano de radiação (descritor incomum)." }),
-    power("Visão do Espectro Solar", catalogEffect("enhanced-senses", 5), { descriptors: "Cósmica e luz", notes: "Visão analítica 1 · Consciência cósmica 1 · Visão infravermelha 1 · Visão ultravioleta 1 · Visão estendida 1." }),
+    power("Visão do Espectro Solar", solarSenses, { descriptors: "Cósmica e luz", notes: "Visão analítica 1 · Consciência cósmica 1 · Visão infravermelha 1 · Visão ultravioleta 1 · Visão estendida 1." }),
   ];
   sheet.attacks = [blast, constructs, stun].map(attackFromEffect);
+  sheet.movement = [{
+    id: newId("movement"), typeId: "movement.flight", name: "Voo Fotônico", rank: 8,
+    sourceEffectId: solarFlight.id, notes: "Derivado de Voo Fotônico 8, sem custo adicional.",
+  }];
+  sheet.senses = [
+    ["sense.analytical-vision", "Visão Analítica"],
+    ["sense.cosmic-awareness", "Consciência Cósmica"],
+    ["sense.infrared-vision", "Visão Infravermelha"],
+    ["sense.ultraviolet-vision", "Visão Ultravioleta"],
+    ["sense.extended-vision", "Visão Estendida"],
+  ].map(([senseId, name]) => ({
+    id: newId("sense"), senseId, name, rank: 1, sourceEffectId: solarSenses.id,
+    details: "Derivado de Sentidos Aprimorados 5, sem custo adicional.",
+  }));
   sheet.complications = [
     complication("responsibility", "A fonte estelar foi confiada a Helena para proteger quem não pode se defender."),
     complication("power-loss", "Ambientes sem energia luminosa suficiente reduzem sua capacidade de recarregar os poderes."),
@@ -91,26 +107,41 @@ function createAtlasZeroNp12() {
     concept: "Construto gravitacional veterano, criado para conter ameaças de grande escala com força, proteção e persistência extremas.",
     origin: "Experimento", descriptors: "Inventada · Tecnológica · Gravidade · Metal", powerLevel: 12,
   });
-  sheet.abilities = { strength: 4, stamina: 4, agility: 1, intellect: 1, awareness: 2, presence: 1 };
+  sheet.abilities = { strength: 4, stamina: 0, agility: 1, intellect: 1, awareness: 2, presence: 1 };
+  sheet.absentTraits = ["stamina"]; // Construtos não vivos não possuem Vigor (WIP v.05, cap. 3).
   sheet.combat = { attack: 5, closeAttack: 1, rangedAttack: 0, defense: 6, closeDefense: 2, rangedDefense: 2, initiativeBonus: 0 };
   sheet.resistanceAdjustments = { dodge: 7, fortitude: 0, toughness: 0, will: 10 };
   setSkill(sheet, "athletics", 4); setSkill(sheet, "insight", 4); setSkill(sheet, "intimidation", 6); setSkill(sheet, "perception", 6);
   setSkill(sheet, "technology", 4); setSkill(sheet, "stealth", 2); setSkill(sheet, "persuasion", 2); setSkill(sheet, "expertise", 0, "Operações de contenção", 8);
-  sheet.advantages = [advantage("improved-interpose", 2), advantage("great-endurance"), advantage("fearless", 2), advantage("extraordinary-effort"), advantage("improved-defense"), advantage("improved-grab"), advantage("improved-hold"), advantage("improved-smash"), advantage("takedown", 2), advantage("diehard"), advantage("teamwork"), advantage("instant-up"), advantage("uncanny-dodge"), advantage("determination", 2), advantage("luck")];
+  sheet.advantages = [advantage("improved-interpose", 2), advantage("assessment"), advantage("fearless", 2), advantage("extraordinary-effort"), advantage("improved-defense"), advantage("improved-grab"), advantage("improved-hold"), advantage("improved-smash"), advantage("takedown", 2), advantage("improved-evasion"), advantage("teamwork"), advantage("instant-up"), advantage("uncanny-dodge"), advantage("determination", 2), advantage("luck")];
   sheet.resources.luckCurrent = 1; sheet.resources.luckMax = 1;
-  const enhancedStamina = linkedTraitEffect("enhanced-trait", 8, "stamina", 2); enhancedStamina.notes = "Vigor Aprimorado +8.";
-  const enhancedToughness = linkedTraitEffect("enhanced-resistance", 4, "toughness", 1); enhancedToughness.notes = "Robustez Aprimorada +4.";
+  const enhancedToughness = linkedTraitEffect("enhanced-resistance", 16, "toughness", 1);
+  enhancedToughness.notes = "Robustez Aprimorada +16, estrutura metálica não viva; sem contribuição de Vigor.";
+  const fortitudeImmunity = catalogEffect("immunity", 30);
+  fortitudeImmunity.notes = "Imunidade a efeitos resistidos por Fortitude (30 PP); não concede graduação de Fortitude.";
+  const tacticalSensors = catalogEffect("enhanced-senses", 2);
+  tacticalSensors.notes = "Visão infravermelha 1 e Visão estendida 1: sensores instalados no corpo.";
+  const gravityLeap = catalogEffect("leaping", 6);
+  const seismicSpeed = catalogEffect("speed", 2);
   const strike = configuredEffect("strike", 2);
   sheet.powers = [
-    power("Matriz de Vigor", enhancedStamina, { descriptors: "Tecnológica e gravitacional" }),
+    power("Sensores Táticos", tacticalSensors, { descriptors: "Tecnológica e sensorial" }),
     power("Força Titânica", catalogEffect("enhanced-strength", 10), { descriptors: "Tecnológica e gravitacional" }),
     power("Estrutura Reforçada", enhancedToughness, { descriptors: "Tecnológica e metal" }),
     power("Golpe Gravitacional", strike, { descriptors: "Gravidade e impacto" }),
     power("Carga Máxima", catalogEffect("lifting", 4), { descriptors: "Tecnológica e gravitacional" }),
     power("Autorrecuperação", catalogEffect("regeneration", 5), { descriptors: "Tecnológica e nanomecânica" }),
-    power("Suporte de Vida", catalogEffect("immunity", 10), { descriptors: "Construto tecnológico", notes: "Imunidade Ambiental 10: todos os perigos ambientais." }),
-    power("Salto Gravitacional", catalogEffect("leaping", 6), { descriptors: "Gravidade" }),
-    power("Passo Sísmico", catalogEffect("speed", 2), { descriptors: "Gravidade e força cinética" }),
+    power("Sistemas Inorgânicos", fortitudeImmunity, { descriptors: "Construto tecnológico", notes: "Imunidade a efeitos de Fortitude 30; não é Vigor e não inclui automaticamente outras imunidades." }),
+    power("Salto Gravitacional", gravityLeap, { descriptors: "Gravidade" }),
+    power("Passo Sísmico", seismicSpeed, { descriptors: "Gravidade e força cinética" }),
+  ];
+  sheet.movement = [
+    { id: newId("movement"), typeId: "movement.leaping", name: "Salto Gravitacional", rank: 6, sourceEffectId: gravityLeap.id, notes: "Derivado de Salto 6, sem custo adicional." },
+    { id: newId("movement"), typeId: "movement.speed", name: "Passo Sísmico", rank: 2, sourceEffectId: seismicSpeed.id, notes: "Derivado de Velocidade 2, sem custo adicional." },
+  ];
+  sheet.senses = [
+    { id: newId("sense"), senseId: "sense.infrared-vision", name: "Visão Infravermelha", rank: 1, sourceEffectId: tacticalSensors.id, details: "Derivado de Sentidos Aprimorados 2, sem custo adicional." },
+    { id: newId("sense"), senseId: "sense.extended-vision", name: "Visão Estendida", rank: 1, sourceEffectId: tacticalSensors.id, details: "Derivado de Sentidos Aprimorados 2, sem custo adicional." },
   ];
   const specializationId = newId("specialization");
   sheet.attackSpecializations = [{ id: specializationId, name: "Desarmado", rank: 2, range: "close" }];
@@ -121,7 +152,7 @@ function createAtlasZeroNp12() {
     complication("relationship", "A cientista que despertou sua consciência é sua principal ligação com a humanidade."),
   ];
   sheet.personality = "Calmo e literal; usa força extrema com disciplina para minimizar danos colaterais.";
-  sheet.notes = "EXEMPLO DE APRENDIZADO V9 · NP 12 · 180 PP. Demonstra traços aprimorados, ataque baseado em Força, resistências equilibradas e capacidades de construto.";
+  sheet.notes = "EXEMPLO DE APRENDIZADO V9 · NP 12 · 180 PP. Construto não vivo: Vigor ausente (−10 PP), Fortitude ausente, Imunidade 30 a efeitos de Fortitude, Robustez por estrutura tecnológica e Regeneração como autorreparo. Demonstra também golpe baseado em Força sem extras por graduação e registros derivados de movimento/sentidos.";
   return sheet;
 }
 
