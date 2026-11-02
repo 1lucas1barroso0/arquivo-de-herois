@@ -9,9 +9,9 @@ import {
   skillCatalog,
 } from "./catalog";
 
-import { createCurrentRulesetReference, normalizeRulesetReference, type RulesetReference } from "./ruleset";
+import { createCurrentRulesetReference, LEGACY_RULESET, normalizeRulesetReference, type RulesetReference } from "./ruleset";
 
-export const CURRENT_SCHEMA_VERSION = 8 as const;
+export const CURRENT_SCHEMA_VERSION = 9 as const;
 
 export const coreAbilityKeys = [
   "strength",
@@ -492,7 +492,6 @@ export const conditions = [
   "Fatigado (Fatigued)",
   "Ilusão menor (Figment)",
   "Amedrontado (Frightened)",
-  "Alucinando (Hallucinating)",
   "Desamparado (Helpless)",
   "Impedido (Hindered)",
   "Ferido (Hit)",
@@ -784,7 +783,7 @@ export function normalizeSheet(value: unknown): CharacterSheet {
   const sheet: CharacterSheet = {
     ...base,
     schemaVersion: CURRENT_SCHEMA_VERSION,
-    ruleset: normalizeRulesetReference(raw.ruleset),
+    ruleset: normalizeRulesetReference(raw.ruleset ?? LEGACY_RULESET),
     id: stringValue(raw.id),
     heroName: stringValue(raw.heroName, base.heroName),
     civilName: stringValue(raw.civilName),

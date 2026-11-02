@@ -57,3 +57,7 @@ modelo novo.
 - Lint, typecheck, testes, build e fluxos críticos precisam terminar sem erro.
 - Qualquer item que não puder ser verificado no ambiente deve constar como
   limitação real no relatório final, sem declaração de conclusão falsa.
+
+## Revisão WIP v.05 (1.2.0)
+
+A matriz histórica acima registra a base anterior. O catálogo atual contém 629 opções, 112 configurações e 65 modificadores; há 144 tópicos, incluindo 37 condições. A condição genérica Hallucinating saiu da seleção atual, mas valores armazenados não são removidos. Ver `HANDBOOK-WIP05.md` para mudanças, páginas e testes.

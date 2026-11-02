@@ -1,40 +1,49 @@
 # Cobertura do material da 4E
 
-Esta versão usa como fonte canônica o arquivo **M&M4e Previews 1–9 editadas**, com 431 páginas. A numeração mostrada nas Referências é a página do próprio PDF fornecido.
+A versão 1.2.0 usa **Hero’s Handbook WIP v.05, de 28/10/2026**, recebido
+como M&M4e.pdf, com 270 páginas. É um manuscrito completo em desenvolvimento,
+não uma edição final. Substitui a compilação anterior de prévias como fonte atual.
 
-O aplicativo transforma o material em dados estruturados, fórmulas verificáveis e resumos autorais curtos. O PDF, sua arte e o texto integral não fazem parte do repositório.
+Os localizadores usam páginas físicas do PDF, incluindo a capa; a numeração
+impressa é uma unidade menor. O aplicativo contém dados mecânicos e resumos
+autorais, sem o PDF, arte ou reprodução integral do livro.
 
-## Matriz de cobertura
+## Matriz atual
 
-| Material | Páginas do PDF | Conteúdo incorporado ao aplicativo |
+| Material | Páginas do PDF | Conteúdo estruturado |
 | --- | ---: | --- |
-| Capítulo 1 · O Básico | 1–32 | Testes, graus, rotina, recursos heroicos, medidas e as 38 condições |
-| Capítulo 2 · Criação de Heróis | 33–106 | 15 arquétipos, 6 origens, 28 motivações/complicações, orçamento e limites de NP |
-| Capítulo 3 · Atributos | 107–123 | Atributos, combate, resistências, traços reduzidos/debilitados/ausentes, tamanho natural, movimento, sentidos, erguer e arremessar |
-| Capítulo 4 · Perícias | 124–153 | As 18 perícias, custos, atributos-base, treinamento e especializações sugeridas |
-| Capítulo 5 · Vantagens | 154–179 | As 101 vantagens, categorias, graduações e vínculos mecânicos suportados |
-| Capítulo 6 · Poderes | 180–297 | 47 efeitos, 110 configurações prontas e 63 extras, recursos, falhas e desvantagens |
-| Capítulo 7 · Equipamento | 298–345 | 182 armas, armaduras, utilidades, veículos, instalações e recursos associados |
-| Capítulo 8 · Ação e Aventura | 346–406 | Conflitos, 4 tipos de cena, ações, resistências a dano e 25 perigos ambientais |
-| Apêndice | 407–431 | Tabelas rápidas, medidas, custos, limites e as 29 ações de referência |
+| Capítulo 1 · O Básico | 7–25 | Testes, graus, rotina, recursos heroicos, medidas e 37 condições |
+| Capítulo 2 · Criação de Heróis | 26–66 | 15 arquétipos, 6 origens, 28 motivações/complicações, orçamento e limites de NP |
+| Capítulo 3 · Atributos | 67–76 | Atributos, combate, resistências, ausência, tamanho, movimento e sentidos |
+| Capítulo 4 · Perícias | 77–94 | 18 perícias, treinamento, custos e especializações |
+| Capítulo 5 · Vantagens | 95–110 | 101 vantagens, categorias, graduações e vínculos suportados |
+| Capítulo 6 · Poderes | 111–181 | 47 efeitos, 112 configurações e 65 modificadores |
+| Capítulo 7 · Equipamento | 182–210 | 182 opções, incluindo armas, armaduras, veículos e recursos |
+| Capítulo 8 · Ação e Aventura | 211–239 | 4 tipos de cena, 29 ações e 25 perigos ambientais |
+| Glossário e tabelas | 240–263 | Consulta cruzada de termos, custos, parâmetros e medidas |
 
-## Inventário pesquisável
+## Inventário e fidelidade
 
-- 625 opções de criação em português e inglês;
-- 145 tópicos de regra com fonte: 49 regras gerais e de características, 38 condições, 29 ações, 25 perigos e 4 tipos de cena;
-- 11 tamanhos naturais publicados, de −5 a 5, com espaço e alcance exatos;
-- calculadoras para testes graduados, rotina, resistência a dano, percurso, duração e arremesso;
-- auditoria automática dos custos, dependências, limites de NP, matrizes e recursos da ficha.
+- 629 opções de criação com nomes e apresentação em PT-BR/EN.
+- 144 tópicos: 49 regras gerais/características, 37 condições, 29 ações,
+  25 perigos e 4 tipos de cena.
+- Cada tópico e grupo de catálogo informa documento, capítulo e páginas.
+- Custos, limites de NP, testes, medidas e dependências continuam centralizados.
+- O catálogo atual incorpora 33 correções de custo de equipamento verificadas
+  nas tabelas do livro, além de correções de parâmetros e novas opções.
 
-Cada cartão nas Referências informa documento, capítulo e páginas. A busca também aceita esses dados; por exemplo, `PDF 115`, `condição`, `hazard` ou o nome do capítulo.
+As alterações e os localizadores específicos constam em [HANDBOOK-WIP05.md](HANDBOOK-WIP05.md).
 
-## Decisões de fidelidade
+## Preservação e limites
 
-- Conteúdo personalizado e regras de campanha continuam possíveis, mas aparecem como decisões do Narrador em vez de receber uma validação falsa.
-- Tamanho natural fora de −5 a 5 é preservado, porém espaço e alcance ficam a definir: o material fornecido não publica esses valores.
-- O exemplo de tamanho aplicado a queda nas páginas 118–119 é ambíguo em relação à regra geral de queda da página 378. As duas orientações estão disponíveis na consulta, mas não foram fundidas em uma fórmula inventada.
-- Traços ausentes aplicam travessão, custo de −10 PP, falha automática e as consequências derivadas. Dados incompatíveis permanecem preservados e são apontados pela auditoria.
+Schema e envelope 9 identificam a atualização. Fichas antigas conservam a revisão
+original e todos os valores; campos sem referência de regras recebem a origem
+legada. A auditoria indica que precisam de conferência com a nova fonte. Adoção
+explícita na Análise altera somente a referência e refaz a auditoria.
 
-## Limite da afirmação
-
-“Cobertura completa” significa cobertura do **material fornecido nesta compilação de prévias**. Não significa que o aplicativo contenha uma edição final posterior, erratas ou conteúdo que não estava nos 431 páginas recebidas. Uma nova fonte deve entrar acompanhada de nova revisão da matriz, migração de dados e testes de regressão.
+Regras de cena, permissões e interpretações dependentes do Narrador continuam
+como consulta ou auxílio. “Cobertura” não significa automação integral do RPG,
+reprodução integral do livro ou certificação de futuras erratas. As ambiguidades
+entre as seções de tamanho e queda e na linha de Fadiga da tabela não são
+resolvidas por regras inventadas. O corpo do capítulo é a referência para o
+modelo de Fadiga.

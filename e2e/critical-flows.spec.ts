@@ -24,7 +24,7 @@ test("a new sheet exposes its ruleset revision", async ({ page }) => {
   const analysis = page.getByRole("button", { name: "Analysis", exact: true });
   await expect(analysis).toBeVisible();
   await analysis.click();
-  await expect(page.getByText(/M&M4e Origin playtest · previews 1–9/)).toBeVisible();
+  await expect(page.getByText(/M&M4e Hero’s Handbook · WIP v.05/)).toBeVisible();
 });
 
 test("share action labels remain intact at responsive widths", async ({ page }) => {

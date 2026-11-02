@@ -36,7 +36,7 @@ import { beginSession, resetSession } from "../lib/session";
 import { createEmptyCampaign } from "../lib/workspace";
 import { CURRENT_RULESET } from "../lib/ruleset";
 
-test("schema 8 migrates older sheets without mutating or dropping content", () => {
+test("schema 9 migrates older sheets without mutating or dropping content", () => {
   const legacy = structuredClone(createEmptySheet()) as unknown as Record<string, unknown>;
   legacy.schemaVersion = 6;
   legacy.heroName = "Legado preservado";
@@ -60,7 +60,7 @@ test("schema 8 migrates older sheets without mutating or dropping content", () =
   assert.deepEqual(migrated.ruleset, CURRENT_RULESET);
 });
 
-test("portable v8 exports preserve new sheet data and strip private identity", () => {
+test("portable v9 exports preserve new sheet data and strip private identity", () => {
   const sheet = createEmptySheet();
   sheet.id = "private-sheet";
   sheet.creationMode = "free";

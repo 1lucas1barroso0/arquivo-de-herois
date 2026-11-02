@@ -68,7 +68,7 @@ function addMotivation(sheet: CharacterSheet) {
   };
 }
 
-test("the preview catalogs are complete, addressable, and free of duplicate IDs", () => {
+test("the WIP v.05 catalogs are complete, addressable, and free of duplicate IDs", () => {
   assert.deepEqual(
     {
       archetypes: archetypeCatalog.length,
@@ -93,9 +93,9 @@ test("the preview catalogs are complete, addressable, and free of duplicate IDs"
       skills: 18,
       advantages: 101,
       effects: 47,
-      configurations: 110,
+      configurations: 112,
       extras: 22,
-      features: 18,
+      features: 20,
       flaws: 17,
       drawbacks: 6,
       equipment: 182,

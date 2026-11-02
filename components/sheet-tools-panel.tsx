@@ -28,7 +28,7 @@ import {
 } from "../lib/history";
 import { beginSession, resetSession } from "../lib/session";
 import { localizeConditionLabel, relationshipKindLabel } from "../lib/localization";
-import { rulesetLabel } from "../lib/ruleset";
+import { createCurrentRulesetReference, isCurrentRuleset, rulesetLabel } from "../lib/ruleset";
 import { useLocale } from "./locale-provider";
 
 export type SheetTool = "analysis" | "session" | "relations" | "history" | "compare";
@@ -49,14 +49,14 @@ export function SheetToolsPanel({
   apiFetch: ApiFetch;
   notify: (message: string, tone?: "success" | "warning" | "error") => void;
 }) {
-  if (tool === "analysis") return <AnalysisPanel sheet={sheet} />;
+  if (tool === "analysis") return <AnalysisPanel sheet={sheet} onChange={onChange} />;
   if (tool === "session") return <SessionPanel sheet={sheet} onChange={onChange} />;
   if (tool === "relations") return <RelationsPanel sheet={sheet} characters={characters} onChange={onChange} />;
   if (tool === "history") return <HistoryPanel sheet={sheet} onChange={onChange} apiFetch={apiFetch} notify={notify} />;
   return <ComparisonPanel sheet={sheet} characters={characters} apiFetch={apiFetch} />;
 }
 
-function AnalysisPanel({ sheet }: { sheet: CharacterSheet }) {
+function AnalysisPanel({ sheet, onChange }: { sheet: CharacterSheet; onChange: (sheet: CharacterSheet) => void }) {
   const { language, m, t } = useLocale();
   const analysis = useMemo(() => getCharacterAnalysis(sheet), [sheet]);
   const maximum = Math.max(1, ...analysis.points.distribution.map((entry) => Math.max(0, entry.value)));
@@ -65,6 +65,7 @@ function AnalysisPanel({ sheet }: { sheet: CharacterSheet }) {
   };
   return <section className="sheet-tool-page analysis-page" aria-labelledby="analysis-title">
     <header><div><p className="eyebrow">{m("common.powerLevelShort")} {analysis.powerLevel}</p><h1 id="analysis-title">{m("analysis.title")}</h1><p>{rulesetLabel(sheet.ruleset, language)}</p></div><div className="analysis-balance"><strong>{analysis.points.spent}</strong><span>/ {analysis.points.budget} PP</span><small>{m("common.balance")}: {analysis.points.remaining}</small></div></header>
+    {!isCurrentRuleset(sheet.ruleset) && <section className="analysis-note ruleset-review"><p>{language === "en" ? "This sheet retains its original rules revision. Review powers, equipment, and conditions against WIP v.05 before adopting it. Values and personal notes are preserved." : "Esta ficha conserva a revisão de origem. Confira poderes, equipamento e condições com o WIP v.05 antes de adotá-lo. Valores e anotações pessoais são preservados."}</p><button className="button button-secondary" type="button" onClick={() => { if (window.confirm(language === "en" ? "Record WIP v.05 as the reviewed revision? This preserves every value and runs the audit again; it does not certify the sheet as valid." : "Registrar o WIP v.05 como revisão conferida? Todos os valores serão preservados e a auditoria será refeita; isso não certifica a ficha como válida.")) onChange({ ...sheet, ruleset: createCurrentRulesetReference() }); }}>{language === "en" ? "Adopt WIP v.05" : "Adotar WIP v.05"}</button></section>}
     <section className="analysis-distribution"><h2>{m("analysis.distribution")}</h2><div>{analysis.points.distribution.map((entry) => <p key={entry.id}><span>{labels[entry.id]?.[language === "en" ? 1 : 0] ?? entry.id}</span><i><b style={{ width: `${Math.max(2, Math.max(0, entry.value) / maximum * 100)}%` }} /></i><strong>{entry.value}</strong></p>)}</div></section>
     <div className="analysis-metrics">
       <AnalysisMetric title={m("analysis.offense")} values={[[m("analysis.attacks"), analysis.offense.attacks], [m("analysis.highestBonus"), analysis.offense.highestAttackBonus ?? "—"], [m("analysis.highestEffect"), analysis.offense.highestEffectRank ?? "—"]]} />

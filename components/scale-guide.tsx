@@ -237,7 +237,7 @@ export function ScaleGuide({
           <div>
             <p className="eyebrow">{t("Referências")}</p>
             <h2 id="reference-guide-title">{t("Regras, opções e escalas")}</h2>
-            <p>{t("Consulte regras, compare valores e resolva cálculos sem sobrecarregar a ficha.")}</p>
+            <p>{t("Consulte regras, compare valores e resolva cálculos sem sobrecarregar a ficha.")} · Hero’s Handbook WIP v.05 (28/10/2026)</p>
           </div>
           <button aria-label={t("Fechar Referências")} className="icon-button scale-close modal-close" onClick={onClose} type="button"><X /></button>
         </header>
@@ -592,7 +592,7 @@ export function ScaleGuide({
                 <footer className="reference-source">
                   <BookOpen aria-hidden="true" />
                   <span>
-                    {displayLanguage === "en" ? "Provided 4E compilation" : "Compilação fornecida da 4E"} · {displayLanguage === "en" ? "Chapter 3 · Abilities" : "Capítulo 3 · Atributos"} · PDF pp. 116–117
+                    Hero’s Handbook WIP v.05 · {displayLanguage === "en" ? "Chapter 3 · Abilities" : "Capítulo 3 · Atributos"} · PDF pp. 72–73
                   </span>
                 </footer>
               </section>

@@ -732,7 +732,7 @@ test("canonical skills and conditions have the required specialized costs and no
   assert.equal(performance?.costClass, "specialized");
   assert.equal(expertise?.costClass, "specialized");
   assert.equal(new Set(conditions).size, conditions.length);
-  assert.equal(conditions.length, 38);
+  assert.equal(conditions.length, 37);
   assert.ok(conditions.includes("Normal (Normal)"));
 
   const migrated = normalizeSheet({

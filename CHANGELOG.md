@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.0 — 2026-11-02
+
+- Atualiza a fonte para Hero’s Handbook WIP v.05, revisão 28/10/2026, 270 páginas.
+- Preserva revisões e valores antigos no schema 9 e permite adoção explícita na Análise.
+- Corrige Defender, Surpreso, Contrapor, Impenetrável, medidas e 33 custos de equipamento.
+- Adiciona Indireto, Descritor Variável, Fadiga e Imunidade Pessoal.
+- Atualiza referências, traduções e testes de importação, custos e pré-requisitos.
+
 ## 1.1.0 — 2026-10-24
 
 - Registra em cada ficha o conjunto de regras e a revisão do playtest M&M4e.

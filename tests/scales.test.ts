@@ -12,7 +12,7 @@ test("published scale anchors and open-ended formulas remain exact", () => {
   assert.equal(getSkillBenchmark(10, "en").difficulty, "Challenging");
   assert.deepEqual(getPowerLevelMetrics(12), { powerLevel: 12, recommendedPoints: 180, pairedLimit: 24, skillLimit: 22, initiativeLimit: 24, heroicUses: 6 });
   assert.equal(getPowerLevelMetrics(40).recommendedPoints, 600);
-  assert.equal(getMeasurementRow(23).volume, "500.000 m³");
+  assert.equal(getMeasurementRow(23).volume, "250.000 m³");
   assert.equal(getMeasurementRow(23, "en").time, "2 years");
   assert.equal(getMeasurementRow(31).exact, false);
   assert.equal(getMeasurementRow(31).distance, "≈ 4.000.000 km");

@@ -6,6 +6,10 @@ export const APP_LANGUAGE_KEY = "arquivo-de-herois:idioma:v1";
 export const LEGACY_LANGUAGE_KEY = "mm4e-terminology-language:v1";
 
 const englishUi: Record<string, string> = {
+  "Pré-requisitos de Impenetrável": "Impervious prerequisites",
+  "Impenetrável exige resistência já Aprimorada e não pode ter mais graduações que o NP. Confira também benefícios concedidos por outros efeitos ativos.": "Impervious requires an already Improved resistance and cannot have more ranks than PL. Also check benefits granted by other active effects.",
+  "Revisão das regras": "Rules revision",
+  "A origem desta ficha foi preservada. O catálogo e a auditoria usam o Hero’s Handbook WIP v.05 de 28/10/2026; confira poderes, equipamento e condições antes de adotar essa revisão na Análise.": "This sheet’s original revision was preserved. The catalog and audit use Hero’s Handbook WIP v.05 dated 2026-10-28; review powers, equipment, and conditions before adopting this revision in Analysis.",
   "Defina conceito, origem e arquétipo para orientar as escolhas.": "Define a concept, origin, and archetype to guide your choices.",
   "A motivação já foi reconhecida; falta apenas explicar como ela orienta o personagem.": "The motivation is already recognized; explain how it guides the character.",
   "Registre a motivação aqui ou no campo Personalidade e motivação.": "Enter the motivation here or in the Personality and motivation field.",

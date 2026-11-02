@@ -2,13 +2,13 @@
 
 Aplicativo full-stack, instalável e responsivo para criar, conferir, salvar e compartilhar fichas de **Mutantes & Malfeitores: Quarta Edição**.
 
-A versão 1.1.0 cobre de forma estruturada a compilação fornecida **M&M4e Previews 1–9 editadas** (431 páginas). Cada ficha registra a revisão exata desse conjunto, identificado como prévia; o aplicativo não afirma incorporar uma edição final posterior.
+A versão 1.2.0 usa o **Hero’s Handbook WIP v.05, de 28/10/2026** (270 páginas), recebido como M&M4e.pdf. O material ainda está em desenvolvimento. Fichas antigas preservam a revisão de origem e os valores; a Análise permite registrar a adoção explícita da nova revisão após conferência. Consulte [as alterações verificadas](docs/HANDBOOK-WIP05.md).
 
 ## O que está pronto
 
 - Editor completo com identidade, atributos, combate, resistências, perícias, vantagens, poderes, ataques, equipamentos, complicações, recursos, movimento, sentidos, relações, organizações e Pontos de Poder.
 - Modos Rápido, Guiado e Livre sobre a mesma ficha e o mesmo motor. É possível trocar de modo sem conversão nem perda; o fluxo guiado cobre conceito, NP, atributos, perícias, vantagens, poderes, defesas, complicações, revisão e finalização.
-- Catálogos pesquisáveis organizados a partir do material disponível: 18 perícias, 101 vantagens, 47 efeitos, 110 configurações prontas de poderes, 63 modificadores, 182 itens de equipamento, 28 opções narrativas, 15 arquétipos e 6 origens.
+- Catálogos pesquisáveis organizados a partir do material disponível: 18 perícias, 101 vantagens, 47 efeitos, 112 configurações prontas de poderes, 65 modificadores, 182 itens de equipamento, 28 opções narrativas, 15 arquétipos e 6 origens.
 - Preenchimento assistido: escolher uma opção do catálogo configura custos, ataques, CD, vínculos, orçamento de Equipamento e valores dependentes; qualquer entrada pode ser personalizada sem perder dados.
 - Modo Assistido como padrão: corrige apenas dependências determinísticas, mantém matrizes exclusivas coerentes, cobre PE, limita usos aos recursos realmente comprados e impede a publicação de uma ficha com erro ou pendência. O Modo Livre é uma escolha explícita para regras próprias.
 - Uma única base de cálculo para custos, dependências, limites de NP e auditoria: verde confirma a regra ou uma aprovação consciente; amarelo pode ser mantido, aprovado ou reprovado; vermelho reúne erros objetivos e reprovações; azul identifica regras mais liberais para o Narrador e seus NPCs.
@@ -19,7 +19,7 @@ A versão 1.1.0 cobre de forma estruturada a compilação fornecida **M&M4e Prev
 - Ferramentas do Narrador com modelos editáveis de NPC, condições e uma estimativa auxiliar de encontros, sempre identificada como opcional e não oficial.
 - Painel numérico da construção, comparação sem previsão de vencedor e impressão completa ou compacta para A4/PDF.
 - Três fichas didáticas mecanicamente distintas — Espectro Rubro NP 8/120 PP, Sentinela Solar NP 10/150 PP e Atlas Zero NP 12/180 PP — com pontos, ataques, resistências, perícias, matrizes e equipamentos auditados automaticamente.
-- Referências pesquisáveis com 145 tópicos de regra e fonte por documento, capítulo e página: 38 condições, 29 ações, 25 perigos ambientais, 4 tipos de cena e 49 regras gerais ou de características. Todos os 625 itens do catálogo também indicam a seção de origem.
+- Referências pesquisáveis com 144 tópicos de regra e fonte por documento, capítulo e página: 37 condições, 29 ações, 25 perigos ambientais, 4 tipos de cena e 49 regras gerais ou de características. Todos os 629 itens do catálogo também indicam a seção de origem.
 - Traços ausentes e tamanho natural integrados à ficha: custo, travessão, falhas automáticas, consequências derivadas, permissão do Narrador, migração sem perda e a tabela completa de tamanho −5 a 5.
 - Escalas de atributos, perícias, CDs, NP, efeitos e medidas, com calculadoras de testes graduados, rotina, resistência a dano, percurso, duração de viagem e arremesso. Fórmulas abertas continuam sem teto artificial quando a fonte estabelece extrapolação.
 - Interface global em português brasileiro e inglês, com chaves estáveis independentes dos textos traduzidos. A busca ignora acentos, tolera plurais e pequenos erros de digitação; nomes, categorias e descrições das opções acompanham o idioma escolhido.

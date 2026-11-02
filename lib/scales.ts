@@ -171,14 +171,14 @@ export const measurementScale: MeasurementRow[] = [
   { rank: 20, mass: "25.000 t", time: "3 meses", distance: "2.000 km", volume: "30.000 m³" },
   { rank: 21, mass: "50.000 t", time: "6 meses", distance: "4.000 km", volume: "60.000 m³" },
   { rank: 22, mass: "100.000 t", time: "1 ano", distance: "8.000 km", volume: "125.000 m³" },
-  { rank: 23, mass: "200.000 t", time: "2 anos", distance: "16.000 km", volume: "500.000 m³" },
-  { rank: 24, mass: "400.000 t", time: "5 anos", distance: "32.000 km", volume: "1 milhão m³" },
-  { rank: 25, mass: "800.000 t", time: "10 anos", distance: "64.000 km", volume: "2 milhões m³" },
-  { rank: 26, mass: "1,6 milhão t", time: "20 anos", distance: "124.000 km", volume: "4 milhões m³" },
-  { rank: 27, mass: "3,2 milhões t", time: "50 anos", distance: "250.000 km", volume: "8 milhões m³" },
-  { rank: 28, mass: "6,4 milhões t", time: "100 anos", distance: "500.000 km", volume: "16 milhões m³" },
-  { rank: 29, mass: "12,5 milhões t", time: "200 anos", distance: "1 milhão km", volume: "32 milhões m³" },
-  { rank: 30, mass: "25 milhões t", time: "500 anos", distance: "2 milhões km", volume: "64 milhões m³" },
+  { rank: 23, mass: "200.000 t", time: "2 anos", distance: "16.000 km", volume: "250.000 m³" },
+  { rank: 24, mass: "400.000 t", time: "5 anos", distance: "32.000 km", volume: "500.000 m³" },
+  { rank: 25, mass: "800.000 t", time: "10 anos", distance: "64.000 km", volume: "1 milhão m³" },
+  { rank: 26, mass: "1,6 milhão t", time: "20 anos", distance: "124.000 km", volume: "2 milhões m³" },
+  { rank: 27, mass: "3,2 milhões t", time: "50 anos", distance: "250.000 km", volume: "4 milhões m³" },
+  { rank: 28, mass: "6,4 milhões t", time: "100 anos", distance: "500.000 km", volume: "8 milhões m³" },
+  { rank: 29, mass: "12,5 milhões t", time: "200 anos", distance: "1 milhão km", volume: "16 milhões m³" },
+  { rank: 30, mass: "25 milhões t", time: "500 anos", distance: "2 milhões km", volume: "32 milhões m³" },
 ];
 
 export function getMeasurementRow(rank: number, language: AppLanguage = "pt") {
@@ -192,7 +192,7 @@ export function getMeasurementRow(rank: number, language: AppLanguage = "pt") {
         mass: formatExtrapolated(25_000_000, delta, "t"),
         time: formatExtrapolated(500, delta, "anos"),
         distance: formatExtrapolated(2_000_000, delta, "km"),
-        volume: formatExtrapolated(64_000_000, delta, "m³"),
+        volume: formatExtrapolated(32_000_000, delta, "m³"),
       }
     : {
         mass: formatExtrapolated(750, -delta, "g"),

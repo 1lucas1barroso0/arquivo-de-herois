@@ -5768,6 +5768,21 @@ body {
   color: var(--cyan);
 }
 
+.ruleset-review {
+  display: grid;
+  gap: 10px;
+}
+
+.ruleset-review p {
+  min-width: 0;
+  margin: 0;
+}
+
+.ruleset-review .button {
+  justify-self: start;
+  white-space: normal;
+}
+
 .session-core {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-top: 16px;

@@ -5,7 +5,7 @@ O formato atual é identificado por:
 ```json
 {
   "format": "arquivo-de-herois",
-  "version": 8,
+  "version": 9,
   "application": "Arquivo de Heróis",
   "exportedAt": "2026-07-31T00:00:00.000Z",
   "sheet": {}
@@ -50,3 +50,7 @@ Ao converter uma entrada do catálogo em personalizada, a ficha registra explici
 ## Backup integral
 
 O envelope `arquivo-de-herois-backup` versão 1 reúne fichas e campanhas. Antes de qualquer gravação, a importação valida formato, versão, presença das coleções e IDs duplicados ou ausentes. A importação cria novas entidades e remapeia IDs de fichas, campanhas, participantes, equipes, organizações e relações; compartilhamento privado e tokens nunca são copiados.
+
+## Revisão 1.2.0
+
+Schema e envelope portátil agora usam versão 9. O campo `ruleset.status` aceita `wip`; novas fichas usam o Hero’s Handbook WIP v.05. Fichas antigas sem `ruleset` recebem a referência das prévias, preservando campos, custos e condições. As versões 1–8 continuam importáveis. Uma revisão desconhecida permanece identificada e exige conferência.

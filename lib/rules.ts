@@ -33,6 +33,7 @@ import {
   type PowerConfigurationPreset,
 } from "./catalog";
 import { applyPowerConfigurationPreset } from "./power-configurations";
+import { isCurrentRuleset } from "./ruleset";
 
 export type RuleStatus = "pass" | "fail" | "attention" | "info";
 export type RuleGroup =
@@ -844,6 +845,15 @@ export function getRuleAudit(sheet: CharacterSheet): RuleAudit {
       group: "pl",
     });
 
+  if (!isCurrentRuleset(sheet.ruleset)) {
+    add({
+      key: "ruleset-review",
+      label: "Revisão das regras",
+      status: "attention",
+      group: "data",
+      detail: "A origem desta ficha foi preservada. O catálogo e a auditoria usam o Hero’s Handbook WIP v.05 de 28/10/2026; confira poderes, equipamento e condições antes de adotar essa revisão na Análise.",
+    });
+  }
   if (storedAbsentTraits.length) {
     add({
       key: "absent-traits-permission",
@@ -1407,6 +1417,19 @@ export function getRuleAudit(sheet: CharacterSheet): RuleAudit {
     );
     for (const effect of power.effects) {
       const effectLabel = effect.name || power.name || "Efeito";
+      const impervious = effect.extras.find((modifier) => findRankedModifierPreset(modifier.name, "extra")?.id === "impervious-resistance");
+      if (impervious) {
+        const ranks = impervious.ranksApplied > 0 ? Math.min(effect.rank, impervious.ranksApplied) : effect.rank;
+        const improved = effect.extras.find((modifier) => findRankedModifierPreset(modifier.name, "extra")?.id === "improved-resistance");
+        const improvedRanks = improved ? (improved.ranksApplied > 0 ? Math.min(effect.rank, improved.ranksApplied) : effect.rank) : 0;
+        if (ranks > pl || improvedRanks < ranks) add({
+          key: `impervious-prerequisite-${effect.id}`,
+          label: "Pré-requisitos de Impenetrável",
+          status: "attention",
+          group: "powers",
+          detail: "Impenetrável exige resistência já Aprimorada e não pode ter mais graduações que o NP. Confira também benefícios concedidos por outros efeitos ativos.",
+        });
+      }
       requireInteger(effect.rank, `${effectLabel}: graduação`, 0);
       if (
         effect.costMode === "structured" &&

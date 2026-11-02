@@ -1,4 +1,5 @@
 import { detailedRuleReferenceEntries } from "./detailed-rule-reference";
+import { handbookRuleSource } from "./handbook-source";
 
 export type RuleReferenceCoverage = "automatic" | "assisted" | "reference";
 export type RuleReferenceKind =
@@ -153,7 +154,7 @@ const englishRuleReferences: Record<
   "extra-effort": {
     category: "Heroic resources",
     title: "Extra Effort and power stunts",
-    summary: "Extra Effort can briefly exceed normal performance; power stunts represent coherent alternate uses of effects and descriptors. Narrative cost and consequences belong to the scene.",
+    summary: "A power stunt temporarily grants one rank of a power feature to a non-permanent effect, with GM approval and suitable descriptors. Extra Effort causes fatigue even when the character is otherwise immune to fatigue or lacks Stamina.",
   },
   effects: {
     category: "Powers",
@@ -207,7 +208,7 @@ const englishRuleReferences: Record<
   minions: {
     category: "Conflicts",
     title: "Minions and Takedown",
-    summary: "Minions streamline large conflicts. Takedown and similar advantages can chain actions against suitable targets while respecting range, circumstances, and the advantage description.",
+    summary: "A critical hit against a minion applies the highest degree of the attack’s effect without a resistance check. Takedown can chain actions against suitable targets while respecting range, circumstances, and the advantage description.",
   },
   "actions-initiative": {
     category: "Scenes",
@@ -462,7 +463,7 @@ const coreRuleReferenceEntries: Omit<
     category: "Recursos heroicos",
     title: "Esforço Extra e façanhas de poder",
     summary:
-      "Esforço Extra permite exceder momentaneamente o desempenho normal; façanhas de poder representam usos alternativos coerentes com efeitos e descritores. O custo narrativo e as consequências pertencem à cena.",
+      "Uma façanha de poder concede temporariamente uma graduação de um recurso a um efeito não permanente, com aprovação do Narrador e descritores coerentes. Esforço Extra causa fadiga mesmo em personagens imunes à fadiga ou sem Vigor.",
     coverage: "reference",
     tags: ["esforço extra", "façanha", "power stunt", "heroico"],
   },
@@ -556,7 +557,7 @@ const coreRuleReferenceEntries: Omit<
     category: "Conflitos",
     title: "Capangas e Derrubada",
     summary:
-      "Capangas simplificam confrontos numerosos. Derrubada e outras vantagens podem encadear ações contra alvos adequados, respeitando alcance, circunstâncias e a descrição da vantagem.",
+      "Um acerto crítico contra um capanga aplica o maior grau do efeito sem teste de resistência. Derrubada pode encadear ações contra alvos adequados, respeitando alcance, circunstâncias e a descrição da vantagem.",
     coverage: "reference",
     tags: ["capanga", "minion", "derrubada", "takedown"],
   },
@@ -636,73 +637,17 @@ const coreRuleReferenceEntries: Omit<
   },
 ];
 
-const previewDocument = "Compilação fornecida da 4E";
-
-function source(
-  chapter: string,
-  chapterEn: string,
-  pages: string,
-): RuleReferenceSource {
-  return { document: previewDocument, chapter, chapterEn, pages };
-}
-
-function getCoreRuleSource(entry: (typeof coreRuleReferenceEntries)[number]) {
-  if (entry.id === "creation-concept") {
-    return source("Capítulo 2 · Criação de Heróis", "Chapter 2 · Hero Creation", "33–106");
-  }
-  if (entry.id === "creation-motivation") {
-    return source("Capítulo 2 · Criação de Heróis", "Chapter 2 · Hero Creation", "97–105");
-  }
-  if (
-    entry.category === "Nível de Poder" ||
-    entry.id === "point-budget"
-  ) {
-    return source("Capítulo 2 · Criação de Heróis", "Chapter 2 · Hero Creation", "91–97");
-  }
-  if (entry.id === "ability-cost" || entry.id === "combat-cost") {
-    return source("Capítulo 3 · Atributos", "Chapter 3 · Abilities", "107–123");
-  }
-  if (entry.id === "skill-checks" || entry.id === "graded-checks" || entry.id === "bonus-penalty-dice" || entry.id === "opposed-team-group-checks" || entry.id === "check-sequences") {
-    return source("Capítulo 1 · O Básico", "Chapter 1 · The Basics", "6–14");
-  }
-  if (entry.category === "Perícias") {
-    return source("Capítulo 4 · Perícias", "Chapter 4 · Skills", "124–153");
-  }
-  if (entry.category === "Vantagens") {
-    return source("Capítulo 5 · Vantagens", "Chapter 5 · Advantages", "154–179");
-  }
-  if (entry.category === "Recursos heroicos") {
-    return source("Capítulo 1 · O Básico", "Chapter 1 · The Basics", "21–28");
-  }
-  if (entry.category === "Poderes") {
-    return source("Capítulo 6 · Poderes", "Chapter 6 · Powers", "180–297");
-  }
-  if (entry.category === "Conflitos") {
-    return source("Capítulo 8 · Ação e Aventura", "Chapter 8 · Action & Adventure", "352–370");
-  }
-  if (entry.category === "Cenas") {
-    return source("Capítulo 8 · Ação e Aventura", "Chapter 8 · Action & Adventure", "347–393");
-  }
-  if (entry.category === "Condições") {
-    return source("Capítulo 1 · O Básico", "Chapter 1 · The Basics", "29–32");
-  }
-  if (entry.category === "Escalas") {
-    return source("Capítulo 1 · O Básico", "Chapter 1 · The Basics", "15–20");
-  }
-  if (entry.category === "Equipamento") {
-    return source("Capítulo 7 · Equipamento", "Chapter 7 · Equipment", "298–345");
-  }
-  return source("Capítulo 2 · Criação de Heróis", "Chapter 2 · Hero Creation", "33–106");
-}
-
 export const ruleReferenceEntries: RuleReferenceEntry[] = [
   ...coreRuleReferenceEntries.map((entry) => ({
     ...entry,
     kind: "rule" as const,
-    source: getCoreRuleSource(entry),
+    source: handbookRuleSource(entry.id, "rule"),
   })),
   ...detailedRuleReferenceEntries,
-];
+].filter((entry) => entry.id !== "condition-hallucinating").map((entry) => ({
+  ...entry,
+  source: handbookRuleSource(entry.id, entry.kind),
+}));
 
 export const ruleReferenceCategories = [
   ...new Set(ruleReferenceEntries.map((entry) => entry.category)),

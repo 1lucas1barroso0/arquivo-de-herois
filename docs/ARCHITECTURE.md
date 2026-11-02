@@ -56,7 +56,7 @@ Vínculos de efeitos distinguem bônus por graduação, bônus fixos e referênc
 
 A matriz auditável da compilação fornecida fica em `docs/4E-COVERAGE.md`. Ela separa cobertura do material recebido de qualquer afirmação sobre publicações posteriores.
 
-`lib/ruleset.ts` identifica a revisão usada por cada ficha. A versão 1.1.0 fixa `mm4e.playtest.origin.previews-1-9`, revisão `2026-08-21`, como playtest; mudanças futuras exigem nova revisão, migração explícita e testes.
+`lib/ruleset.ts` identifica a revisão usada por cada ficha. A versão 1.2.0 usa `mm4e.heros-handbook.wip05`, revisão `2026-10-28`, estado `wip`. Importações sem metadados preservam `mm4e.playtest.origin.previews-1-9`; valores e vínculos não são convertidos silenciosamente. A adoção da revisão ocorre na Análise e refaz a auditoria. `lib/handbook-source.ts` centraliza a paginação física do novo PDF.
 
 ## Portabilidade
 
