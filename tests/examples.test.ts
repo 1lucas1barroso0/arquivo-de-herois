@@ -68,16 +68,24 @@ test("learning examples are exact, distinct NP 8, 10 and 12 heroes", () => {
       expectedLedgers[sheet.heroName as keyof typeof expectedLedgers],
       `${sheet.heroName}: distribuição de PP alterada`,
     );
+    const isNonlivingConstruct = sheet.heroName === "Atlas Zero";
     assert.equal(
       audit.status,
-      "pass",
+      isNonlivingConstruct ? "attention" : "pass",
       `${sheet.heroName}: ${audit.checks
         .filter((check) => check.status !== "pass")
         .map((check) => `${check.label} (${check.status})`)
         .join("; ")}`,
     );
     assert.equal(audit.failures, 0);
-    assert.equal(audit.attentions, 0);
+    assert.equal(audit.attentions, isNonlivingConstruct ? 1 : 0);
+    if (isNonlivingConstruct) {
+      assert.deepEqual(
+        audit.checks.filter((check) => check.status === "attention").map((check) => check.label),
+        ["Traços ausentes"],
+        "A única pendência é a permissão do Narrador para Vigor ausente; não aprovar artificialmente.",
+      );
+    }
     assert.ok(sheet.complications.length >= 3);
     assert.ok(sheet.notes.includes("EXEMPLO DE APRENDIZADO V9"));
   }

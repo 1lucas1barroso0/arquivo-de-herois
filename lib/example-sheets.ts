@@ -152,7 +152,7 @@ function createAtlasZeroNp12() {
     complication("relationship", "A cientista que despertou sua consciência é sua principal ligação com a humanidade."),
   ];
   sheet.personality = "Calmo e literal; usa força extrema com disciplina para minimizar danos colaterais.";
-  sheet.notes = "EXEMPLO DE APRENDIZADO V9 · NP 12 · 180 PP. Construto não vivo: Vigor ausente (−10 PP), Fortitude ausente, Imunidade 30 a efeitos de Fortitude, Robustez por estrutura tecnológica e Regeneração como autorreparo. Demonstra também golpe baseado em Força sem extras por graduação e registros derivados de movimento/sentidos.";
+  sheet.notes = "EXEMPLO DE APRENDIZADO V9 · NP 12 · 180 PP. Construto não vivo: Vigor ausente (−10 PP), Fortitude ausente, Imunidade 30 a efeitos de Fortitude, Robustez por estrutura tecnológica e Regeneração como autorreparo. Demonstra também golpe baseado em Força sem extras por graduação e registros derivados de movimento/sentidos. Vigor ausente exige autorização do Narrador, portanto o aviso amarelo é intencional e não foi pré-aprovado.";
   return sheet;
 }
 
