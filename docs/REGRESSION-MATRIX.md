@@ -82,3 +82,14 @@ A matriz histórica acima registra a base anterior. O catálogo atual contém 62
 - ATENDE — Regressão de renderização do dashboard para 0/1/2 registros e textos ingleses; backup com 1 ficha/2 campanhas, nos dois idiomas. `tests/dashboard-counts.test.tsx`.
 - NÃO SE APLICA — Sem mudanças em regras, fichas, migrações ou permissões. Cache PWA v26 mantém os dados locais.
 - PENDENTE — Instalação efetiva em dispositivo móvel e suíte automatizada de navegador não executadas nesta revisão.
+
+## Concordância em toda a interface — 02/11/2026
+
+- ATENDE — Revisão de quantidades no dashboard, biblioteca, edição, visualização/impressão, Análise, recursos atuais, auditoria, campanhas/encontros, catálogos, Referências, sincronização e backup. Títulos de categoria sem quantidade mantêm o plural apropriado.
+- ATENDE — Centralizadas variantes PT/EN para erros, avisos pendentes/aprovados, graduações, usos, sincronização, especializações e resumos de catálogo. Removidas implementações duplicadas da contagem de auditoria na edição/visualização.
+- ATENDE — Concordância de modificadores: uso/usos calculado(s), aviso(s) pendente(s)/aprovado(s), ficha(s) sincronizada(s); diagnóstico numérico usa «o valor deve ser inteiro», mesmo quando o rótulo é plural ou feminino.
+- ATENDE — Campanhas identificam participantes e encontros com a quantidade correta. Fontes das Referências preservam o mesmo nome do WIP em PT/EN.
+- ATENDE — Nomes e textos pessoais não recebem correção automática. Teste renderiza um nome pessoal com «1 fichas» sem alterá-lo.
+- ATENDE — Testes de contagem 0/1/múltiplos, mensagens PT/EN, backup com quantidades diferentes, renderização de auditoria e diagnóstico numérico. Política permanente registrada em `QUALITY.md`.
+- NÃO SE APLICA — Sem alterações em valores, regras, permissões, formato portátil ou dados salvos. Cache PWA v27 preserva IndexedDB.
+- PENDENTE — Suíte automatizada de navegador e varredura visual em todos os dispositivos não executadas nesta revisão; verificações pontuais em produção não representam certificação de ausência de erros.

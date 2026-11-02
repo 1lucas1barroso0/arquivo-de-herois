@@ -162,7 +162,7 @@ export function CampaignsWorkspace({
         <header><div><FolderKanban /><strong>{m("campaign.title")}</strong></div><button type="button" onClick={() => void createCampaign()} aria-label={m("campaign.new")}><Plus /></button></header>
         {summaries.length ? summaries.map((entry) => (
           <button className={campaign?.id === entry.id ? "is-active" : ""} key={entry.id} type="button" onClick={() => void selectCampaign(entry.id)}>
-            <span><strong>{entry.name}</strong><small>{entry.memberCount} · {entry.encounterCount}</small></span>
+            <span><strong>{entry.name}</strong><small>{entry.memberCount} {m("campaign.memberCount", { count: entry.memberCount })} · {entry.encounterCount} {m("campaign.encounterCount", { count: entry.encounterCount })}</small></span>
             {entry.archived ? <Archive /> : null}
           </button>
         )) : <p>{m("campaign.empty")}</p>}

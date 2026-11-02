@@ -1,3 +1,4 @@
+import { formatMessageCount } from "./messages";
 import type {
   AdvantageCategory,
   CoreAbilityKey,
@@ -1211,7 +1212,7 @@ function skill(
     label,
     canonical,
     category: trainedOnly ? "Somente treinada" : "Uso sem treinamento",
-    summary: `${action}; ${specializations.length} especializações sugeridas.`,
+    summary: `${action}; ${formatMessageCount("count.specializations", specializations.length, "pt")}.`,
     ability,
     trainedOnly,
     costClass,

@@ -99,7 +99,7 @@ export function ScaleGuide({
   onAddCatalog?: (groupId: string, entryId: string) => void;
 }) {
   const dialogRef = useRef<HTMLElement>(null);
-  const { language: displayLanguage, setLanguage, t } = useLocale();
+  const { language: displayLanguage, setLanguage, t, m } = useLocale();
   const [tab, setTab] = useState<GuideTab>("rules");
   const [query, setQuery] = useState("");
   const [catalogGroup, setCatalogGroup] = useState("all");
@@ -288,7 +288,7 @@ export function ScaleGuide({
               <ScaleHeading
                 id="rules-reference-title"
                 title="Regras da ficha"
-                text={displayLanguage === "en" ? `${ruleReferenceEntries.length} searchable topics. Each identifies its automation level and source in the provided material.` : `${ruleReferenceEntries.length} tópicos consultáveis. Cada um informa o nível de automação e sua fonte no material fornecido.`}
+                text={m("reference.topicCount", { count: ruleReferenceEntries.length })}
               />
               <div className="reference-catalog-toolbar">
                 <label>
@@ -324,7 +324,7 @@ export function ScaleGuide({
                     <footer className="reference-source">
                       <BookOpen aria-hidden="true" />
                       <span>
-                        {displayLanguage === "en" ? "Provided 4E compilation" : entry.source.document} · {displayLanguage === "en" ? entry.source.chapterEn : entry.source.chapter} · PDF pp. {entry.source.pages}
+                        {entry.source.document} · {displayLanguage === "en" ? entry.source.chapterEn : entry.source.chapter} · PDF pp. {entry.source.pages}
                       </span>
                     </footer>
                   </article>;
@@ -383,7 +383,7 @@ export function ScaleGuide({
                       <footer className="reference-source">
                         <BookOpen aria-hidden="true" />
                         <span>
-                          {displayLanguage === "en" ? "Provided 4E compilation" : group.source.document} · {displayLanguage === "en" ? group.source.chapterEn : group.source.chapter} · PDF pp. {group.source.pages}
+                          {group.source.document} · {displayLanguage === "en" ? group.source.chapterEn : group.source.chapter} · PDF pp. {group.source.pages}
                         </span>
                       </footer>
                     </article>

@@ -58,12 +58,12 @@ import {
 } from "../lib/device-owner";
 import {
   parsePortableSheet,
-  plural,
   portableSheetToJson,
   portableSheetToText,
 } from "../lib/portable";
 import { parsePortableShare } from "../lib/portable-share";
-import { translateRuleText } from "../lib/localization";
+import { formatMessageCount } from "../lib/messages";
+import { translateRuleText, type AppLanguage } from "../lib/localization";
 import { humanizeError } from "../lib/errors";
 import type { Campaign, CampaignSummary } from "../lib/workspace";
 import {
@@ -354,7 +354,7 @@ export function HeroArchiveApp() {
   }, [loading]);
 
   useEffect(() => {
-    const synchronize = () => void syncPendingSaves(apiFetch, refreshList, showToast).then((count) => {
+    const synchronize = () => void syncPendingSaves(apiFetch, refreshList, showToast, language).then((count) => {
       const current = latestSheet.current;
       if (
         count &&
@@ -367,7 +367,7 @@ export function HeroArchiveApp() {
     window.addEventListener("online", synchronize);
     if (navigator.onLine) synchronize();
     return () => window.removeEventListener("online", synchronize);
-  }, [apiFetch, refreshList, showToast]);
+  }, [apiFetch, refreshList, showToast, language]);
 
   useEffect(() => {
     latestSheet.current = activeSheet;
@@ -1488,7 +1488,7 @@ function LimitPanel({
     audit.status === "pass"
       ? "Tudo certo"
       : audit.status === "fail"
-        ? plural(audit.failures, "Erro", "Erros")
+        ? formatMessageCount("count.errors", audit.failures, language)
         : audit.status === "attention"
           ? "Atenção"
           : "Narrador / NPC";
@@ -1902,6 +1902,7 @@ async function syncPendingSaves(
   apiFetch: (url: string, init?: RequestInit) => Promise<Response>,
   refreshList: () => Promise<SheetSummary[]>,
   notify: (message: string) => void,
+  language: AppLanguage,
 ) {
   const keys = listBrowserStorageKeys()
     .filter((key) =>
@@ -1932,7 +1933,7 @@ async function syncPendingSaves(
   }
   if (synchronized) {
     await refreshList();
-    notify(plural(synchronized, "ficha sincronizada", "fichas sincronizadas"));
+    notify(formatMessageCount("count.syncedSheets", synchronized, language));
   }
   return synchronized;
 }

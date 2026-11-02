@@ -52,3 +52,35 @@ test("English counts and mixed backup quantities agree independently", () => {
     }), expected);
   }
 });
+
+test("audit, synchronization, ranks, and their modifiers agree in both languages", async () => {
+  const { formatMessageCount } = await import("../lib/messages");
+  for (const [language, one, many, approved, synced, calculated] of [
+    ["pt", "1 aviso pendente", "2 avisos pendentes", "1 aviso aprovado", "1 ficha sincronizada", "1 uso calculado pela vantagem Sorte"],
+    ["en", "1 pending warning", "2 pending warnings", "1 approved warning", "1 sheet synchronized", "1 use calculated from the Luck advantage"],
+  ] as const) {
+    assert.equal(formatMessageCount("count.pendingWarnings", 1, language), one);
+    assert.equal(formatMessageCount("count.pendingWarnings", 2, language), many);
+    assert.equal(formatMessageCount("count.approvedWarnings", 1, language), approved);
+    assert.equal(formatMessageCount("count.syncedSheets", 1, language), synced);
+    assert.equal(formatMessageCount("count.calculatedLuck", 1, language), calculated);
+  }
+  assert.equal(formatMessageCount("count.errors", 0, "en"), "0 errors");
+  assert.equal(formatMessageCount("count.ranks", 1, "pt"), "1 graduação");
+  assert.equal(translateMessage("catalog.effectCount", "pt", { count: 1 }), "efeito com custo-base, ação, alcance, duração, teste e resistência preenchidos.");
+  assert.equal(translateMessage("skills.completeCount", "en", { count: 1 }), "Complete 1 skill");
+});
+
+test("printed audit and numeric diagnostics remain grammatical without rewriting personal text", async () => {
+  const { SheetView } = await import("../components/sheet-view");
+  const { createExampleSheets } = await import("../lib/example-sheets");
+  const { getRuleAudit } = await import("../lib/rules");
+  const atlas = createExampleSheets()[2];
+  atlas.heroName = "1 fichas — texto pessoal";
+  const html = renderToStaticMarkup(<SheetView sheet={atlas} showAudit />);
+  assert.match(html, /1 aviso pendente/);
+  assert.doesNotMatch(html, /1 avisos pendentes/);
+  assert.ok(html.includes("1 fichas — texto pessoal"));
+  atlas.skills[0].rank = 1.5;
+  assert.match(getRuleAudit(atlas).checks.find(c => c.key === "numeric-integrity")?.detail ?? "", /graduações: o valor deve ser inteiro/);
+});

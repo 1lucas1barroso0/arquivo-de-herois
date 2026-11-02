@@ -112,6 +112,7 @@ import {
   type RuleCheck,
   type RuleStatus,
 } from "../lib/rules";
+import { formatMessageCount } from "../lib/messages";
 import type { EditingMode } from "../lib/guided";
 import {
   applyPowerConfigurationPreset,
@@ -998,7 +999,7 @@ function TraitsEditor({ sheet, patch }: EditorChildProps) {
 }
 
 function SkillsEditor({ sheet, patch }: EditorChildProps) {
-  const { t } = useLocale();
+  const { t, m } = useLocale();
   const derived = getDerivedTraits(sheet);
   const absentTraits = getEffectiveAbsentTraits(sheet);
   const limit = sheet.powerLevel + 10;
@@ -1054,8 +1055,7 @@ function SkillsEditor({ sheet, patch }: EditorChildProps) {
               })
             }
           >
-            <WandSparkles size={14} /> Completar {missingSkills.length}{" "}
-            {missingSkills.length === 1 ? "perícia" : "perícias"}
+            <WandSparkles size={14} /> {m("skills.completeCount", { count: missingSkills.length })}
           </button>
         )}
       </div>
@@ -1307,6 +1307,7 @@ function SkillsEditor({ sheet, patch }: EditorChildProps) {
 }
 
 function AdvantagesEditor({ sheet, patch }: EditorChildProps) {
+  const { language, m } = useLocale();
   const [catalogOpen, setCatalogOpen] = useState(false);
   const capacity = getHeroicAdvantageCapacity(sheet);
   const luckCapacity = getLuckCapacity(sheet);
@@ -1377,18 +1378,18 @@ function AdvantagesEditor({ sheet, patch }: EditorChildProps) {
           Custo <strong>{cost} PP</strong>
         </span>
         <span>
-          Graduações heroicas <strong>{capacity}</strong>
+          {m("count.heroicRanks", { count: capacity })} <strong>{capacity}</strong>
         </span>
         <span>
           Equipamento <strong>{equipment.used}/{equipment.allowance} PE</strong>
         </span>
         <span>
-          Sorte <strong>{luckCapacity} {luckCapacity === 1 ? "uso" : "usos"}</strong>
+          {language === "en" ? "Luck" : "Sorte"} <strong>{formatMessageCount("count.uses", luckCapacity, language)}</strong>
         </span>
       </div>
       <CatalogCallout
         title="Adicionar vantagem com regras prontas"
-        text={`${advantageCatalog.length} opções com categorias, limite de graduação e custo já vinculados.`}
+        text={`${advantageCatalog.length} ${m("catalog.optionCount", { count: advantageCatalog.length })}`}
         onOpen={() => setCatalogOpen(true)}
       />
       <Repeater
@@ -1569,6 +1570,7 @@ function AdvantagesEditor({ sheet, patch }: EditorChildProps) {
 }
 
 function PowersEditor({ sheet, patch }: EditorChildProps) {
+  const { m } = useLocale();
   const [catalogTarget, setCatalogTarget] = useState<
     "new" | number | null
   >(null);
@@ -1731,12 +1733,12 @@ function PowersEditor({ sheet, patch }: EditorChildProps) {
 
       <CatalogCallout
         title="Começar por um efeito do catálogo"
-        text={`${powerEffectCatalog.length} efeitos com custo-base, ação, alcance, duração, teste e resistência preenchidos.`}
+        text={`${powerEffectCatalog.length} ${m("catalog.effectCount", { count: powerEffectCatalog.length })}`}
         onOpen={() => setCatalogTarget("new")}
       />
       <CatalogCallout
         title="Usar uma configuração pronta"
-        text={`${powerConfigurationCatalog.length} configurações prontas — de Rajada e Campo de Força a Invisibilidade, Invocação e Mimetismo — com custo calculado.`}
+        text={`${powerConfigurationCatalog.length} ${m("catalog.configurationCount", { count: powerConfigurationCatalog.length })}`}
         onOpen={() => setConfigurationTarget("new")}
       />
 
@@ -3166,6 +3168,7 @@ function EquipmentEditor({
   patch,
   editingMode,
 }: EditorChildProps & { editingMode: EditingMode }) {
+  const { m } = useLocale();
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [autoCover, setAutoCover] = useState(true);
   const coverEquipment = editingMode === "guided" || autoCover;
@@ -3274,7 +3277,7 @@ function EquipmentEditor({
       </div>
       <CatalogCallout
         title="Adicionar item com custo e efeitos prontos"
-        text={`${equipmentCatalog.length} utilidades, armas, armaduras, veículos e recursos de instalações pesquisáveis.`}
+        text={`${equipmentCatalog.length} ${m("catalog.equipmentCount", { count: equipmentCatalog.length })}`}
         onOpen={() => setCatalogOpen(true)}
       />
       <Repeater
@@ -3680,7 +3683,7 @@ function ResourcesEditor({
               }
             />
             <span>
-              {language === "en" ? `/ ${luckCapacity} calculated from the Luck advantage` : `/ ${luckCapacity} calculado pela vantagem Sorte`}
+              {`/ ${formatMessageCount("count.calculatedLuck", luckCapacity, language)}`}
             </span>
           </div>
         </Field>
@@ -3776,7 +3779,7 @@ function AuditEditor({
   editingMode: EditingMode;
   onEditingMode: (mode: EditingMode) => void;
 }) {
-  const { t } = useLocale();
+  const { t, language } = useLocale();
   const breakdown = getPointBreakdown(sheet);
   const budget = getPointBudget(sheet);
   const audit = getRuleAudit(sheet);
@@ -3923,10 +3926,10 @@ function AuditEditor({
       <div className={`audit-overview status-${audit.status}`}>
         <StatusIcon status={audit.status} />
         <div>
-          <h3>{statusCopy(audit.status).title}</h3>
+          <h3>{t(statusCopy(audit.status).title)}</h3>
           <p>
-            {formatCount(audit.failures, "erro", "erros")} e {formatCount(audit.attentions, "aviso pendente", "avisos pendentes")}.
-            {audit.approvals > 0 && ` ${formatCount(audit.approvals, "aviso aprovado", "avisos aprovados")}.`}
+            {formatMessageCount("count.errors", audit.failures, language)} {language === "en" ? "and" : "e"} {formatMessageCount("count.pendingWarnings", audit.attentions, language)}.
+            {audit.approvals > 0 && ` ${formatMessageCount("count.approvedWarnings", audit.approvals, language)}.`}
           </p>
         </div>
       </div>
@@ -4624,10 +4627,6 @@ function statusCopy(status: RuleStatus) {
 function signed(value: number) {
   const numeric = Number(value) || 0;
   return numeric > 0 ? `+${formatNumber(numeric)}` : formatNumber(numeric);
-}
-
-function formatCount(value: number, singular: string, plural: string) {
-  return `${value} ${value === 1 ? singular : plural}`;
 }
 
 function formatNumber(value: number) {

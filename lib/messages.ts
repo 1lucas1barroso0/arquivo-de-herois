@@ -1,6 +1,24 @@
 import type { AppLanguage } from "./localization";
 
 export const messages = {
+  "count.errors": { pt: "erros", en: "errors", one: { pt: "erro", en: "error" } },
+  "count.pendingWarnings": { pt: "avisos pendentes", en: "pending warnings", one: { pt: "aviso pendente", en: "pending warning" } },
+  "count.approvedWarnings": { pt: "avisos aprovados", en: "approved warnings", one: { pt: "aviso aprovado", en: "approved warning" } },
+  "count.ranks": { pt: "graduações", en: "ranks", one: { pt: "graduação", en: "rank" } },
+  "count.heroicRanks": { pt: "graduações heroicas", en: "heroic ranks", one: { pt: "graduação heroica", en: "heroic rank" } },
+  "count.calculatedLuck": { pt: "usos calculados pela vantagem Sorte", en: "uses calculated from the Luck advantage", one: { pt: "uso calculado pela vantagem Sorte", en: "use calculated from the Luck advantage" } },
+  "count.uses": { pt: "usos", en: "uses", one: { pt: "uso", en: "use" } },
+  "count.syncedSheets": { pt: "fichas sincronizadas", en: "sheets synchronized", one: { pt: "ficha sincronizada", en: "sheet synchronized" } },
+  "count.specializations": { pt: "especializações sugeridas", en: "suggested specializations", one: { pt: "especialização sugerida", en: "suggested specialization" } },
+  "session.effectCount": { pt: "Efeitos ativos", en: "Active effects", one: { pt: "Efeito ativo", en: "Active effect" } },
+  "campaign.memberCount": { pt: "participantes", en: "members", one: { pt: "participante", en: "member" } },
+  "campaign.encounterCount": { pt: "encontros", en: "encounters", one: { pt: "encontro", en: "encounter" } },
+  "catalog.optionCount": { pt: "opções com categorias, limite de graduação e custo já vinculados.", en: "options with linked categories, rank limits, and costs.", one: { pt: "opção com categorias, limite de graduação e custo já vinculados.", en: "option with linked categories, rank limit, and cost." } },
+  "catalog.effectCount": { pt: "efeitos com custo-base, ação, alcance, duração, teste e resistência preenchidos.", en: "effects with base cost, action, range, duration, check, and resistance filled in.", one: { pt: "efeito com custo-base, ação, alcance, duração, teste e resistência preenchidos.", en: "effect with base cost, action, range, duration, check, and resistance filled in." } },
+  "catalog.configurationCount": { pt: "configurações prontas — de Rajada e Campo de Força a Invisibilidade, Invocação e Mimetismo — com custo calculado.", en: "ready-to-use configurations — from Blast and Force Field to Invisibility, Summon, and Mimicry — with calculated costs.", one: { pt: "configuração pronta — de Rajada e Campo de Força a Invisibilidade, Invocação e Mimetismo — com custo calculado.", en: "ready-to-use configuration — from Blast and Force Field to Invisibility, Summon, and Mimicry — with calculated cost." } },
+  "catalog.equipmentCount": { pt: "itens de equipamento pesquisáveis: utilidades, armas, armaduras, veículos e recursos de instalações.", en: "searchable equipment items: gear, weapons, armor, vehicles, and headquarters features.", one: { pt: "item de equipamento pesquisável: utilidades, armas, armaduras, veículos e recursos de instalações.", en: "searchable equipment item: gear, weapons, armor, vehicles, and headquarters features." } },
+  "skills.completeCount": { pt: "Completar {count} perícias", en: "Complete {count} skills", one: { pt: "Completar {count} perícia", en: "Complete {count} skill" } },
+  "reference.topicCount": { pt: "{count} tópicos consultáveis. Cada um informa o nível de automação e sua fonte no material fornecido.", en: "{count} searchable topics. Each identifies its automation level and source in the provided material.", one: { pt: "{count} tópico consultável. Ele informa o nível de automação e sua fonte no material fornecido.", en: "{count} searchable topic. It identifies its automation level and source in the provided material." } },
   "nav.dashboard": { pt: "Início", en: "Home" },
   "nav.characters": { pt: "Fichas", en: "Sheets" },
   "nav.campaigns": { pt: "Campanhas", en: "Campaigns" },
@@ -283,4 +301,9 @@ export function translateMessage(
     value = value.replaceAll(`{${name}}`, String(replacement));
   }
   return value;
+}
+
+/** Count and wording are selected together; zero keeps the explicit plural. */
+export function formatMessageCount(key: Extract<MessageKey, `count.${string}`>, count: number, language: AppLanguage) {
+  return `${count} ${translateMessage(key, language, { count })}`;
 }

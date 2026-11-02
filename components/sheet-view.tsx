@@ -55,7 +55,7 @@ import {
   translateRuleText,
   type AppLanguage,
 } from "../lib/localization";
-import type { MessageKey } from "../lib/messages";
+import { formatMessageCount, type MessageKey } from "../lib/messages";
 import { getSizeProfile } from "../lib/scales";
 
 type SheetViewProps = {
@@ -277,14 +277,10 @@ export function SheetView({
             <div>
               <strong>{auditTitle(audit.status, language)}</strong>
               <span>
-                {formatCount(audit.failures, "erro", "erros")} ·{" "}
-                {formatCount(
-                  audit.attentions,
-                  "aviso pendente",
-                  "avisos pendentes",
-                )}
+                {formatMessageCount("count.errors", audit.failures, language)} ·{" "}
+                {formatMessageCount("count.pendingWarnings", audit.attentions, language)}
                 {audit.approvals > 0 &&
-                  ` · ${formatCount(audit.approvals, "aprovado", "aprovados")}`}
+                  ` · ${formatMessageCount("count.approvedWarnings", audit.approvals, language)}`}
               </span>
             </div>
           </div>
@@ -533,7 +529,7 @@ export function SheetView({
                               {effect.extras
                                 .map(
                                   (item) =>
-                                    `${item.name || "Extra"} +${item.value} por graduação${item.ranksApplied ? ` (${formatCount(item.ranksApplied, "graduação", "graduações")})` : ""}`,
+                                    `${item.name || "Extra"} +${item.value} por graduação${item.ranksApplied ? ` (${formatMessageCount("count.ranks", item.ranksApplied, language)})` : ""}`,
                                 )
                                 .join("; ")}
                             </p>
@@ -544,7 +540,7 @@ export function SheetView({
                               {effect.flaws
                                 .map(
                                   (item) =>
-                                    `${item.name || "Falha"} −${item.value} por graduação${item.ranksApplied ? ` (${formatCount(item.ranksApplied, "graduação", "graduações")})` : ""}`,
+                                    `${item.name || "Falha"} −${item.value} por graduação${item.ranksApplied ? ` (${formatMessageCount("count.ranks", item.ranksApplied, language)})` : ""}`,
                                 )
                                 .join("; ")}
                             </p>
@@ -670,7 +666,7 @@ export function SheetView({
             <Stat label="Dano" value={sheet.session.damage} />
             <Stat label="Pontos Heroicos" value={sheet.session.heroPointsCurrent} />
             <Stat label="Sorte" value={sheet.session.luckCurrent} />
-            <Stat label="Efeitos ativos" value={sheet.session.activeEffects.length} />
+            <Stat label={m("session.effectCount", { count: sheet.session.activeEffects.length })} value={sheet.session.activeEffects.length} />
           </div>
           {sheet.session.conditions.length ? (
             <div className="condition-view-list">
@@ -920,10 +916,6 @@ function auditTitle(status: RuleStatus, language: AppLanguage) {
   if (status === "fail") return "Erros encontrados";
   if (status === "attention") return "Atenção";
   return "Regras liberais · Narrador e NPCs";
-}
-
-function formatCount(value: number, singular: string, plural: string) {
-  return `${value} ${value === 1 ? singular : plural}`;
 }
 
 function arrayRoleLabel(role: string, m: MessageLookup) {

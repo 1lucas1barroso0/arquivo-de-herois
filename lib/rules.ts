@@ -1356,9 +1356,9 @@ export function getRuleAudit(sheet: CharacterSheet): RuleAudit {
     minimum?: number,
   ) => {
     if (!Number.isSafeInteger(value)) {
-      numericIssues.push(`${label} deve ser inteiro`);
+      numericIssues.push(`${label}: o valor deve ser inteiro`);
     } else if (minimum !== undefined && value < minimum) {
-      numericIssues.push(`${label} não pode ser menor que ${minimum}`);
+      numericIssues.push(`${label}: o valor não pode ser menor que ${minimum}`);
     }
   };
 

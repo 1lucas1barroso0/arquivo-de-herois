@@ -7,7 +7,7 @@
 3. Manter mudanças proporcionais ao problema, com impacto definido.
 4. Registrar fonte, versão e autoridade; distinguir oficial, interpretação e opção.
 5. Tornar cálculos verificáveis e atualizar dependências automaticamente.
-6. Usar linguagem natural e terminologia consistente em todo PT-BR/EN, sem traduzir textos pessoais.
+6. Usar linguagem natural e terminologia consistente em todo PT-BR/EN, sem traduzir textos pessoais. Toda quantidade deve concordar com substantivos, adjetivos e verbos. Centralizar variantes de contagem em `lib/messages.ts`; conferir 0, 1 e múltiplos valores nos dois idiomas. Categorias e títulos sem quantidade não devem receber singular por engano.
 7. Manter identidade visual, simplicidade e funções fáceis de descobrir.
 8. Validar legibilidade em celular, tablet e desktop, com textos longos nos dois idiomas.
 9. Garantir teclado, foco, rótulos, contraste e significado além das cores.
