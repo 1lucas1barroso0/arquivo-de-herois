@@ -61,3 +61,16 @@ modelo novo.
 ## Revisão WIP v.05 (1.2.0)
 
 A matriz histórica acima registra a base anterior. O catálogo atual contém 629 opções, 112 configurações e 65 modificadores; há 144 tópicos, incluindo 37 condições. A condição genérica Hallucinating saiu da seleção atual, mas valores armazenados não são removidos. Ver `HANDBOOK-WIP05.md` para mudanças, páginas e testes.
+
+
+## Revisão dos três exemplos — 02/11/2026
+
+- ATENDE — Todos os modelos novos usam schema 9 e a revisão WIP v.05 de 28/10/2026.
+- ATENDE — Espectro Rubro: NP 8, 120 PP, equipamento 20/20 PE, auditoria sem erros ou avisos.
+- ATENDE — Sentinela Solar: NP 10, 150 PP, ataque +8/efeito 12; voo e cinco sentidos vinculados aos poderes, sem cobrança duplicada; auditoria sem erros ou avisos.
+- ATENDE — Atlas Zero: NP 12, 180 PP, ataque +8/efeito 16, Força 14 e Robustez 16. Vigor/Fortitude ausentes, Imunidade a Fortitude 30 PP; autorreparo por Regeneração. Sem erros mecânicos; um aviso intencional exige autorização do Narrador para traço ausente. Não pré-aprovar esse aviso.
+- ATENDE — Atualização das cópias v9 intactas também reconhece a origem antiga das prévias 1–9. Inclui Espectro, cujo único ajuste é a revisão de origem.
+- ATENDE — Comparação integral de conteúdo, vínculos, notas e estado de sessão protege cópias personalizadas; fichas compartilhadas ou com revisão desconhecida não entram nessa atualização. Uma cópia já atualizada não é regravada a cada listagem. Testes: `tests/examples.test.ts`.
+- ATENDE — Cache PWA v25, sem remoção de dados do IndexedDB.
+- NÃO SE APLICA — Nenhuma mudança de layout, imagens ou dependências.
+- PENDENTE — Suíte automatizada de navegador; a disponibilidade do Chromium não foi comprovada nesta revisão.

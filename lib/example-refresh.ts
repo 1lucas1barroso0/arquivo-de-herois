@@ -9,27 +9,37 @@ import {
 import { advantageCatalog, powerEffectCatalog } from "./catalog";
 import { createExampleSheets } from "./example-sheets";
 import { applyPowerEffectPreset } from "./power-configurations";
+import { CURRENT_RULESET, LEGACY_RULESET, isCurrentRuleset } from "./ruleset";
 
 /**
- * Previous WIP v.05 demonstrations are replaced ONLY if an exact semantic
+ * Previous v9 learning demonstrations are replaced ONLY if an exact semantic
  * comparison proves they were never customized. Random object IDs and private
  * storage timestamps do not count as customization; every other stored field
  * does, including powers, notes, relationships, and session state.
  */
 export function isUntouchedLearningExampleV9(sheet: CharacterSheet) {
   if (sheet.shareEnabled || sheet.shareToken) return false;
-  if (sheet.heroName !== "Sentinela Solar" && sheet.heroName !== "Atlas Zero") return false;
-  const oldTemplate = previousLearningExampleV9(sheet.heroName);
-  return comparableTemplate(sheet) === comparableTemplate(oldTemplate);
+  if (!["Espectro Rubro", "Sentinela Solar", "Atlas Zero"].includes(sheet.heroName)) return false;
+  const legacy = sheet.ruleset.id === LEGACY_RULESET.id &&
+    sheet.ruleset.revision === LEGACY_RULESET.revision &&
+    sheet.ruleset.status === LEGACY_RULESET.status;
+  if (!legacy && !isCurrentRuleset(sheet.ruleset)) return false;
+  // Espectro's numbers did not change; only untouched copies with old provenance
+  // need refreshing. Current copies must never be rewritten on every list call.
+  if (sheet.heroName === "Espectro Rubro" && !legacy) return false;
+  const candidate = structuredClone(sheet);
+  candidate.ruleset = { ...CURRENT_RULESET };
+  const oldTemplate = previousLearningExampleV9(sheet.heroName as "Espectro Rubro" | "Sentinela Solar" | "Atlas Zero");
+  return comparableTemplate(candidate) === comparableTemplate(oldTemplate);
 }
 
-/** Frozen semantic recreation of the two example templates before the WIP v.05 correction. */
-export function previousLearningExampleV9(name: "Sentinela Solar" | "Atlas Zero"): CharacterSheet {
+/** Frozen semantic recreation of the three example templates before the WIP v.05 correction. */
+export function previousLearningExampleV9(name: "Espectro Rubro" | "Sentinela Solar" | "Atlas Zero"): CharacterSheet {
   const sheet = createExampleSheets().find((example) => example.heroName === name);
   if (!sheet) throw new Error(`Exemplo didático não encontrado: ${name}`);
   sheet.movement = [];
   sheet.senses = [];
-  if (name === "Sentinela Solar") return sheet;
+  if (name !== "Atlas Zero") return sheet;
 
   sheet.abilities.stamina = 4;
   sheet.absentTraits = [];

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createEmptySheet, isResistanceAbsent } from "../lib/character";
 import { isUntouchedLearningExampleV9, previousLearningExampleV9 } from "../lib/example-refresh";
-import { CURRENT_RULESET } from "../lib/ruleset";
+import { CURRENT_RULESET, LEGACY_RULESET } from "../lib/ruleset";
 import { createExampleSheets } from "../lib/example-sheets";
 import { applyGuidedAutomation } from "../lib/guided";
 import {
@@ -189,5 +189,24 @@ test("only untouched previous learning examples qualify for a safe update", () =
     assert.equal(isUntouchedLearningExampleV9(shared), false);
     const newTemplate = createExampleSheets().find((example) => example.heroName === name)!;
     assert.equal(isUntouchedLearningExampleV9(newTemplate), false);
+  }
+});
+
+test("all three untouched legacy-source examples refresh without treating personal changes as templates", () => {
+  for (const name of ["Espectro Rubro", "Sentinela Solar", "Atlas Zero"] as const) {
+    const previous = previousLearningExampleV9(name);
+    previous.ruleset = { ...LEGACY_RULESET };
+    assert.equal(isUntouchedLearningExampleV9(previous), true, `${name}: revisão antiga intacta`);
+    for (const change of [
+      (s: typeof previous) => { s.notes += " Nota pessoal."; },
+      (s: typeof previous) => { s.resources.heroicAdvantageUses = 1; },
+      (s: typeof previous) => { s.shareToken = "published-example"; },
+      (s: typeof previous) => { s.ruleset.revision = "custom-revision"; },
+    ]) {
+      const customized = structuredClone(previous);
+      change(customized);
+      assert.equal(isUntouchedLearningExampleV9(customized), false, `${name}: alteração preservada`);
+    }
+    assert.equal(isUntouchedLearningExampleV9(createExampleSheets().find(s => s.heroName === name)!), false);
   }
 });
